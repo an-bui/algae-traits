@@ -1,0 +1,17 @@
+---
+title: "preliminary visualizations"
+author: "An Bui"
+date: "10/6/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+0. set up
+```{r}
+# source the cleaning/summarizing script, which sources the set up
+source(here::here("code", "01_cleaning-and-summarizing.R"))
+```
+
