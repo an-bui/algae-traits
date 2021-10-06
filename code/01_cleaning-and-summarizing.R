@@ -19,6 +19,16 @@ fvfm_summary <- fvfm_raw %>%
           var = var(fvfm_meas),
           sd = sd(fvfm_meas)) %>% 
   # join with metadata
-  full_join(., metadata, by = "specimen_ID") %>% 
+  left_join(., metadata, by = "specimen_ID") %>% 
   # select columns of interest
-  select(specimen_ID, mean, var, sd, date_collected, site, species)
+  select(specimen_ID, mean, var, sd, date_collected, site, sp_code) %>% 
+  left_join(., algae_ct, by = "sp_code")
+
+# as a note: samples from 20210623 don't have FvFm, and one sample from IVEE doesn't either
+
+
+
+
+
+
+

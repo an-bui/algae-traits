@@ -45,4 +45,41 @@ fvfm_raw <- path %>%
   map_df(~ read_csv(.))
 
 
+# 4.  other files ---------------------------------------------------------
+
+# coarse trait data
+coarse_traits <- read_csv(here::here("data", "00-coarse_traits.csv"))
+
+# all species with group, mobility, species code, scientific name
+algae_all <- read_csv(here::here("data", "spp_names.csv")) %>% 
+  filter(group == "algae") %>% 
+  select(-group_mobility)
+
+
+# 5.  useful vectors and data frames --------------------------------------
+
+# most abundant algae
+algae_common <- c("PH", "PTCA", # Pterygophora californica 
+                  "DL", # Desmarestia ligulata
+                  "R", # Rhodymenia californica 
+                  "CC", # Chondracanthus corymbiferus 
+                  "POLA", # Polyneura latissima 
+                  "CYOS", # Stephanocystis osmundacea 
+                  "FTHR", # Pterosiphonia dendroidea 
+                  "CO", # Corallina officinalis var. chilensis 
+                  "LX", # Osmundea spectabilis
+                  "GS", # Gracilaria spp. 
+                  "BR", # Halymenia spp.
+                  "BO", # Bossiella orbigniana 
+                  "FB", # Ectocarpaceae spp. 
+                  "BF", # Cryptopleura ruprechtiana 
+                  "LAFA", # Laminaria farlowii 
+                  "CF", # Callophyllis rhynchocarpa 
+                  "DP" # Dictyota spp. 
+)
+
+# data frame with scientific name, taxonomy, and coarse traits
+algae_ct <- full_join(algae_all, coarse_traits, by = "sp_code") %>% 
+  drop_na(sp_code)
+
 

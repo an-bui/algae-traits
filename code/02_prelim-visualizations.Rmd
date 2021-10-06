@@ -9,9 +9,22 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-0. set up
+# 0. set up
 ```{r}
 # source the cleaning/summarizing script, which sources the set up
 source(here::here("code", "01_cleaning-and-summarizing.R"))
+```
+
+# 1. FvFm visualizations
+
+## a. box plot
+
+```{r}
+ggplot(fvfm_summary, aes(x = sp_code, y = mean)) +
+  geom_boxplot() +
+  geom_jitter() +
+  facet_wrap(~ pigment_type, scales = "free_x") +
+  scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
+  theme_bw()
 ```
 

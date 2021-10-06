@@ -1,0 +1,222 @@
+group,group_mobility,sp_code,scientific_name,common_name
+invert,invert_sessile,AB,Abietinaria spp.,Coarse Sea Fir Hydroid
+fish,fish_mobile,AHOL,Alloclinus holderi,Island Kelpfish
+invert,invert_sessile,AL,Astrangia haimei,Aggregating cup Coral
+invert,invert_mobile,AML,Patiria miniata,Bat Star
+fish,fish_mobile,ANDA,Anisotremus davidsonii,Sargo
+fish,fish_mobile,ANOB,Atractoscion nobilis,White Sea Bass
+algae,algae_sessile,ANPA,Anisocladella pacifica,-99999
+invert,invert_sessile,ANSP,Anthopleura spp.,Aggregating anemone
+invert,invert_mobile,APCA,Aplysia californica,California Brown Sea Hare
+invert,invert_mobile,APVA,Aplysia vaccaria,California Black Sea Hare
+invert,invert_sessile,AR,Eudistoma psammion,Sand Tunicate
+invert,invert_sessile,ARUD,Discophyton rudyi,Octocoral
+invert,invert_sessile,AS,Agalophenia spp.,Ostrich-Plume Hydroid
+invert,invert_sessile,ATM,Ischyroceridae spp.,Amphipod tube mat
+algae,algae_sessile,AU,Acrosorium ciliolatum,-99999
+fish,fish_mobile,AUFL,Aulorhynchus flavidus,Tube-Snout
+invert,invert_sessile,BA,Balanomorpha spp.,Barnacles
+invert,invert_sessile,BAEL,Balanophyllia elegans,Orange Cup Coral
+invert,invert_sessile,BCAL,Bugulina californica,Spiral Bryozoan
+algae,algae_sessile,BF,Cryptopleura ruprechtiana,Grape Tounge
+fish,fish_mobile,BFRE,Brachyistius frenatus,Kelp Surfperch
+algae,algae_sessile,BLD,Unidentifiable juvenile kelp,Unidentifiable juvenile kelp - not a unique species
+invert,invert_sessile,BN,Bugula neritina,-99999
+algae,algae_sessile,BO,Bossiella orbigniana,-99999
+fish,fish_mobile,BOTH,Unidentified Flatfish spp.,Unidentified Flatfish spp.
+invert,invert_sessile,BOW,Amathia gracilis,-99999
+algae,algae_sessile,BR,Halymenia spp.; Schizymenia pacifica,Blady red
+algae,algae_sessile,BRA,Unidentifiable Branching Red Alga,Branching red alga - not a unique species
+fish,fish_mobile,BRAY,Myliobatis californica,Bat Ray
+invert,invert_sessile,BRSP,Barentsia sp.,-99999
+fish,fish_mobile,CAGG,Cymatogaster aggregata,Shiner Surfperch
+algae,algae_sessile,CAL,Calliarthron cheilosporioides,-99999
+fish,fish_mobile,CAPR,Caulolatilus princeps,Ocean Whitefish
+invert,invert_mobile,CASP,Cancer spp.,Cancer Crab
+algae,algae_sessile,CC,Chondracanthus corymbiferus; Chondracanthus exasperatus,-99999
+invert,invert_mobile,CECO,Centrostephanus coronatus,Crowned Sea Urchin
+invert,invert_sessile,CESP,Cellaria diffusa; Cellaria mandibulata,-99999
+algae,algae_sessile,CF,Callophyllis flabellulata,-99999
+algae,algae_sessile,CG,Cladophora graminea,-99999
+invert,invert_sessile,CHOV,Chaceia ovoidea,Wart-Neck Piddock
+invert,invert_sessile,CHPR,Chelyosoma productum,Disc-Top Tunicate
+invert,invert_sessile,CILU,Timarete luxuriosa,-99999
+invert,invert_sessile,CL,Clavelina huntsmani,Light Bulb Tunicate
+fish,fish_mobile,CLIN,Gibbonsia,Crevice Kelpfish
+fish,fish_mobile,CNIC,Rhinogobiops nicholsii,Blackeye Goby
+algae,algae_sessile,CO,Corallina officinalis,Pink Feather Coralline
+invert,invert_mobile,COCA,Californiconus californicus,Califonia Cone Snail
+algae,algae_sessile,COF,Codium fragile,Dead Man's Fingers
+invert,invert_sessile,COST,Celleporina robertsoniae,Orange Byozoan
+fish,fish_mobile,COTT,Unidentified Cottidae,Unidentified Sculpin Spp
+algae,algae_sessile,CP,Colpomenia peregrina,-99999
+fish,fish_mobile,CPUN,Chromis punctipinnis,Blacksmith
+invert,invert_sessile,CRGI,Crassadoma gigantea,Rock Scallop
+invert,invert_sessile,CROC,Crisia occidentalis,White Tuft Bryozoans
+algae,algae_sessile,CRYP,Cryptopleura spp.,-99999
+fish,fish_mobile,CSAT,Cheilotrema saturnum,Black Croaker
+fish,fish_mobile,CSTI,Citharichthys stigmaeus,Speckled Sanddab
+invert,invert_mobile,CUKE,Apostichopus californicus,California Sea Cucumber
+invert,invert_sessile,CUPI,Cucumaria piperata,Salt and Pepper Cucumber
+invert,invert_sessile,CUSP,Cucumaria salma; Cucumaria miniata,-99999
+fish,fish_mobile,CVEN,Cephaloscyllium ventriosum,Swell Shark
+invert,invert_sessile,CY,Corynactis californica,Club-Tipped Anemone
+algae,algae_sessile,CYOS,Stephanocystis osmundacea,-99999
+invert,invert_mobile,CYSP,Neobernaya spadicea,Chestnut Cowry
+algae,algae_sessile,CZ,Chondracanthus spinosus,-99999
+invert,invert_sessile,DC,Diaperoforma californica,Southern Staghorn Bryozoan
+invert,invert_mobile,DIL,Dermasterias imbricata,Leather Star
+invert,invert_sessile,DIOR,Diopatra ornata,Ornate Tube Worm
+algae,algae_sessile,DL,Desmarestia ligulata,Acid Weed
+invert,invert_sessile,DOFE,Dodecaceria fewkesi,Colonial Tube Worm
+algae,algae_sessile,DP,Dictyota binghamiae; Dictyota flabellata; Dictyota coriacea,-99999
+algae,algae_sessile,DU,Dictyopteris undulata,-99999
+fish,fish_mobile,DVAC,Rhacochilus vacca,Pile Surfperch
+algae,algae_sessile,EA,Eisenia arborea,Southern Palm Kelp
+algae,algae_sessile,EC,crustose coralline algae spp.,Encrusting Coralline
+invert,invert_sessile,ECB,Unidentified Encrusting Bryozoa spp.,Encrusting Bryozoan
+algae,algae_sessile,EGME,Egregia menziesii,Feather Boa Kelp
+fish,fish_mobile,EJAC,Embiotoca jacksoni,Black Surfperch
+fish,fish_mobile,ELAT,Embiotoca lateralis,Striped Surfperch
+fish,fish_mobile,EMBI,Unidentified Surfperch spp.,Unidentified Surfperch Spp.
+algae,algae_sessile,ER,Hildenbrandia spp.,Encrusting red algae
+invert,invert_sessile,ES,Unidentified Demospongiae spp.,Encrusting sponge
+invert,invert_sessile,EUCL,Euherdmania claviformis,Tunic-Band Compound Tunicate
+invert,invert_sessile,EUPO,Eudistylia polymorpha,Feather Duster Worm
+invert,invert_sessile,EUQU,Eupentacta quinquesemita,White Sea Cucumber
+algae,algae_sessile,FASP,Gloiocladia fryeana,-99999
+algae,algae_sessile,FB,Ectocarpaceae spp.,Filamentous brown & Diatom Mats
+algae,algae_sessile,FG,Ulva spp.; Sponogomorpha spp.,Filamentous green
+algae,algae_sessile,FR,Rhodophyta,filamentous red
+algae,algae_sessile,FTHR,Neoptilota spp.; Ptilota spp.; Rhodoptilum spp.,Ceramiales Complex: Neoptilota Ptilota Rhodoptilum Pterosiphonia
+fish,fish_mobile,GAGA,Galeorhinus galeus,Soupfin Shark
+fish,fish_mobile,GNIG,Girella nigricans,Opaleye
+algae,algae_sessile,GR,Gelidium spp.,Agarweed
+algae,algae_sessile,GS,Gracilaria spp.,-99999
+algae,algae_sessile,GYSP,Gymnogongrus spp.,-99999
+invert,invert_mobile,HACO,Haliotis corrugata,Pink Abalone
+invert,invert_mobile,HACR,Haliotis cracherodii,Black Abalone
+algae,algae_sessile,HAGL,Halosaccion glandiforme,Sea Nipples
+invert,invert_mobile,HARU,Haliotis rufescens,Red Abalone
+invert,invert_sessile,HC,Acanthancora cyanocrypta,Cobalt Sponge
+fish,fish_mobile,HCAR,Hypsurus caryi,Rainbow Surfperch
+fish,fish_mobile,HDEC,Hexagrammos decagrammus,Kelp Greenling
+fish,fish_mobile,HEFR,Heterodontus francisci,Horn Shark
+fish,fish_mobile,HEGR,Hexanchus griseus,Sixgill Shark
+invert,invert_sessile,HIP,Primavelans mexicana,Southern Fluted Bryozoan
+invert,invert_sessile,HPAC,Heteropora pacifica,Northern Staghorn Bryozoan
+fish,fish_mobile,HROS,Heterostichus rostratus,Giant Kelpfish
+fish,fish_mobile,HRUB,Hypsypops rubicundus,Garibaldi
+fish,fish_mobile,HSEM,Halichoeres semicinctus,Rock Wrasse
+algae,algae_sessile,IR,Mazzaella spp.,-99999
+invert,invert_mobile,KEKE,Kelletia kelletii,Kellet's Welk
+invert,invert_mobile,LA,Lytechinus pictus,White Sea Urchin
+algae,algae_sessile,LAFA,Laminaria farlowii,Oar Weed
+fish,fish_mobile,LDAL,Lythrypnus dalli,Bluebanded Goby
+fish,fish_mobile,LHIR,Leiocottus hirundo,Lavender Sculpin
+algae,algae_sessile,LI,Lithothrix aspergillum,Stone Hair
+invert,invert_mobile,LIGL,Pomaulax gibberosus; Megastraea undosa,Wavey Turbin Snail
+invert,invert_sessile,LINU,Lissothuria nutriens,Scarlet Sea Cucumber
+invert,invert_sessile,LNUT,Leucilla nuttingi,Urn Sponge
+invert,invert_sessile,LOCH,Leptogorgia chilensis,Red Gorgonian
+invert,invert_mobile,LOGR,Loxorhynchus grandis,Sheep Crab
+algae,algae_sessile,LS,Laurencia spp.,-99999
+algae,algae_sessile,LX,Osmundea spectabilis,-99999
+algae,algae_sessile,MAPY,Macrocystis pyrifera,Giant Kelp
+invert,invert_sessile,MC,Mytilus californianus,California Mussel
+fish,fish_mobile,MCAL,Medialuna californiensis,Halfmoon
+invert,invert_mobile,MECR,Megathura crenulata,Giant Key Hole Limpet
+invert,invert_mobile,MIID,Atrimitra idae,Ida's Mitre
+invert,invert_sessile,MISE,Metridium dianthus,Clonal Plumose Anemone
+invert,invert_sessile,MT,Jellyella tuberculata,Kelp Bryozoan
+invert,invert_sessile,MUCA,Muricea californica,California Golden Gorgonian
+invert,invert_sessile,MUFR,Muricea fruticosa,Brown Gorgonian
+fish,fish_mobile,NBLA,Neoclinus blanchardi,Sarcastic Fringehead
+algae,algae_sessile,NEO,Agardhiella subulata,-99999
+invert,invert_mobile,NONO,Norrisia norrisii,Norris's Topsnail
+invert,invert_sessile,OBSP,Obelia spp.,Wine-Glass Hydroid
+fish,fish_mobile,OCAL,Oxyjulis californica,Senorita
+invert,invert_mobile,OCTO,Octopus spp.,-99999
+fish,fish_mobile,OELO,Ophiodon elongatus,Lingcod
+invert,invert_mobile,OKL,Orthasterias koehleri,Rainbow Star
+invert,invert_mobile,OPES,Ophioplocus esmarki,Smooth Brittle Star
+fish,fish_mobile,OPIC,Oxylebius pictus,Painted Greenling
+invert,invert_mobile,OPSP,Ophiothrix spiculata,Spiny Brittle Star
+invert,invert_sessile,PA,Phragmatopoma californica,Colonial Sand Tube Worm
+invert,invert_sessile,PACA,Parapholas californica,Scaleside Piddock
+invert,invert_sessile,PAFI,Pachycerianthus fimbriatus,Tube Dwelling Anemone
+invert,invert_mobile,PAIN,Panulirus interruptus,California Spiny Lobster
+invert,invert_mobile,PAPA,Apostichopus parvimensis,Warty Sea Cucumber
+invert,invert_sessile,PAST,Paracyathus stearnsii,Brown Cup Coral
+invert,invert_mobile,PBL,Pisaster brevispinus,Short Spined Sea Star
+fish,fish_mobile,PCAL,Paralichthys californicus,California Halibut
+fish,fish_mobile,PCLA,Paralabrax clathratus,Kelp Bass
+fish,fish_mobile,PFUR,Phanerodon furcatus,White Surfperch
+invert,invert_mobile,PGL,Pisaster giganteus,Giant Spined Sea Star
+invert,invert_mobile,PHL,Pycnopodia helianthoides,Sunflower Sea Star
+algae,algae_sessile,PHSE,Phycodrys setchellii,-99999
+invert,invert_sessile,PHSP,Actinostella californica,Sand Anemone
+invert,invert_sessile,PIEL,Pista elongata,-99999
+algae,algae_sessile,PL,Prionitis lanceolata,-99999
+invert,invert_sessile,PLAB,Phidolopora labiata,Lattice-Work Bryozoan
+invert,invert_sessile,PLUM,Plumularia spp.,Hydroid
+fish,fish_mobile,PNEB,Paralabrax nebulifer,Barred Sandbass
+invert,invert_mobile,POL,Pisaster ochraceus,Ochre sea star
+algae,algae_sessile,POLA,Polyneura latissima,-99999
+invert,invert_sessile,POPL,Polyclinum planum,Elephant Ear Tunicate
+algae,algae_sessile,PRSP,Prionitis linearis,-99999
+invert,invert_sessile,PRUB,Pachythyone rubra,-99999
+algae,algae_sessile,PTCA,Pterygophora californica,Palm Kelp
+fish,fish_mobile,PTRY,Platyrhinoidis triseriata,Thornback guitarfish
+invert,invert_mobile,PTTR,Pteropurpura trialata,Three-Winged Murex
+invert,invert_mobile,PUPR,Pugettia producta,Kelp Crab
+invert,invert_sessile,PYST,Pycnoclavella stanleyi,Yellow Social Tunicate
+algae,algae_sessile,R,Rhodymenia californica,-99999
+algae,algae_sessile,RAT,small Ceramiaceae spp.,Red algal turf
+fish,fish_mobile,RTOX,Rhacochilus toxotes,Rubberlip Surfperch
+invert,invert_sessile,SABW,Sabellidae spp.,Sabellid Wom
+algae,algae_sessile,SAFU,Sarcodiotheca furcata,-99999
+algae,algae_sessile,SAHO,Sargassum horneri,-99999
+algae,algae_sessile,SAMU,Sargassum muticum,Wire-weed
+fish,fish_mobile,SATR,Sebastes atrovirens,Kelp Rockfish
+fish,fish_mobile,SAUR,Sebastes auriculatus,Brown Rockfish
+invert,invert_sessile,SC,Spheciospongia confoederata,Grey Moon Sponge
+fish,fish_mobile,SCAL,Squatina californica,Pacific Angel Shark
+fish,fish_mobile,SCAR,Sebastes carnatus,Gopher Rockfish
+fish,fish_mobile,SCAU,Sebastes caurinus,Copper Rockfish
+algae,algae_sessile,SCCA,Scinaia confusa,-99999
+fish,fish_mobile,SCHR,Sebastes chrysomelas,Black and Yellow Rockfish
+fish,fish_mobile,SCSP,Unidentified YOY Sebastes,Young of Year Rockfish
+invert,invert_sessile,SE,Thylacodes squamigerus,Scaled Worm Snail
+algae,algae_sessile,SELO,Scytosiphon lomentaria,-99999
+invert,invert_mobile,SFL,Mesocentrotus franciscanus,Red Urchin
+fish,fish_mobile,SGUT,Scorpaena guttata,California Scorpionfish
+invert,invert_mobile,SKE,Kelletia kelletii,Kellet's Welk
+fish,fish_mobile,SMAR,Scorpaenichthys marmoratus,Cabezon
+fish,fish_mobile,SMIN,Sebastes miniatus,Vermilion Rockfish
+fish,fish_mobile,SMYS,Sebastes mystinus,Blue Rockfish
+fish,fish_mobile,SPAR,Sphyraena argentea,Pacific Barracuda
+fish,fish_mobile,SPAU,Sebastes paucispinis,Boccacio
+invert,invert_mobile,SPL,Strongylocentrotus purpuratus,Purple Urchin
+fish,fish_mobile,SPUL,Semicossyphus pulcher,California Sheephead
+fish,fish_mobile,SRAS,Sebastes rastrelliger,Grass Rockfish
+fish,fish_mobile,SSER,Sebastes serranoides,Olive Rockfish
+invert,invert_sessile,ST,Salmacina tribranchiata,Fragile Tube Worm
+algae,algae_sessile,STIN,Stenogramma californicum,-99999
+invert,invert_sessile,STMO,Styela montereyensis,Stalked Tunicate
+fish,fish_mobile,STRE,Sebastes serriceps,Treefish
+fish,fish_mobile,SYNG,Syngnathus spp.,Unidentified Pipefish Spp.
+algae,algae_sessile,TALE,Taonia lennebackerae,-99999
+invert,invert_sessile,TC,Thalamoporella californica,-99999
+invert,invert_sessile,TEAU,Tethya aurantium,Orange Puffball Sponge
+invert,invert_mobile,TESP,Tegula spp.,-99999
+fish,fish_mobile,TSEM,Triakis semifasciata,Leopard Shark
+invert,invert_sessile,UAB,Unidentified Arborescent Bryozoan,Unidentified Arborescent Bryozoan
+algae,algae_sessile,UBB,Unidentifiable small brown blade,Unidentified brown blade - not a unique species
+algae,algae_sessile,UEC,Amphiroa beauvoisii,-99999
+invert,invert_sessile,UIH,Ectopleura crocea; Eudendrium californicum; Schuchertinia milleri,Unidentified hydroid
+invert,invert_sessile,URLO,Urticina eques,Whit-Spotted Rose Anemone
+invert,invert_sessile,UT,Unidentified Didemnidae spp.,Unidentified compound tunicate
+algae,algae_sessile,UV,Ulva spp.,Sea Lettuce
+invert,invert_sessile,WASP,Watersipora subatra,-99999
+fish,fish_mobile,XCAL,Haemulon californiensis,Salema
