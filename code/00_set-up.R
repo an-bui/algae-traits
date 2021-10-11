@@ -22,13 +22,13 @@ hw <- read_sheet(sheet_id, sheet = "02-hw")
 
 thickness <- read_sheet(sheet_id, sheet = "03-thickness", na = "NA") 
 
-weight <- read_sheet(sheet_id, sheet = "04-weight") 
+weight <- read_sheet(sheet_id, sheet = "04-weight", na = "NA") 
 
 sa_peri <- read_sheet(sheet_id, sheet = "05a-scans") 
 
 bra_ord <- read_sheet(sheet_id, sheet = "05b-branching_order") 
 
-toughness <- read_sheet(sheet_id, sheet = "06-toughness") 
+toughness <- read_sheet(sheet_id, sheet = "06-toughness", na = "NA") 
 
 volume <- read_sheet(sheet_id, sheet = "07-volume") 
 

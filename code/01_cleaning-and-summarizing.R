@@ -30,6 +30,8 @@ fvfm_summary <- fvfm_raw %>%
 
 # 3. thickness ------------------------------------------------------------
 
+# some problems with the subsampling - used the metadata_subsamples df
+
 thickness_summary <- thickness %>% 
   pivot_longer(cols = thickness_01:thickness_10, names_to = "measurement_n", values_to = "thickness_mm") %>% 
   group_by(specimen_ID) %>% 
@@ -43,8 +45,25 @@ thickness_summary <- thickness %>%
   left_join(., algae_ct, by = "sp_code") %>% 
   drop_na(sp_code)
 
+# 4. dry weight -----------------------------------------------------------
+
+# only whole dry weights
+
+dryw_summary <- weight %>% 
+  filter(type == "whole") %>% 
+  left_join(., metadata, by = "specimen_ID") %>% 
+  drop_na(sp_code) %>% 
+  left_join(., algae_ct, by = "sp_code")
 
 
+
+# 5. volume ---------------------------------------------------------------
+
+volume_summary <- volume %>% 
+  filter(type == "whole") %>% 
+  left_join(., metadata, by = "specimen_ID") %>% 
+  drop_na(sp_code) %>% 
+  left_join(., algae_ct, by = "sp_code")
 
 
 

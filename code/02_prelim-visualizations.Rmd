@@ -50,8 +50,32 @@ ggplot(thickness_summary, aes(x = sp_code, y = mean)) +
 ## a. box plot
 
 ```{r}
+ggplot(dryw_summary, aes(x = sp_code, y = weight_dry_mg)) +
+  geom_boxplot() +
+  geom_jitter() +
+  facet_wrap(~ pigment_type, scales = "free_x") +
+  scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
+  theme_bw()
 
-
-
+# ggsave(here::here("figures/prelim-visualizations", "20211011_dryw-boxplot.jpg"))
 ```
+
+As a note: something needs to happen to be able to filter out the things that are true thalli (e.g. thallus on PTCA) AND things that are whole individuals that are basically thalli (e.g. BF). Maybe code those in as "thallus" and go from there?
+
+# 4. volume
+
+## a. box plot
+```{r}
+ggplot(volume_summary, aes(x = sp_code, y = volume_total_mL)) +
+  geom_boxplot() +
+  geom_jitter() +
+  facet_wrap(~ pigment_type, scales = "free_x") +
+  scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
+  theme_bw()
+
+# ggsave(here::here("figures/prelim-visualizations", "20211011_volume-boxplot.jpg"))
+```
+
+
+
 
