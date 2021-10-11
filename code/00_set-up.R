@@ -7,26 +7,30 @@ library(here)
 
 # 2.  getting data from google drive --------------------------------------
 
-# gets the file data from google drive, only have to do this once to get the sheet id
-# trait_data_id <- googledrive::drive_get("trait_data")
+# gets the file data from google drive
+trait_data_id <- googledrive::drive_get("trait_data")
 
 sheet_id <- "1h2eHoL5kXMRwExt3hjrLavxG0pajHOvA1UfJd24pRk4"
 
-metadata <- read_sheet(sheet_id, sheet = "00b-metadata")
+metadata <- read_sheet(sheet_id, sheet = "00b-metadata") %>% 
+  filter(site != "Campus Point")
 
-hw <- read_sheet(sheet_id, sheet = "02-hw")
+metadata_subsamples <- read_sheet(sheet_id, sheet = "00c-metadata-subsamples") %>% 
+  filter(site != "Campus Point")
 
-thickness <- read_sheet(sheet_id, sheet = "03-thickness")
+hw <- read_sheet(sheet_id, sheet = "02-hw") 
 
-weight <- read_sheet(sheet_id, sheet = "04-weight")
+thickness <- read_sheet(sheet_id, sheet = "03-thickness", na = "NA") 
 
-sa_peri <- read_sheet(sheet_id, sheet = "05a-scans")
+weight <- read_sheet(sheet_id, sheet = "04-weight") 
 
-bra_ord <- read_sheet(sheet_id, sheet = "05b-branching_order")
+sa_peri <- read_sheet(sheet_id, sheet = "05a-scans") 
 
-toughness <- read_sheet(sheet_id, sheet = "06-toughness")
+bra_ord <- read_sheet(sheet_id, sheet = "05b-branching_order") 
 
-volume <- read_sheet(sheet_id, sheet = "07-volume")
+toughness <- read_sheet(sheet_id, sheet = "06-toughness") 
+
+volume <- read_sheet(sheet_id, sheet = "07-volume") 
 
 
 # 3.  getting FvFm data ---------------------------------------------------

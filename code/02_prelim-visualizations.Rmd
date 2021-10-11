@@ -15,7 +15,7 @@ knitr::opts_chunk$set(echo = TRUE)
 source(here::here("code", "01_cleaning-and-summarizing.R"))
 ```
 
-# 1. FvFm visualizations
+# 1. FvFm 
 
 ## a. box plot
 
@@ -26,5 +26,32 @@ ggplot(fvfm_summary, aes(x = sp_code, y = mean)) +
   facet_wrap(~ pigment_type, scales = "free_x") +
   scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
   theme_bw()
+
+# ggsave(here::here("figures/prelim-visualizations", "20211006_fvfm-boxplot.jpg"))
+```
+
+# 2. Thickness
+
+## a. box plot
+
+```{r}
+ggplot(thickness_summary, aes(x = sp_code, y = mean)) +
+  geom_boxplot() +
+  geom_jitter() +
+  facet_wrap(~ pigment_type, scales = "free_x") +
+  scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
+  theme_bw()
+
+# ggsave(here::here("figures/prelim-visualizations", "20211011_thickness-boxplot.jpg"))
+```
+
+# 3. Dry weight
+
+## a. box plot
+
+```{r}
+
+
+
 ```
 

@@ -22,9 +22,26 @@ fvfm_summary <- fvfm_raw %>%
   left_join(., metadata, by = "specimen_ID") %>% 
   # select columns of interest
   select(specimen_ID, mean, var, sd, date_collected, site, sp_code) %>% 
-  left_join(., algae_ct, by = "sp_code")
+  left_join(., algae_ct, by = "sp_code") %>% 
+  unique()
 
 # as a note: samples from 20210623 don't have FvFm, and one sample from IVEE doesn't either
+
+
+# 3. thickness ------------------------------------------------------------
+
+thickness_summary <- thickness %>% 
+  pivot_longer(cols = thickness_01:thickness_10, names_to = "measurement_n", values_to = "thickness_mm") %>% 
+  group_by(specimen_ID) %>% 
+  summarize(mean = mean(thickness_mm),
+            var = var(thickness_mm),
+            sd = sd(thickness_mm)) %>% 
+  # join with metadata
+  left_join(., metadata_subsamples, by = "specimen_ID") %>% 
+  # select columns of interest
+  select(specimen_ID, mean, var, sd, date_collected, site, sp_code) %>% 
+  left_join(., algae_ct, by = "sp_code") %>% 
+  drop_na(sp_code)
 
 
 
