@@ -20,14 +20,22 @@ source(here::here("code", "01_cleaning-and-summarizing.R"))
 ## a. box plot
 
 ```{r}
-ggplot(fvfm_summary, aes(x = sp_code, y = mean)) +
+fvfm_boxplot <- ggplot(fvfm_summary, aes(x = sp_code, y = mean)) +
   geom_boxplot() +
-  geom_jitter() +
+  geom_jitter(alpha = 0.45) +
   facet_wrap(~ pigment_type, scales = "free_x") +
   scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
-  theme_bw()
+  theme_bw() +
+  labs(title = "Photosynthetic efficiency",
+       x = "Species code",
+       y = "Fv/Fm")
 
-# ggsave(here::here("figures/prelim-visualizations", "20211006_fvfm-boxplot.jpg"))
+fvfm_boxplot
+
+# ggsave(here::here("figures/prelim-visualizations",
+#                   paste("fvfm-boxplot-", todays_date, ".jpg", sep = "")),
+#        fvfm_boxplot,
+#        width = 8, height = 5, dpi = 150)
 ```
 
 # 2. Thickness
@@ -35,14 +43,22 @@ ggplot(fvfm_summary, aes(x = sp_code, y = mean)) +
 ## a. box plot
 
 ```{r}
-ggplot(thickness_summary, aes(x = sp_code, y = mean)) +
+thickness_boxplot <- ggplot(thickness_summary, aes(x = sp_code, y = mean)) +
   geom_boxplot() +
-  geom_jitter() +
+  geom_jitter(alpha = 0.45) +
   facet_wrap(~ pigment_type, scales = "free_x") +
   scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
-  theme_bw()
+  theme_bw() +
+  labs(title = "Thallus thickness",
+       x = "Species code",
+       y = "Thickness (mm)")
 
-# ggsave(here::here("figures/prelim-visualizations", "20211011_thickness-boxplot.jpg"))
+thickness_boxplot
+
+# ggsave(here::here("figures/prelim-visualizations",
+#                   paste("thickness-boxplot-", todays_date, ".jpg", sep = "")),
+#        thickness_boxplot,
+#        width = 8, height = 5, dpi = 150)
 ```
 
 # 3. Dry weight
@@ -50,14 +66,22 @@ ggplot(thickness_summary, aes(x = sp_code, y = mean)) +
 ## a. box plot
 
 ```{r}
-ggplot(dryw_summary, aes(x = sp_code, y = weight_dry_mg)) +
+dryw_boxplot <- ggplot(dryw_summary, aes(x = sp_code, y = weight_dry_g)) +
   geom_boxplot() +
-  geom_jitter() +
+  geom_jitter(alpha = 0.45) +
   facet_wrap(~ pigment_type, scales = "free_x") +
   scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
-  theme_bw()
+  theme_bw()  +
+  labs(title = "Oven dry weight",
+       x = "Species code",
+       y = "Dry weight (g)")
 
-# ggsave(here::here("figures/prelim-visualizations", "20211011_dryw-boxplot.jpg"))
+dryw_boxplot
+
+# ggsave(here::here("figures/prelim-visualizations",
+#                   paste("dryw-boxplot-", todays_date, ".jpg", sep = "")),
+#        dryw_boxplot,
+#        width = 8, height = 5, dpi = 150)
 ```
 
 As a note: something needs to happen to be able to filter out the things that are true thalli (e.g. thallus on PTCA) AND things that are whole individuals that are basically thalli (e.g. BF). Maybe code those in as "thallus" and go from there?
@@ -66,15 +90,155 @@ As a note: something needs to happen to be able to filter out the things that ar
 
 ## a. box plot
 ```{r}
-ggplot(volume_summary, aes(x = sp_code, y = volume_total_mL)) +
+volume_boxplot <- ggplot(volume_summary, aes(x = sp_code, y = volume_total_mL)) +
   geom_boxplot() +
-  geom_jitter() +
+  geom_jitter(alpha = 0.45) +
   facet_wrap(~ pigment_type, scales = "free_x") +
   scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
-  theme_bw()
+  theme_bw() +
+  labs(title = "Volume",
+       x = "Species code",
+       y = "Volume (mL)")
 
-# ggsave(here::here("figures/prelim-visualizations", "20211011_volume-boxplot.jpg"))
+volume_boxplot
+
+# ggsave(here::here("figures/prelim-visualizations",
+#                   paste("volume-boxplot", todays_date, ".jpg", sep = "")),
+#        volume_boxplot,
+#        width = 8, height = 5, dpi = 150)
 ```
+
+# 5. surface area
+
+## a. box plot
+```{r}
+sa_boxplot <- ggplot(sa_summary, aes(x = sp_code, y = area_total)) +
+  geom_boxplot() +
+  geom_jitter(alpha = 0.45) +
+  facet_wrap(~ pigment_type, scales = "free_x") +
+  scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
+  theme_bw() +
+  labs(title = "Surface area",
+       x = "Species code",
+       y = bquote("Square millimeter "(mm^2)))
+
+sa_boxplot
+
+# ggsave(here::here("figures/prelim-visualizations",
+#                   paste("sa-boxplot", todays_date, ".jpg", sep = "")),
+#        sa_boxplot,
+#        width = 8, height = 5, dpi = 150)
+```
+
+# 6. perimeter
+
+## a. box plot
+```{r}
+peri_boxplot <- ggplot(peri_summary, aes(x = sp_code, y = peri_total)) +
+  geom_boxplot() +
+  geom_jitter(alpha = 0.45) +
+  facet_wrap(~ pigment_type, scales = "free_x") +
+  scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
+  theme_bw() +
+  labs(title = "Perimeter",
+       x = "Species code",
+       y = "Perimeter (mm)")
+
+peri_boxplot
+
+# ggsave(here::here("figures/prelim-visualizations",
+#                   paste("peri_boxplot", todays_date, ".jpg", sep = "")),
+#        peri_boxplot,
+#        width = 8, height = 5, dpi = 150)
+```
+
+# 7. surface area:perimeter ratio
+
+## a. box plot
+
+```{r}
+ratio_saperi_boxplot <- ggplot(ratio_saperi, aes(x = sp_code, y = ratio)) +
+  geom_boxplot() +
+  geom_jitter(alpha = 0.45) +
+  facet_wrap(~ pigment_type, scales = "free_x") +
+  scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
+  theme_bw() +
+  labs(title = "Surface area:perimeter ratio",
+       x = "Species code",
+       y = expression(paste(mm^2, "per mm")))
+
+ratio_saperi_boxplot 
+
+# ggsave(here::here("figures/prelim-visualizations",
+#                   paste("ratio_saperi_boxplot", todays_date, ".jpg", sep = "")),
+#        ratio_saperi_boxplot,
+#        width = 8, height = 5, dpi = 150)
+```
+
+# 8. surface area:volume ratio
+
+## a. box plot
+```{r}
+ratio_savolume_boxplot <- ggplot(ratio_savolume, aes(x = sp_code, y = ratio)) +
+  geom_boxplot() +
+  geom_jitter(alpha = 0.45) +
+  facet_wrap(~ pigment_type, scales = "free_x") +
+  scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
+  theme_bw() +
+  labs(title = "Surface area:volume ratio",
+       x = "Species code",
+       y = "mm^2/mL")
+
+ratio_savolume_boxplot
+
+# ggsave(here::here("figures/prelim-visualizations",
+#                   paste("ratio_savolume_boxplot", todays_date, ".jpg", sep = "")),
+#        ratio_savolume_boxplot,
+#        width = 8, height = 5, dpi = 150)
+```
+
+# 9. maximum height and width
+
+```{r}
+height_boxplot <- ggplot(hw_summary, aes(x = sp_code, y = max_height_cm)) +
+  geom_boxplot() +
+  geom_jitter(alpha = 0.45) +
+  facet_wrap(~ pigment_type, scales = "free_x") +
+  scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
+  theme_bw() +
+  labs(title = "Maximum height",
+       x = "Species code",
+       y = "cm")
+
+height_boxplot
+
+# ggsave(here::here("figures/prelim-visualizations",
+#                   paste("height_boxplot", todays_date, ".jpg", sep = "")),
+#        height_boxplot,
+#        width = 8, height = 5, dpi = 150)
+
+width_boxplot <- ggplot(hw_summary, aes(x = sp_code, y = max_width_cm)) +
+  geom_boxplot() +
+  geom_jitter(alpha = 0.45) +
+  facet_wrap(~ pigment_type, scales = "free_x") +
+  scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
+  theme_bw() +
+  labs(title = "Maximum width",
+       x = "Species code",
+       y = "cm")
+
+width_boxplot
+
+# ggsave(here::here("figures/prelim-visualizations",
+#                   paste("width_boxplot", todays_date, ".jpg", sep = "")),
+#        width_boxplot,
+#        width = 8, height = 5, dpi = 150)
+```
+
+
+
+
+
 
 
 

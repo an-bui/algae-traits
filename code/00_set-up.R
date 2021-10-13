@@ -83,6 +83,7 @@ algae_common <- c("PH", "PTCA", # Pterygophora californica
 )
 
 # data frame with scientific name, taxonomy, and coarse traits
+# algae_ct = "algae coarse traits"
 algae_ct <- full_join(algae_all, coarse_traits, by = "sp_code") %>% 
   drop_na(sp_code)
 
