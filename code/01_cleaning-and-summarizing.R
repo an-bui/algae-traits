@@ -60,17 +60,22 @@ thickness_summary <- thickness %>%
   left_join(., algae_ct, by = "sp_code") %>% 
   drop_na(sp_code)
 
-# 4. dry weight -----------------------------------------------------------
+# 4. weights --------------------------------------------------------------
 
 # only whole dry weights
 
-dryw_summary <- weight %>% 
+weight_summary <- weight %>% 
   filter(type == "whole") %>% 
   # join with metadata: spp codes + specimen_ID
   left_join(., metadata, by = "specimen_ID") %>% 
   drop_na(sp_code) %>% 
   # join with algae_ct: spp codes + taxonomic info
   left_join(., algae_ct, by = "sp_code")
+
+# thallus dry matter content: dry mass/fresh mass
+
+tdmc_summary <- weight %>% 
+  filter(type == "thallus")
 
 
 
@@ -146,4 +151,19 @@ hw_summary <- hw %>%
   drop_na(sp_code) %>% 
   # join with algae_ct: spp codes + taxonomic info
   left_join(., algae_ct, by = "sp_code")
+
+
+# 11. dry matter content --------------------------------------------------
+
+# thallus dry matter content = dry mass/fresh mass
+
+ratio_tdmc <- weight_summary %>% 
+  mutate(tdmc = )
+
+
+
+
+
+
+
 
