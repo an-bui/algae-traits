@@ -18,7 +18,7 @@ metadata <- read_sheet(sheet_id, sheet = "00b-metadata") %>%
 metadata_subsamples <- read_sheet(sheet_id, sheet = "00c-metadata-subsamples") %>% 
   filter(site != "Campus Point")
 
-hw <- read_sheet(sheet_id, sheet = "02-hw") 
+hw <- read_sheet(sheet_id, sheet = "02-hw", na = "NA") 
 
 thickness <- read_sheet(sheet_id, sheet = "03-thickness", na = "NA") 
 
@@ -30,7 +30,7 @@ bra_ord <- read_sheet(sheet_id, sheet = "05b-branching_order")
 
 toughness <- read_sheet(sheet_id, sheet = "06-toughness", na = "NA") 
 
-volume <- read_sheet(sheet_id, sheet = "07-volume") 
+volume <- read_sheet(sheet_id, sheet = "07-volume", na = "NA") 
 
 
 # 3.  getting FvFm data ---------------------------------------------------
@@ -59,10 +59,9 @@ algae_all <- read_csv(here::here("data", "spp_names.csv")) %>%
   filter(group == "algae") %>% 
   select(-group_mobility)
 
+# 5. useful objects -------------------------------------------------------
 
-# 5.  useful vectors and data frames --------------------------------------
-
-# most abundant algae
+# vector: most abundant algae
 algae_common <- c("PH", "PTCA", # Pterygophora californica 
                   "DL", # Desmarestia ligulata
                   "R", # Rhodymenia californica 
@@ -82,9 +81,13 @@ algae_common <- c("PH", "PTCA", # Pterygophora californica
                   "DP" # Dictyota spp. 
 )
 
-# data frame with scientific name, taxonomy, and coarse traits
+# data frame: scientific name, taxonomy, and coarse traits
 # algae_ct = "algae coarse traits"
 algae_ct <- full_join(algae_all, coarse_traits, by = "sp_code") %>% 
   drop_na(sp_code)
+
+# date
+todays_date <- Sys.Date()
+
 
 
