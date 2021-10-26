@@ -62,27 +62,29 @@ thickness_summary <- thickness %>%
 
 # 4. weights --------------------------------------------------------------
 
-# only whole dry weights
-
 weight_summary <- weight %>% 
-  filter(type == "whole") %>% 
+  filter(type == "thallus") %>% 
   # join with metadata: spp codes + specimen_ID
-  left_join(., metadata, by = "specimen_ID") %>% 
-  drop_na(sp_code) %>% 
+  left_join(., metadata_subsamples, by = "specimen_ID") %>% 
+  drop_na(sp_code, weight_dry_mg) %>% 
   # join with algae_ct: spp codes + taxonomic info
   left_join(., algae_ct, by = "sp_code")
 
 # thallus dry matter content: dry mass/fresh mass
 
 tdmc_summary <- weight %>% 
-  filter(type == "thallus")
-
-
+  filter(type == "thallus") %>% 
+  mutate(tdmc = weight_dry_g/weight_wet_g) %>% 
+  # join with metadata: spp codes + specimen_ID
+  left_join(., metadata_subsamples, by = "specimen_ID") %>% 
+  drop_na(sp_code) %>% 
+  # join with algae_ct: spp codes + taxonomic info
+  left_join(., algae_ct, by = "sp_code")
 
 # 5. volume ---------------------------------------------------------------
 
 volume_summary <- volume %>% 
-  filter(type == "whole") %>% 
+  filter(type == "thallus") %>% 
   # join with metadata: spp codes + specimen_ID
   left_join(., metadata_subsamples, by = "specimen_ID") %>% 
   drop_na(sp_code) %>% 
@@ -153,12 +155,20 @@ hw_summary <- hw %>%
   left_join(., algae_ct, by = "sp_code")
 
 
-# 11. dry matter content --------------------------------------------------
+# 12. specific thallus area -----------------------------------------------
 
-# thallus dry matter content = dry mass/fresh mass
+# area:dry mass
 
-ratio_tdmc <- weight_summary %>% 
-  mutate(tdmc = )
+sta_summary <- sa_summary %>% 
+  left_join(., weight_summary, by = "specimen_ID") %>% 
+  mutate(sta = area_total/weight_dry_g) %>% 
+  # join with metadata: spp codes + specimen_ID
+  left_join(., metadata_subsamples, by = "specimen_ID") %>% 
+  drop_na(sp_code) %>% 
+  # join with algae_ct: spp codes + taxonomic info
+  left_join(., algae_ct, by = "sp_code")
+  
+
 
 
 

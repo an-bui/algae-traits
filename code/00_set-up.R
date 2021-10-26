@@ -1,9 +1,13 @@
 
 # 1.  libraries -----------------------------------------------------------
 
-library(tidyverse)
-library(googlesheets4)
-library(here)
+library(tidyverse) # general use
+library(googlesheets4) # getting data from google sheets
+library(here) # file organization
+library(vegan) # ordinations etc
+library(corrplot) # correlation plots
+library(cluster) # to get gower distance on categorical variables
+library(FD) # functional diversity
 
 # 2.  getting data from google drive --------------------------------------
 

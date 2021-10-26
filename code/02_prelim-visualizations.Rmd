@@ -61,7 +61,7 @@ thickness_boxplot
 #        width = 8, height = 5, dpi = 150)
 ```
 
-# 3. Dry weight
+# 3. Weights
 
 ## a. box plot
 
@@ -82,9 +82,45 @@ dryw_boxplot
 #                   paste("dryw-boxplot-", todays_date, ".jpg", sep = "")),
 #        dryw_boxplot,
 #        width = 8, height = 5, dpi = 150)
+
+wetw_boxplot <- ggplot(weight_summary, aes(x = sp_code, y = weight_wet_g)) +
+  geom_boxplot() +
+  geom_jitter(alpha = 0.45) +
+  facet_wrap(~ pigment_type, scales = "free_x") +
+  scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
+  theme_bw()  +
+  labs(title = "Fresh wet weight",
+       x = "Species code",
+       y = "Wet weight (g)")
+
+wetw_boxplot
+
+# ggsave(here::here("figures/prelim-visualizations",
+#                   paste("wetw-boxplot-", todays_date, ".jpg", sep = "")),
+#        wetw_boxplot,
+#        width = 8, height = 5, dpi = 150)
+
+tdmc_boxplot <- ggplot(tdmc_summary, aes(x = sp_code, y = tdmc)) +
+  geom_boxplot() +
+  geom_jitter(alpha = 0.45) +
+  facet_wrap(~ pigment_type, scales = "free_x") +
+  scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
+  theme_bw() +
+  labs(title = "Thallus dry matter content",
+       x = "Species code",
+       y = "g dry weight/g wet weight")
+
+tdmc_boxplot
+
+# ggsave(here::here("figures/prelim-visualizations",
+#                   paste("tdmc_boxplot", todays_date, ".jpg", sep = "")),
+#        tdmc_boxplot,
+#        width = 8, height = 5, dpi = 150)
 ```
 
-As a note: something needs to happen to be able to filter out the things that are true thalli (e.g. thallus on PTCA) AND things that are whole individuals that are basically thalli (e.g. BF). Maybe code those in as "thallus" and go from there?
+As a note: something needs to happen to be able to filter out the things that are true thalli (e.g. thallus on PTCA) AND things that are whole individuals that are basically thalli (e.g. BF). Maybe code those in as "thallus" and go from there?  
+
+Note: Changed that on 2021-10-25. If it's a whole individual that is a thallus, it's coded in as "thallus" in the weight data sheet.
 
 # 4. volume
 
@@ -235,11 +271,26 @@ width_boxplot
 #        width = 8, height = 5, dpi = 150)
 ```
 
+# 10. specific thallus area
 
+thallus area:dry weight
 
+```{r}
+sta_boxplot <- ggplot(sta_summary, aes(x = sp_code, y = sta)) +
+  geom_boxplot() +
+  geom_jitter(alpha = 0.45) +
+  facet_wrap(~ pigment_type, scales = "free_x") +
+  scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
+  theme_bw() +
+  labs(title = "Specific thallus area",
+       x = "Species code",
+       y = "Thallus area/dry weight (mm^2/g")
 
+sta_boxplot
 
-
-
-
+# ggsave(here::here("figures/prelim-visualizations",
+#                   paste("sta_boxplot", todays_date, ".jpg", sep = "")),
+#        sta_boxplot,
+#        width = 8, height = 5, dpi = 150)
+```
 
