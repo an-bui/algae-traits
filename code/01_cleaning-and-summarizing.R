@@ -16,8 +16,8 @@ fvfm_summary <- fvfm_raw %>%
   # calculate mean, variance, standard deviation
   group_by(specimen_ID) %>% 
   summarize(mean = mean(fvfm_meas),
-          var = var(fvfm_meas),
-          sd = sd(fvfm_meas)) %>% 
+            var = var(fvfm_meas),
+            sd = sd(fvfm_meas)) %>% 
   # join with metadata: spp codes + specimen_ID
   left_join(., metadata, by = "specimen_ID") %>% 
   # select columns of interest
@@ -68,18 +68,9 @@ weight_summary <- weight %>%
   left_join(., metadata_subsamples, by = "specimen_ID") %>% 
   drop_na(sp_code, weight_dry_mg) %>% 
   # join with algae_ct: spp codes + taxonomic info
-  left_join(., algae_ct, by = "sp_code")
-
-# thallus dry matter content: dry mass/fresh mass
-
-tdmc_summary <- weight %>% 
-  filter(type == "thallus") %>% 
-  mutate(tdmc = weight_dry_g/weight_wet_g) %>% 
-  # join with metadata: spp codes + specimen_ID
-  left_join(., metadata_subsamples, by = "specimen_ID") %>% 
-  drop_na(sp_code) %>% 
-  # join with algae_ct: spp codes + taxonomic info
-  left_join(., algae_ct, by = "sp_code")
+  left_join(., algae_ct, by = "sp_code") %>%
+  # thallus dry matter content: dry mass/fresh mass
+  mutate(tdmc = weight_dry_g/weight_wet_g)
 
 # 5. volume ---------------------------------------------------------------
 
@@ -94,49 +85,26 @@ volume_summary <- volume %>%
 
 # 6. surface area ---------------------------------------------------------
 
-sa_summary <- sa_peri %>% 
+sa_peri_summary <- sa_peri %>% 
   # drop all observations that haven't been processed
   drop_na(results_file) %>% 
-  select(specimen_ID, area_total) %>% 
+  select(specimen_ID, area_total, peri_total) %>% 
   group_by(specimen_ID) %>% 
-  summarize(area_total = sum(area_total)) %>% 
+  summarize(area_total = sum(area_total),
+            peri_total = sum(peri_total)) %>% 
   drop_na(area_total) %>% 
-  # join with metadata_subsamples: spp code + specimen_ID
-  left_join(., metadata_subsamples, by = "specimen_ID") %>% 
-  # select columns of interest
-  select(specimen_ID, area_total, date_collected, site, sp_code) %>% 
-  # join with algae_ct: spp codes + taxonomic info
-  left_join(., algae_ct, by = "sp_code")
-
-
-# 7. perimeter ------------------------------------------------------------
-
-peri_summary <- sa_peri %>% 
-  # drop all observations that haven't been processed
-  drop_na(results_file) %>% 
-  select(specimen_ID, peri_total) %>% 
-  group_by(specimen_ID) %>% 
-  summarize(peri_total = sum(peri_total)) %>% 
-  # join with metadata_subsamples: spp code + specimen_ID
-  left_join(., metadata_subsamples, by = "specimen_ID") %>% 
-  # select columns of interest
-  select(specimen_ID, peri_total, date_collected, site, sp_code) %>% 
-  # join with algae_ct: spp codes + taxonomic info
-  left_join(., algae_ct, by = "sp_code")
-
-
-# 8. surface area:perimeter ratio -----------------------------------------
-
-ratio_saperi <- sa_summary %>% 
-  select(specimen_ID, area_total) %>% 
-  full_join(., peri_summary, by = "specimen_ID") %>% 
+  # calculate SA:P
   mutate(ratio = area_total/peri_total) %>% 
-  relocate(specimen_ID, area_total, peri_total, ratio)
+  # join with metadata_subsamples: spp code + specimen_ID
+  left_join(., metadata_subsamples, by = "specimen_ID") %>% 
+  # select columns of interest
+  select(specimen_ID, area_total, peri_total, ratio, date_collected, site, sp_code) %>% 
+  # join with algae_ct: spp codes + taxonomic info
+  left_join(., algae_ct, by = "sp_code")
 
+# 7. surface area:volume ratio --------------------------------------------
 
-# 9. surface area:volume ratio --------------------------------------------
-
-ratio_savolume <- sa_summary %>% 
+ratio_savolume <- sa_peri_summary %>% 
   select(specimen_ID, area_total) %>% 
   full_join(., volume_summary, by = "specimen_ID") %>% 
   # drop specimens that don't have area
@@ -144,29 +112,39 @@ ratio_savolume <- sa_summary %>%
   mutate(ratio = area_total/volume_total_mL) %>% 
   drop_na(ratio)
 
-# 10. max height and width ------------------------------------------------
+# 8. max height and width ------------------------------------------------
 
 hw_summary <- hw %>% 
-  filter(type == "whole") %>% 
+  # filter(type == "whole") %>% 
+  # join with metadata: spp codes + specimen_ID
+  left_join(., metadata_subsamples, by = "specimen_ID") %>% 
+  drop_na(sp_code) %>% 
+  # join with algae_ct: spp codes + taxonomic info
+  left_join(., algae_ct, by = "sp_code") %>% 
+  # replace NAs with -99999
+  mutate(max_height_cm = replace_na(max_height_cm, -99999),
+         max_width_cm = replace_na(max_width_cm, -99999)) %>% 
+  select(specimen_ID, max_height_cm, max_width_cm) %>% 
+  # select highest height and width values
+  group_by(specimen_ID) %>% 
+  filter(max_height_cm == max(max_height_cm),
+         max_width_cm == max(max_width_cm)) %>% 
+  filter(specimen_ID != "20210621-MOHK-001") %>% 
   # join with metadata: spp codes + specimen_ID
   left_join(., metadata_subsamples, by = "specimen_ID") %>% 
   drop_na(sp_code) %>% 
   # join with algae_ct: spp codes + taxonomic info
   left_join(., algae_ct, by = "sp_code")
 
-
-# 12. specific thallus area -----------------------------------------------
+# 9. specific thallus area -----------------------------------------------
 
 # area:dry mass
 
-sta_summary <- sa_summary %>% 
+sta_summary <- sa_peri_summary %>% 
+  select(specimen_ID, area_total) %>% 
   left_join(., weight_summary, by = "specimen_ID") %>% 
-  mutate(sta = area_total/weight_dry_g) %>% 
-  # join with metadata: spp codes + specimen_ID
-  left_join(., metadata_subsamples, by = "specimen_ID") %>% 
-  drop_na(sp_code) %>% 
-  # join with algae_ct: spp codes + taxonomic info
-  left_join(., algae_ct, by = "sp_code")
+  mutate(sta_mm_g = area_total/weight_dry_g,
+         sta_mm_mg = area_total/weight_dry_mg) 
   
 
 
