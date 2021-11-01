@@ -100,7 +100,7 @@ wetw_boxplot
 #        wetw_boxplot,
 #        width = 8, height = 5, dpi = 150)
 
-tdmc_boxplot <- ggplot(tdmc_summary, aes(x = sp_code, y = tdmc)) +
+tdmc_boxplot <- ggplot(weight_summary, aes(x = sp_code, y = tdmc)) +
   geom_boxplot() +
   geom_jitter(alpha = 0.45) +
   facet_wrap(~ pigment_type, scales = "free_x") +
@@ -148,7 +148,7 @@ volume_boxplot
 
 ## a. box plot
 ```{r}
-sa_boxplot <- ggplot(sa_summary, aes(x = sp_code, y = area_total)) +
+sa_boxplot <- ggplot(sa_peri_summary, aes(x = sp_code, y = area_total)) +
   geom_boxplot() +
   geom_jitter(alpha = 0.45) +
   facet_wrap(~ pigment_type, scales = "free_x") +
@@ -170,7 +170,7 @@ sa_boxplot
 
 ## a. box plot
 ```{r}
-peri_boxplot <- ggplot(peri_summary, aes(x = sp_code, y = peri_total)) +
+peri_boxplot <- ggplot(sa_peri_summary, aes(x = sp_code, y = peri_total)) +
   geom_boxplot() +
   geom_jitter(alpha = 0.45) +
   facet_wrap(~ pigment_type, scales = "free_x") +
@@ -193,7 +193,7 @@ peri_boxplot
 ## a. box plot
 
 ```{r}
-ratio_saperi_boxplot <- ggplot(ratio_saperi, aes(x = sp_code, y = ratio)) +
+ratio_saperi_boxplot <- ggplot(sa_peri_summary, aes(x = sp_code, y = ratio)) +
   geom_boxplot() +
   geom_jitter(alpha = 0.45) +
   facet_wrap(~ pigment_type, scales = "free_x") +
@@ -276,7 +276,7 @@ width_boxplot
 thallus area:dry weight
 
 ```{r}
-sta_boxplot <- ggplot(sta_summary, aes(x = sp_code, y = sta)) +
+sta_boxplot <- ggplot(sta_summary, aes(x = sp_code, y = sta_mm_mg)) +
   geom_boxplot() +
   geom_jitter(alpha = 0.45) +
   facet_wrap(~ pigment_type, scales = "free_x") +
@@ -284,7 +284,7 @@ sta_boxplot <- ggplot(sta_summary, aes(x = sp_code, y = sta)) +
   theme_bw() +
   labs(title = "Specific thallus area",
        x = "Species code",
-       y = "Thallus area/dry weight (mm^2/g")
+       y = "Thallus area/dry weight (mm^2/mg)")
 
 sta_boxplot
 
