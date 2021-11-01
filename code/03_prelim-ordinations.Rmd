@@ -35,6 +35,10 @@ fvfm_summary_spp <- fvfm_raw %>%
   summarize(fvfm = mean(fvfm_meas)) %>% 
   pivot_longer(cols = fvfm, names_to = "trait", values_to = "value")
 
+fvfm_test <- fvfm_summary %>% 
+  select(specimen_ID, mean) %>% 
+  rename("fvfm" = mean)
+
 thickness_summary_spp <- thickness %>% 
   pivot_longer(cols = thickness_01:thickness_10, names_to = "measurement_n", values_to = "thickness_mm") %>% 
   # replace NAs for 20210709-MOHK-004 with the quickfix value
@@ -48,6 +52,10 @@ thickness_summary_spp <- thickness %>%
   pivot_longer(cols = thickness_mm, names_to = "trait", values_to = "value") %>% 
   drop_na()
 
+thickness_test <- thickness_summary %>% 
+  select(specimen_ID, mean) %>% 
+  rename("thickness_mm" = mean)
+
 weight_summary_spp <- weight %>% 
   filter(type == "thallus") %>% 
   # join with metadata: spp codes + specimen_ID
@@ -59,6 +67,9 @@ weight_summary_spp <- weight %>%
             dmc = weight_dry_g/weight_wet_g) %>% 
   pivot_longer(cols = weight_wet_g:dmc, names_to = "trait", values_to = "value")
 
+weight_test <- weight_summary %>% 
+  select(specimen_ID, weight_wet_g, weight_dry_g, tdmc)
+
 volume_summary_spp <- volume %>% 
   filter(type == "thallus") %>% 
   # join with metadata: spp codes + specimen_ID
@@ -67,6 +78,13 @@ volume_summary_spp <- volume %>%
   group_by(sp_code) %>% 
   summarize(volume_mL = mean(volume_total_mL)) %>% 
   pivot_longer(cols = volume_mL, names_to = "trait", values_to = "value")
+
+
+volume_test <- volume %>% 
+  select(specimen_ID, volume_total_mL) %>% 
+  rename("volume_mL" = volume_total_mL) %>% 
+  group_by(specimen_ID) %>% 
+  summarize(volume_mL = sum(volume_mL))
 
 sa_summary_spp <- sa_peri %>% 
   # drop all observations that haven't been processed
@@ -81,6 +99,13 @@ sa_summary_spp <- sa_peri %>%
   group_by(sp_code) %>% 
   summarize(sa_mm2 = mean(area_total)) %>% 
   pivot_longer(cols = sa_mm2, names_to = "trait", values_to = "value")
+
+sa_peri_test <- sa_peri_summary %>% 
+  select(specimen_ID, area_total, peri_total, ratio) 
+# %>% 
+#   group_by(specimen_ID) %>% 
+#   summarize(area_total = sum(area_total),
+#             peri_total = sum(peri_total))
 
 peri_summary_spp <- sa_peri %>% 
   # drop all observations that haven't been processed
@@ -106,6 +131,9 @@ hw_summary_spp <- hw %>%
             width_cm = mean(max_width_cm)) %>% 
   pivot_longer(cols = height_cm:width_cm, names_to = "trait", values_to = "value")
 
+hw_test <- hw_summary %>% 
+  select(specimen_ID, max_height_cm, max_width_cm)
+
 sta_summary_spp <- sa_summary %>% 
   left_join(., weight_summary, by = "specimen_ID") %>% 
   mutate(sta = area_total/weight_dry_g) %>% 
@@ -116,10 +144,17 @@ sta_summary_spp <- sa_summary %>%
   summarize(sta = mean(sta)) %>% 
   pivot_longer(cols = sta, names_to = "trait", values_to = "value")
 
+sta_test <- sta_summary %>% 
+  select(specimen_ID, sta)
+
 ct_summary_spp <- coarse_traits %>% 
   select(sp_code, growth_form, pigment_type) %>% 
   filter(sp_code %in% pull(hw_summary_spp, sp_code)) %>% 
   pivot_longer(cols = growth_form:pigment_type, names_to = "trait", values_to = "value") 
+
+ct_test <- metadata_subsamples %>% 
+  select(specimen_ID, sp_code) %>% 
+  left_join(., coarse_traits, by = "sp_code")
 ```
 
 ## b. make trait by species matrix
@@ -135,12 +170,23 @@ tbs_matrix <- rbind(fvfm_summary_spp, thickness_summary_spp,
   full_join(., ct_summary_spp, by = "sp_code") %>%
   column_to_rownames("sp_code") %>% 
   drop_na()
+
+tbs_test <- full_join(fvfm_test, thickness_test, by = "specimen_ID") %>% 
+  full_join(., weight_test, by = "specimen_ID") %>% 
+  full_join(., volume_test, by = "specimen_ID") %>% 
+  full_join(., sa_peri_test, by = "specimen_ID") %>% 
+  full_join(., hw_test, by = "specimen_ID") %>% 
+  full_join(., sta_test, by = "specimen_ID") %>% 
+  full_join(., ct_test, by = "specimen_ID") %>% 
+  select(-height_class) %>% 
+  drop_na() %>% 
+  column_to_rownames("specimen_ID")
 ```
 
 ## c. attempt a PCoA
 
 ```{r}
-tbs_gower <- gowdis(tbs_matrix)
+tbs_gower <- gowdis(tbs_test)
 tbs_pcoa <- cmdscale(tbs_gower, eig = TRUE)
 # tbs_pcoa <- wcmdscale(tbs_gower, eig = TRUE)
 # tbs_pcoa <- ape::pcoa(tbs_gower, correction = "none")
@@ -151,7 +197,7 @@ biplot(ape::pcoa(tbs_gower, correction = "none"))
 # text(tbs.wa, rownames(tbs.wa), cex=0.7, col="red")
 # biplot.pcoa(tbs_gower, tbs_pcoa, dir.axis1 = -1)
 
-tbs_pcoa$species <- wascores(tbs_pcoa$points, tbs_matrix, expand = TRUE)
+tbs_pcoa$species <- wascores(tbs_pcoa$points, tbs_test[, 1:12], expand = TRUE)
 
 p1 <- ordiplot(tbs_pcoa, type = "none")
 points1 <- points(p1, "sites", pch = 21, col = "red", bg = "yellow")
@@ -163,13 +209,39 @@ text(p1, "species", col = "blue", cex = 0.9)
 
 ```{r}
 # only include numeric variables
-tbs_tf <- decostand(tbs_matrix[, 1:7], method = "log")
+tbs_tf <- decostand(tbs_test[, 1:12], method = "log")
 tbs_pca <- rda(tbs_tf)
-
-scores(tbs_pca, choices = c(1, 2), display = "species")
-scores(tbs_pca, choices = c(1, 2), display = "sites")
-
 biplot(tbs_pca)
+
+PCAscores <- scores(tbs_pca, display = "sites") %>% 
+  as.data.frame() %>% 
+  rownames_to_column("specimen_ID") %>% 
+  left_join(metadata_subsamples, by = "specimen_ID") %>% 
+  left_join(algae_ct, by = "sp_code")
+
+PCAvect <- scores(tbs_pca, display = "species") %>% 
+  as.data.frame()
+
+plot_PCA <- ggplot() +
+  geom_point(data = PCAscores, aes(x = PC1, y = PC2, color = scientific_name.x)) +
+  # scale_color_manual(values = pal) +
+  geom_vline(xintercept = c(0), color = "grey70", linetype = 2) +
+  geom_hline(yintercept = c(0), color = "grey70", linetype = 2) +
+  geom_segment(data = PCAvect, aes(x = 0, y = 0, xend = PC1, yend = PC2), arrow = arrow(length = unit(0.2, "cm"))) +
+  geom_text(data = PCAvect, aes(x = PC1, y = PC2, label = rownames(PCAvect))) +
+  theme_bw() +
+  guides(colour = guide_legend(nrow = 5)) +
+  theme(legend.position = "bottom", legend.box = "vertical", legend.margin = margin()) +
+  labs(x = "PC1 (16.751%)",
+       y = "PC2 (3.253%)",
+       title = "Principal Components Analysis",
+       color = "Scientific name") 
+plot_PCA
+
+ggsave(here::here("figures/prelim-ordinations",
+                  paste("PCA_spp-", todays_date, ".jpg", sep = "")),
+       plot_PCA,
+       width = 8, height = 8, dpi = 150)
 ```
 
 
