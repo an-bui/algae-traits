@@ -208,8 +208,8 @@ plot_PCA <- ggplot() +
   theme_bw() +
   guides(colour = guide_legend(nrow = 5)) +
   theme(legend.position = "bottom", legend.box = "vertical", legend.margin = margin()) +
-  labs(x = "PC1 (16.751%)",
-       y = "PC2 (3.253%)",
+  labs(x = "PC1 (17.823%)",
+       y = "PC2 (3.218%)",
        title = "Principal Components Analysis",
        color = "Scientific name") 
 plot_PCA
@@ -229,9 +229,11 @@ M <- tbs_test[, 1:12] %>%
   # take out UV
   # slice(-16) %>% 
   cor()
+
 corr_traits <- corrplot(M, method = "circle", type = "lower")
+
 ggsave(here::here("figures/prelim-ordinations",
-                  paste("corrplot_traits", todays_date, ".jpg", sep = "")),
+                  paste("corrplot_traits-", todays_date, ".jpg", sep = "")),
        corr_traits,
        width = 8, height = 8, dpi = 150)
 ```

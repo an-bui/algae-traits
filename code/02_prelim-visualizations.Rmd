@@ -113,7 +113,7 @@ tdmc_boxplot <- ggplot(weight_summary, aes(x = sp_code, y = tdmc)) +
 tdmc_boxplot
 
 # ggsave(here::here("figures/prelim-visualizations",
-#                   paste("tdmc_boxplot", todays_date, ".jpg", sep = "")),
+#                   paste("tdmc_boxplot-", todays_date, ".jpg", sep = "")),
 #        tdmc_boxplot,
 #        width = 8, height = 5, dpi = 150)
 ```
@@ -139,7 +139,7 @@ volume_boxplot <- ggplot(volume_summary, aes(x = sp_code, y = volume_total_mL)) 
 volume_boxplot
 
 # ggsave(here::here("figures/prelim-visualizations",
-#                   paste("volume-boxplot", todays_date, ".jpg", sep = "")),
+#                   paste("volume-boxplot-", todays_date, ".jpg", sep = "")),
 #        volume_boxplot,
 #        width = 8, height = 5, dpi = 150)
 ```
@@ -161,7 +161,7 @@ sa_boxplot <- ggplot(sa_peri_summary, aes(x = sp_code, y = area_total)) +
 sa_boxplot
 
 # ggsave(here::here("figures/prelim-visualizations",
-#                   paste("sa-boxplot", todays_date, ".jpg", sep = "")),
+#                   paste("sa-boxplot-", todays_date, ".jpg", sep = "")),
 #        sa_boxplot,
 #        width = 8, height = 5, dpi = 150)
 ```
@@ -183,7 +183,7 @@ peri_boxplot <- ggplot(sa_peri_summary, aes(x = sp_code, y = peri_total)) +
 peri_boxplot
 
 # ggsave(here::here("figures/prelim-visualizations",
-#                   paste("peri_boxplot", todays_date, ".jpg", sep = "")),
+#                   paste("peri_boxplot-", todays_date, ".jpg", sep = "")),
 #        peri_boxplot,
 #        width = 8, height = 5, dpi = 150)
 ```
@@ -206,7 +206,7 @@ ratio_saperi_boxplot <- ggplot(sa_peri_summary, aes(x = sp_code, y = ratio)) +
 ratio_saperi_boxplot 
 
 # ggsave(here::here("figures/prelim-visualizations",
-#                   paste("ratio_saperi_boxplot", todays_date, ".jpg", sep = "")),
+#                   paste("ratio_saperi_boxplot-", todays_date, ".jpg", sep = "")),
 #        ratio_saperi_boxplot,
 #        width = 8, height = 5, dpi = 150)
 ```
@@ -228,7 +228,7 @@ ratio_savolume_boxplot <- ggplot(ratio_savolume, aes(x = sp_code, y = ratio)) +
 ratio_savolume_boxplot
 
 # ggsave(here::here("figures/prelim-visualizations",
-#                   paste("ratio_savolume_boxplot", todays_date, ".jpg", sep = "")),
+#                   paste("ratio_savolume_boxplot-", todays_date, ".jpg", sep = "")),
 #        ratio_savolume_boxplot,
 #        width = 8, height = 5, dpi = 150)
 ```
@@ -249,7 +249,7 @@ height_boxplot <- ggplot(hw_summary, aes(x = sp_code, y = max_height_cm)) +
 height_boxplot
 
 # ggsave(here::here("figures/prelim-visualizations",
-#                   paste("height_boxplot", todays_date, ".jpg", sep = "")),
+#                   paste("height_boxplot-", todays_date, ".jpg", sep = "")),
 #        height_boxplot,
 #        width = 8, height = 5, dpi = 150)
 
@@ -266,7 +266,7 @@ width_boxplot <- ggplot(hw_summary, aes(x = sp_code, y = max_width_cm)) +
 width_boxplot
 
 # ggsave(here::here("figures/prelim-visualizations",
-#                   paste("width_boxplot", todays_date, ".jpg", sep = "")),
+#                   paste("width_boxplot-", todays_date, ".jpg", sep = "")),
 #        width_boxplot,
 #        width = 8, height = 5, dpi = 150)
 ```
@@ -289,7 +289,7 @@ sta_boxplot <- ggplot(sta_summary, aes(x = sp_code, y = sta_mm_mg)) +
 sta_boxplot
 
 # ggsave(here::here("figures/prelim-visualizations",
-#                   paste("sta_boxplot", todays_date, ".jpg", sep = "")),
+#                   paste("sta_boxplot-", todays_date, ".jpg", sep = "")),
 #        sta_boxplot,
 #        width = 8, height = 5, dpi = 150)
 ```
