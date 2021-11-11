@@ -276,7 +276,7 @@ width_boxplot
 thallus area:dry weight
 
 ```{r}
-sta_boxplot <- ggplot(sta_summary, aes(x = sp_code, y = sta_mm_mg)) +
+sta_boxplot <- ggplot(sta_summary %>% drop_na(sta_mm_mg) %>% slice(-124), aes(x = sp_code, y = sta_mm_mg)) +
   geom_boxplot() +
   geom_jitter(alpha = 0.45) +
   facet_wrap(~ pigment_type, scales = "free_x") +
