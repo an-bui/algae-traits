@@ -100,7 +100,7 @@ wetw_boxplot
 #        wetw_boxplot,
 #        width = 8, height = 5, dpi = 150)
 
-tdmc_boxplot <- ggplot(weight_summary, aes(x = sp_code, y = tdmc)) +
+tdmc_boxplot <- ggplot(weight_summary %>% filter(sp_code != "BO"), aes(x = sp_code, y = tdmc)) +
   geom_boxplot() +
   geom_jitter(alpha = 0.45) +
   facet_wrap(~ pigment_type, scales = "free_x") +
@@ -293,4 +293,55 @@ sta_boxplot
 #        sta_boxplot,
 #        width = 8, height = 5, dpi = 150)
 ```
+
+# 11. branching order
+
+```{r}
+bra_ord_boxplot <- ggplot(bra_ord_summary, aes(x = sp_code, y = mean)) +
+  geom_boxplot() +
+  geom_jitter(alpha = 0.45) +
+  facet_wrap(~ pigment_type, scales = "free_x") +
+  scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
+  theme_bw() +
+  labs(title = "Branching order",
+       x = "Species code",
+       y = "Branch count")
+
+bra_ord_boxplot
+
+# ggsave(here::here("figures/prelim-visualizations",
+#                   paste("bra_ord_boxplot-", todays_date, ".jpg", sep = "")),
+#        bra_ord_boxplot,
+#        width = 8, height = 5, dpi = 150)
+```
+
+# 12. toughness
+
+```{r}
+toughness_boxplot <- ggplot(toughness_summary, aes(x = sp_code, y = mean)) +
+  geom_boxplot() +
+  geom_jitter(alpha = 0.45) +
+  facet_wrap(~ pigment_type, scales = "free_x") +
+  scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
+  theme_bw() +
+  labs(title = "Toughness",
+       x = "Species code",
+       y = "kg/cm2")
+
+toughness_boxplot
+
+ggsave(here::here("figures/prelim-visualizations",
+                  paste("toughness_boxplot-", todays_date, ".jpg", sep = "")),
+       toughness_boxplot,
+       width = 8, height = 5, dpi = 150)
+```
+
+
+
+
+
+
+
+
+
 

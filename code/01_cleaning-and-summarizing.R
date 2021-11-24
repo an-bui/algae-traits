@@ -145,8 +145,34 @@ sta_summary <- sa_peri_summary %>%
   left_join(., weight_summary, by = "specimen_ID") %>% 
   mutate(sta_mm_g = area_total/weight_dry_g,
          sta_mm_mg = area_total/weight_dry_mg) 
-  
 
+
+# 10. branching order -----------------------------------------------------
+
+bra_ord_summary <- bra_ord %>% 
+  pivot_longer(cols = bo_01:bo_05, names_to = "measurement_n", values_to = "bra_ord_count") %>% 
+  # calculate mean branching order for each sample
+  group_by(specimen_ID) %>% 
+  summarize(mean = mean(bra_ord_count, na.rm = TRUE)) %>% 
+  # join with metadata_subsamples
+  left_join(., metadata_subsamples, by = "specimen_ID") %>% 
+  # join with algae_ct
+  left_join(., algae_ct, by = "sp_code") %>% 
+  drop_na(sp_code)
+
+
+# 11. toughness -----------------------------------------------------------
+
+toughness_summary <- toughness %>% 
+  pivot_longer(cols = 2:11, names_to = "measurement_n", values_to = "toughness_kgcm2") %>% 
+  # calculate mean toughness for each sample
+  group_by(specimen_ID) %>% 
+  summarize(mean = mean(toughness_kgcm2, na.rm = TRUE)) %>% 
+  # join with metadata_subsamples
+  left_join(., metadata_subsamples, by = "specimen_ID") %>% 
+  # join with algae_ct
+  left_join(., algae_ct, by = "sp_code") %>% 
+  drop_na(sp_code)
 
 
 

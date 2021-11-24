@@ -30,7 +30,7 @@ weight <- read_sheet(sheet_id, sheet = "04-weight", na = "NA")
 
 sa_peri <- read_sheet(sheet_id, sheet = "05a-scans") 
 
-bra_ord <- read_sheet(sheet_id, sheet = "05b-branching_order") 
+bra_ord <- read_sheet(sheet_id, sheet = "05b-branching_order", na = "NA") 
 
 toughness <- read_sheet(sheet_id, sheet = "06-toughness", na = "NA") 
 
