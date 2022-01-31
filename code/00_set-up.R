@@ -8,12 +8,11 @@ library(vegan) # ordinations etc
 library(corrplot) # correlation plots
 library(cluster) # to get gower distance on categorical variables
 library(FD) # functional diversity
+library(janitor) # cleaning names in data frames
 
 # 2.  getting data from google drive --------------------------------------
 
 # gets the file data from google drive
-trait_data_id <- googledrive::drive_get("trait_data")
-
 sheet_id <- "1h2eHoL5kXMRwExt3hjrLavxG0pajHOvA1UfJd24pRk4"
 
 metadata <- read_sheet(sheet_id, sheet = "00b-metadata") %>% 
@@ -55,6 +54,7 @@ fvfm_raw <- path %>%
 
 # 4.  other files ---------------------------------------------------------
 
+## a. traits 
 # coarse trait data
 coarse_traits <- read_csv(here::here("data", "00-coarse_traits.csv"))
 
@@ -62,6 +62,30 @@ coarse_traits <- read_csv(here::here("data", "00-coarse_traits.csv"))
 algae_all <- read_csv(here::here("data", "spp_names.csv")) %>% 
   filter(group == "algae") %>% 
   select(-group_mobility)
+
+## b. benthics
+benthic_cleaning_fxn <- function(df) {
+  df %>% 
+    clean_names() %>% 
+    # create a sample_ID for each sampling date at each site
+    unite("sample_ID", site, date, remove = FALSE) %>% 
+    # change to lower case
+    mutate_at(c("group", "mobility", "growth_morph"), str_to_lower) %>% 
+    # only include algae
+    filter(group == "algae")
+}
+
+# biomass
+biomass <- read_csv(here::here("data", "SBC-LTER-benthics", 
+                               "Annual_All_Species_Biomass_at_transect_20210108.csv")) %>% 
+  benthic_cleaning_fxn() %>% 
+  # replace all -99999 values with 0
+  mutate(dry_gm2 = replace(dry_gm2, dry_gm2 < 0, 0)) 
+
+# percent cover
+percov <- read_csv(here::here("data", "SBC-LTER-benthics", 
+                              "Annual_Cover_All_Years_20210108.csv")) %>% 
+  benthic_cleaning_fxn()
 
 # 5. useful objects -------------------------------------------------------
 
