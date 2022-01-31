@@ -72,7 +72,12 @@ benthic_cleaning_fxn <- function(df) {
     # change to lower case
     mutate_at(c("group", "mobility", "growth_morph"), str_to_lower) %>% 
     # only include algae
-    filter(group == "algae")
+    filter(group == "algae") %>% 
+    # make sure that sp_code for Nienburgia andersoniana isn't NA
+    mutate(sp_code = case_when(
+      scientific_name == "Nienburgia andersoniana" ~ "Nandersoniana",
+      TRUE ~ as.character(as.character(sp_code))
+    ))
 }
 
 # biomass
