@@ -22,8 +22,8 @@ fvfm_summary <- fvfm_raw %>%
   left_join(., metadata, by = "specimen_ID") %>% 
   # select columns of interest
   select(specimen_ID, mean, var, sd, date_collected, site, sp_code) %>% 
-  # join with algae_ct: spp codes + taxonomic info
-  left_join(., algae_ct, by = "sp_code") %>% 
+  # join with coarse_traits
+  left_join(., coarse_traits, by = "sp_code") %>% 
   unique()
 
 # as a note: samples from 20210623 don't have FvFm, and one sample from IVEE doesn't either
@@ -56,9 +56,9 @@ thickness_summary <- thickness %>%
   left_join(., metadata_subsamples, by = "specimen_ID") %>% 
   # select columns of interest
   select(specimen_ID, mean, var, sd, date_collected, site, sp_code) %>% 
-  # join with algae_ct: spp codes + taxonomic info
-  left_join(., algae_ct, by = "sp_code") %>% 
-  drop_na(sp_code)
+  # join with coarse_traits
+  left_join(., coarse_traits, by = "sp_code") %>% 
+  unique()
 
 # 4. weights --------------------------------------------------------------
 
@@ -67,8 +67,8 @@ weight_summary <- weight %>%
   # join with metadata: spp codes + specimen_ID
   left_join(., metadata_subsamples, by = "specimen_ID") %>% 
   drop_na(sp_code, weight_dry_mg) %>% 
-  # join with algae_ct: spp codes + taxonomic info
-  left_join(., algae_ct, by = "sp_code") %>%
+  # join with coarse_traits
+  left_join(., coarse_traits, by = "sp_code") %>% 
   # thallus dry matter content: dry mass/fresh mass
   mutate(tdmc = weight_dry_g/weight_wet_g)
 
@@ -79,8 +79,8 @@ volume_summary <- volume %>%
   # join with metadata: spp codes + specimen_ID
   left_join(., metadata_subsamples, by = "specimen_ID") %>% 
   drop_na(sp_code) %>% 
-  # join with algae_ct: spp codes + taxonomic info
-  left_join(., algae_ct, by = "sp_code")
+  # join with coarse_traits
+  left_join(., coarse_traits, by = "sp_code")
 
 
 # 6. surface area ---------------------------------------------------------
@@ -99,8 +99,8 @@ sa_peri_summary <- sa_peri %>%
   left_join(., metadata_subsamples, by = "specimen_ID") %>% 
   # select columns of interest
   select(specimen_ID, area_total, peri_total, ratio, date_collected, site, sp_code) %>% 
-  # join with algae_ct: spp codes + taxonomic info
-  left_join(., algae_ct, by = "sp_code")
+  # join with coarse_traits
+  left_join(., coarse_traits, by = "sp_code") 
 
 # 7. surface area:volume ratio --------------------------------------------
 
@@ -133,8 +133,8 @@ hw_summary <- hw %>%
   # join with metadata: spp codes + specimen_ID
   left_join(., metadata_subsamples, by = "specimen_ID") %>% 
   drop_na(sp_code) %>% 
-  # join with algae_ct: spp codes + taxonomic info
-  left_join(., algae_ct, by = "sp_code")
+  # join with coarse_traits
+  left_join(., coarse_traits, by = "sp_code") 
 
 # 9. specific thallus area -----------------------------------------------
 
@@ -156,8 +156,8 @@ bra_ord_summary <- bra_ord %>%
   summarize(mean = mean(bra_ord_count, na.rm = TRUE)) %>% 
   # join with metadata_subsamples
   left_join(., metadata_subsamples, by = "specimen_ID") %>% 
-  # join with algae_ct
-  left_join(., algae_ct, by = "sp_code") %>% 
+  # join with coarse_traits
+  left_join(., coarse_traits, by = "sp_code") %>% 
   drop_na(sp_code)
 
 
@@ -170,8 +170,8 @@ toughness_summary <- toughness %>%
   summarize(mean = mean(toughness_kgcm2, na.rm = TRUE)) %>% 
   # join with metadata_subsamples
   left_join(., metadata_subsamples, by = "specimen_ID") %>% 
-  # join with algae_ct
-  left_join(., algae_ct, by = "sp_code") %>% 
+  # join with coarse_traits
+  left_join(., coarse_traits, by = "sp_code") %>% 
   drop_na(sp_code)
 
 

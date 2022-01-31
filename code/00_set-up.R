@@ -56,12 +56,7 @@ fvfm_raw <- path %>%
 
 ## a. traits 
 # coarse trait data
-coarse_traits <- read_csv(here::here("data", "00-coarse_traits.csv"))
-
-# all species with group, mobility, species code, scientific name
-algae_all <- read_csv(here::here("data", "spp_names.csv")) %>% 
-  filter(group == "algae") %>% 
-  select(-group_mobility)
+coarse_traits <- read_csv(here::here("data", "algae_all.csv"))
 
 ## b. benthics
 benthic_cleaning_fxn <- function(df) {
@@ -92,6 +87,7 @@ percov <- read_csv(here::here("data", "SBC-LTER-benthics",
                               "Annual_Cover_All_Years_20210108.csv")) %>% 
   benthic_cleaning_fxn()
 
+
 # 5. useful objects -------------------------------------------------------
 
 # vector: most abundant algae
@@ -113,11 +109,6 @@ algae_common <- c("PH", "PTCA", # Pterygophora californica
                   "CF", # Callophyllis rhynchocarpa 
                   "DP" # Dictyota spp. 
 )
-
-# data frame: scientific name, taxonomy, and coarse traits
-# algae_ct = "algae coarse traits"
-algae_ct <- full_join(algae_all, coarse_traits, by = "sp_code") %>% 
-  drop_na(sp_code)
 
 # date
 todays_date <- Sys.Date()
