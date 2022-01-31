@@ -2,7 +2,13 @@
 title: "preliminary visualizations"
 author: "An Bui"
 date: "10/6/2021"
-output: html_document
+output: 
+  html_document:
+    toc: yes
+    toc_depth: 4
+    toc_float:
+      collapsed: no
+    theme: readable
 ---
 
 ```{r setup, include=FALSE}
@@ -10,7 +16,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 # 0. set up
-```{r}
+```{r message = FALSE, warning = FALSE, echo = FALSE}
 # source the cleaning/summarizing script, which sources the set up
 source(here::here("code", "01_cleaning-and-summarizing.R"))
 ```
@@ -336,8 +342,7 @@ ggsave(here::here("figures/prelim-visualizations",
        width = 8, height = 5, dpi = 150)
 ```
 
-
-
+Use `rmarkdown::render(here::here("code", "02_prelim-visualizations.Rmd"))` to knit the document.
 
 
 
