@@ -9,6 +9,7 @@ library(corrplot) # correlation plots
 library(cluster) # to get gower distance on categorical variables
 library(FD) # functional diversity
 library(janitor) # cleaning names in data frames
+library(lubridate) # dealing with dates
 
 # 2.  getting data from google drive --------------------------------------
 
@@ -80,7 +81,8 @@ biomass <- read_csv(here::here("data", "SBC-LTER-benthics",
                                "Annual_All_Species_Biomass_at_transect_20210108.csv")) %>% 
   benthic_cleaning_fxn() %>% 
   # replace all -99999 values with 0
-  mutate(dry_gm2 = replace(dry_gm2, dry_gm2 < 0, 0)) 
+  mutate(dry_gm2 = replace(dry_gm2, dry_gm2 < 0, 0)) %>% 
+  mutate(date = ymd(date))
 
 # percent cover
 percov <- read_csv(here::here("data", "SBC-LTER-benthics", 
@@ -112,6 +114,11 @@ algae_common <- c("PH", "PTCA", # Pterygophora californica
 
 # date
 todays_date <- Sys.Date()
+
+# colors
+rhodo_col <- "#781416"
+ochro_col <- "#CC7540"
+chloro_col <- "#6D5A18"
 
 
 
