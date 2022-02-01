@@ -336,13 +336,16 @@ toughness_boxplot <- ggplot(toughness_summary, aes(x = sp_code, y = mean)) +
 
 toughness_boxplot
 
-ggsave(here::here("figures/prelim-visualizations",
-                  paste("toughness_boxplot-", todays_date, ".jpg", sep = "")),
-       toughness_boxplot,
-       width = 8, height = 5, dpi = 150)
+# ggsave(here::here("figures/prelim-visualizations",
+#                   paste("toughness_boxplot-", todays_date, ".jpg", sep = "")),
+#        toughness_boxplot,
+#        width = 8, height = 5, dpi = 150)
 ```
 
-Use `rmarkdown::render(here::here("code", "02_prelim-visualizations.Rmd"))` to knit the document.
+```{r include = FALSE}
+# Use `rmarkdown::render(here::here("code", "02_prelim-visualizations.Rmd"))` to knit the document.
+```
+
 
 
 
