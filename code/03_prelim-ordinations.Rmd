@@ -213,10 +213,10 @@ plot_PCA <- ggplot() +
        title = "Principal Components Analysis",
        color = "Scientific name") 
 plot_PCA
-ggsave(here::here("figures/prelim-ordinations",
-                  paste("PCA_spp-", todays_date, ".jpg", sep = "")),
-       plot_PCA,
-       width = 8, height = 8, dpi = 150)
+# ggsave(here::here("figures/prelim-ordinations",
+#                   paste("PCA_spp-", todays_date, ".jpg", sep = "")),
+#        plot_PCA,
+#        width = 8, height = 8, dpi = 150)
 ```
 
 
@@ -232,8 +232,8 @@ M <- tbs_test[, 1:12] %>%
 
 corr_traits <- corrplot(M, method = "circle", type = "lower")
 
-ggsave(here::here("figures/prelim-ordinations",
-                  paste("corrplot_traits-", todays_date, ".jpg", sep = "")),
-       corr_traits,
-       width = 8, height = 8, dpi = 150)
+# ggsave(here::here("figures/prelim-ordinations",
+#                   paste("corrplot_traits-", todays_date, ".jpg", sep = "")),
+#        corr_traits,
+#        width = 8, height = 8, dpi = 150)
 ```
