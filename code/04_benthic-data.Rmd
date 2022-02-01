@@ -33,11 +33,13 @@ Data question: what is the difference between the percent cover data and the per
 
 Stray thoughts: introduced/native species trait column?
 
-## b. Test
+## b. Test case: SCTW from 3 different sampling points
 
-To make sure the all the code was working, I tested this out with "SCTW_2010-07-29" and "SCTW_2020-07-29". The issue comes from scenarios where species were counted at more than one transect - for example, at SCTW_2020-07-29, EC was at both transect 2 and 3, but I only want the dry/wet biomass for EC for the whole survey.  
+To make sure the code was working, I tested this out with "SCTW_2010-07-29", "SCTW_2016-07-20", and "SCTW_2020-07-29". The issue comes from scenarios where species were counted at more than one transect - for example, at SCTW_2020-07-29, EC was at both transect 2 and 3, but I only want the dry/wet biomass for EC for the whole survey.  
 
 When I create the data frame, there are then "duplicate" observations for total species biomass for EC because it was present at both transects. To fix this, I filtered the data frame for unique observations of the total and percent biomass calculations and double checked the total dry percent to make sure everything added up to 1.  
+
+### i. Calculations
 
 ```{r}
 test <- biomass %>% 
@@ -66,7 +68,11 @@ test <- biomass %>%
          total_percent_wet = sum(percent_sp_wet)) %>% 
   # join with coarse traits data frame, which includes taxonomy
   left_join(., coarse_traits, by = "sp_code")
+```
 
+### ii. Plots
+
+```{r}
 # plot of proportion total biomass by phylum faceted by sampling date
 ggplot(test) +
   aes(x = taxon_phylum, y = percent_sp_dry) +
@@ -108,10 +114,12 @@ ggplot(test) +
        col = "Phylum")
 ```
 
-## c. Laminariales
+
+## c. Biomass data set
 
 Since this worked, I felt comfortable doing this for the whole `biomass` data frame.
 
+### i. Calculations
 ```{r}
 prop_biomass <- biomass %>% 
   select(sample_ID, site, year, date, sp_code, dry_gm2, wm_gm2) %>% 
@@ -138,8 +146,12 @@ prop_biomass <- biomass %>%
          total_percent_wet = sum(percent_sp_wet)) %>% 
   # join with coarse traits data frame, which includes taxonomy
   left_join(., coarse_traits, by = "sp_code")
+```
 
-ggplot(prop_biomass %>% filter(site == "MOHK")) +
+### ii.
+
+```{r}
+ggplot(prop_biomass %>% filter(site == "CARP")) +
   aes(x = date, y = percent_sp_dry) +
   # calculating sum of proportion within stat_summary
   stat_summary(aes(col = taxon_phylum),
@@ -154,25 +166,25 @@ ggplot(prop_biomass %>% filter(site == "MOHK")) +
   # theme(legend.position = "none") +
   labs(x = "Sampling date",
        y = "Proportion total biomass",
-       title = "Biomass by phylum through time for MOHK",
+       title = "Biomass by phylum through time for CARP",
        col = "Phylum")
 
 ggplot(prop_biomass %>% filter(site == "CARP")) +
   aes(x = date, y = percent_sp_dry) +
   # calculating sum of proportion within stat_summary
-  stat_summary(aes(col = taxon_phylum),
+  stat_summary(aes(col = growth_form),
                fun = "sum", geom = "line", size = 1) +
-  stat_summary(aes(col = taxon_phylum),
+  stat_summary(aes(col = growth_form),
                fun = "sum", geom = "point", size = 2) +
-  scale_color_manual(values = c("Chlorophyta" = chloro_col, 
-                                "Ochrophyta" = ochro_col, 
-                                "Rhodophyta" = rhodo_col)) +
+  # scale_color_manual(values = c("Chlorophyta" = chloro_col, 
+  #                               "Ochrophyta" = ochro_col, 
+  #                               "Rhodophyta" = rhodo_col)) +
   scale_y_continuous(limits = c(0, 1), expand = c(0, 0)) +
   theme_bw() +
   labs(x = "Sampling date",
        y = "Proportion total biomass",
-       title = "Biomass by phylum through time",
-       col = "Phylum")
+       title = "Biomass by growth form through time for CARP",
+       col = "Growth form")
 ```
 
 
@@ -182,14 +194,7 @@ ggplot(prop_biomass %>% filter(site == "CARP")) +
 
 
 
-
-
-
-
-
-
-
-
-Use `rmarkdown::render(here::here("code", "04_benthic-data.Rmd"))` to knit the document.
-
+```{r include = FALSE}
+# Use `rmarkdown::render(here::here("code", "04_benthic-data.Rmd"))` in the console to knit the document.
+```
 
