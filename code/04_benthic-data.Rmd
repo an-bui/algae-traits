@@ -2,7 +2,13 @@
 title: "Abundant species dynamics from benthic surveys"
 author: "An Bui"
 date: "1/31/2022"
-output: html_document
+output: 
+  html_document:
+    toc: yes
+    toc_depth: 4
+    toc_float:
+      collapsed: no
+    theme: readable
 ---
 
 ```{r setup, include=FALSE}
@@ -10,36 +16,40 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 # 0. set up
-```{r}
+```{r warning = FALSE, message = FALSE}
 # source the cleaning/summarizing script, which sources the set up
 source(here::here("code", "01_cleaning-and-summarizing.R"))
 ```
 
 # 1. Biomass
 
+## a. Guiding questions
+
 What's the percent community biomass that can be attributed to:  
 1. _Laminariales_, and  
 2. the 11 abundant species from Miller et al.?  
 
-Data question: what is the difference between the percent cover data and the percent cover that's in the column in the biomass data?
+Data question: what is the difference between the percent cover data and the percent cover that's in the column in the biomass data?  
 
-## a. Test
+Stray thoughts: introduced/native species trait column?
 
-To make sure the all the code was working, I tested this out with "SCTW_2020-07-29". The issue comes from scenarios where species were counted at more than one transect - for example, at SCTW_2020-07-29, EC was at both transect 2 and 3, but I only want the dry/wet biomass for EC for the whole survey.  
+## b. Test
+
+To make sure the all the code was working, I tested this out with "SCTW_2010-07-29" and "SCTW_2020-07-29". The issue comes from scenarios where species were counted at more than one transect - for example, at SCTW_2020-07-29, EC was at both transect 2 and 3, but I only want the dry/wet biomass for EC for the whole survey.  
 
 When I create the data frame, there are then "duplicate" observations for total species biomass for EC because it was present at both transects. To fix this, I filtered the data frame for unique observations of the total and percent biomass calculations and double checked the total dry percent to make sure everything added up to 1.  
 
 ```{r}
 test <- biomass %>% 
-  filter(sample_ID == "SCTW_2020-07-29") %>% 
-  select(sample_ID, site, date, sp_code, dry_gm2, wm_gm2) %>% 
+  filter(sample_ID %in% c("SCTW_2010-07-29", "SCTW_2016-07-20", "SCTW_2020-07-29")) %>% 
+  select(sample_ID, site, year, date, sp_code, dry_gm2, wm_gm2) %>% 
   # create a new column where total biomass for the whole survey is calculated
-  group_by(sample_ID) %>% 
+  group_by(site, year) %>% 
   mutate(total_dry = sum(dry_gm2),
          total_wet = sum(wm_gm2)) %>% 
   ungroup() %>% 
   # create a new column where total biomass for the species for the whole survey is calculated
-  group_by(sample_ID, sp_code) %>% 
+  group_by(site, year, sp_code) %>% 
   mutate(total_sp_dry = sum(dry_gm2),
          total_sp_wet = sum(wm_gm2)) %>% 
   ungroup() %>% 
@@ -47,29 +57,71 @@ test <- biomass %>%
   mutate(percent_sp_dry = total_sp_dry/total_dry,
          percent_sp_wet = total_sp_wet/total_wet) %>% 
   # double check to make sure the percents worked out...
-  select(sample_ID, site, date, sp_code, 
+  select(sample_ID, site, year, date, sp_code, 
          # values that need to be unique: 
          total_sp_dry, total_sp_wet, percent_sp_dry, percent_sp_wet) %>% 
   unique() %>% 
   group_by(sample_ID) %>% 
   mutate(total_percent = sum(percent_sp_dry),
-         total_percent_wet = sum(percent_sp_wet))
+         total_percent_wet = sum(percent_sp_wet)) %>% 
+  # join with coarse traits data frame, which includes taxonomy
+  left_join(., coarse_traits, by = "sp_code")
+
+# plot of proportion total biomass by phylum faceted by sampling date
+ggplot(test) +
+  aes(x = taxon_phylum, y = percent_sp_dry) +
+  # calculating sum of proportion within stat_summary
+  stat_summary(aes(fill = taxon_phylum),
+               fun = "sum", geom = "bar") +
+  # adding labels for sum values
+  stat_summary(aes(label = round(..y.., 2)), 
+               fun = "sum", geom = "text", 
+               size = 4, vjust = -0.5) +
+  scale_fill_manual(values = c("Chlorophyta" = chloro_col, 
+                               "Ochrophyta" = ochro_col, 
+                               "Rhodophyta" = rhodo_col)) +
+  scale_y_continuous(limits = c(0, 1), expand = c(0, 0)) +
+  facet_wrap(~sample_ID) +
+  theme_classic() +
+  theme(legend.position = "none") +
+  labs(x = "Phylum",
+       y = "Proportion total biomass",
+       title = "Biomass by phylum for SCTW")
+
+# pretend timeseries
+ggplot(test) +
+  aes(x = date, y = percent_sp_dry) +
+  # calculating sum of proportion within stat_summary
+  stat_summary(aes(col = taxon_phylum),
+               fun = "sum", geom = "line", size = 1) +
+  stat_summary(aes(col = taxon_phylum),
+               fun = "sum", geom = "point", size = 2) +
+  scale_color_manual(values = c("Chlorophyta" = chloro_col, 
+                                "Ochrophyta" = ochro_col, 
+                                "Rhodophyta" = rhodo_col)) +
+  scale_y_continuous(limits = c(0, 1), expand = c(0, 0)) +
+  theme_bw() +
+  # theme(legend.position = "none") +
+  labs(x = "Sampling date",
+       y = "Proportion total biomass",
+       title = "Biomass by phylum through time for SCTW",
+       col = "Phylum")
 ```
 
-## b. Laminariales
+## c. Laminariales
 
 Since this worked, I felt comfortable doing this for the whole `biomass` data frame.
 
 ```{r}
-lami <- biomass %>% 
-  select(sample_ID, site, date, sp_code, dry_gm2, wm_gm2) %>% 
+prop_biomass <- biomass %>% 
+  select(sample_ID, site, year, date, sp_code, dry_gm2, wm_gm2) %>% 
   # create a new column where total biomass for the whole survey is calculated
-  group_by(sample_ID) %>% 
+  group_by(site, year) %>% 
   mutate(total_dry = sum(dry_gm2),
          total_wet = sum(wm_gm2)) %>% 
   ungroup() %>% 
   # create a new column where total biomass for the species for the whole survey is calculated
-  group_by(sample_ID, sp_code) %>% 
+  group_by(site, year, sp_code) %>% 
   mutate(total_sp_dry = sum(dry_gm2),
          total_sp_wet = sum(wm_gm2)) %>% 
   ungroup() %>% 
@@ -77,15 +129,67 @@ lami <- biomass %>%
   mutate(percent_sp_dry = total_sp_dry/total_dry,
          percent_sp_wet = total_sp_wet/total_wet) %>% 
   # double check to make sure the percents worked out...
-  select(sample_ID, site, date, sp_code, 
+  select(sample_ID, site, year, date, sp_code, 
          # values that need to be unique: 
          total_sp_dry, total_sp_wet, percent_sp_dry, percent_sp_wet) %>% 
   unique() %>% 
   group_by(sample_ID) %>% 
   mutate(total_percent = sum(percent_sp_dry),
-         total_percent_wet = sum(percent_sp_wet))
+         total_percent_wet = sum(percent_sp_wet)) %>% 
+  # join with coarse traits data frame, which includes taxonomy
+  left_join(., coarse_traits, by = "sp_code")
+
+ggplot(prop_biomass %>% filter(site == "MOHK")) +
+  aes(x = date, y = percent_sp_dry) +
+  # calculating sum of proportion within stat_summary
+  stat_summary(aes(col = taxon_phylum),
+               fun = "sum", geom = "line", size = 1) +
+  stat_summary(aes(col = taxon_phylum),
+               fun = "sum", geom = "point", size = 2) +
+  scale_color_manual(values = c("Chlorophyta" = chloro_col, 
+                                "Ochrophyta" = ochro_col, 
+                                "Rhodophyta" = rhodo_col)) +
+  scale_y_continuous(limits = c(0, 1), expand = c(0, 0)) +
+  theme_bw() +
+  # theme(legend.position = "none") +
+  labs(x = "Sampling date",
+       y = "Proportion total biomass",
+       title = "Biomass by phylum through time for MOHK",
+       col = "Phylum")
+
+ggplot(prop_biomass %>% filter(site == "CARP")) +
+  aes(x = date, y = percent_sp_dry) +
+  # calculating sum of proportion within stat_summary
+  stat_summary(aes(col = taxon_phylum),
+               fun = "sum", geom = "line", size = 1) +
+  stat_summary(aes(col = taxon_phylum),
+               fun = "sum", geom = "point", size = 2) +
+  scale_color_manual(values = c("Chlorophyta" = chloro_col, 
+                                "Ochrophyta" = ochro_col, 
+                                "Rhodophyta" = rhodo_col)) +
+  scale_y_continuous(limits = c(0, 1), expand = c(0, 0)) +
+  theme_bw() +
+  labs(x = "Sampling date",
+       y = "Proportion total biomass",
+       title = "Biomass by phylum through time",
+       col = "Phylum")
 ```
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Use `rmarkdown::render(here::here("code", "04_benthic-data.Rmd"))` to knit the document.
 
 
