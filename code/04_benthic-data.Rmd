@@ -45,7 +45,7 @@ When I create the data frame, there are then "duplicate" observations for total 
 test <- biomass %>% 
   filter(sample_ID %in% c("SCTW_2010-07-29", "SCTW_2016-07-20", "SCTW_2020-07-29")) %>% 
   select(sample_ID, site, year, date, sp_code, dry_gm2, wm_gm2) %>% 
-  # create a new column where total biomass for the whole survey is calculated
+  # create a new column where total biomass for both surveys is calculated
   group_by(site, year) %>% 
   mutate(total_dry = sum(dry_gm2),
          total_wet = sum(wm_gm2)) %>% 
@@ -136,6 +136,8 @@ prop_biomass <- biomass %>%
   # create a new column where percent of total biomass per survey for each species is calculated
   mutate(percent_sp_dry = total_sp_dry/total_dry,
          percent_sp_wet = total_sp_wet/total_wet) %>% 
+  # replace NaNs with 0 (which happens when there's nothing in the survey)
+  # mutate_at(vars("percent_sp_dry", "percent_sp_wet"), list(~ ifelse(. = NaN, 0, .))) %>% 
   # double check to make sure the percents worked out...
   select(sample_ID, site, year, date, sp_code, 
          # values that need to be unique: 
@@ -145,13 +147,24 @@ prop_biomass <- biomass %>%
   mutate(total_percent = sum(percent_sp_dry),
          total_percent_wet = sum(percent_sp_wet)) %>% 
   # join with coarse traits data frame, which includes taxonomy
-  left_join(., coarse_traits, by = "sp_code")
+  left_join(., coarse_traits, by = "sp_code") %>% 
+  # include a column for whether or not the species is in the "interesting species" list
+  mutate(algae_interest = case_when(
+    sp_code %in% algae_interest ~ "species of interest",
+    TRUE ~ "other species"
+  ))
+  
 ```
 
-### ii.
+### ii. Plots
 
+Made some plot functions to keep things tidy.
 ```{r}
-ggplot(prop_biomass %>% filter(site == "CARP")) +
+phylum.plot <- function(site_choice) {
+  # choose a subtitle from sites_full
+  subtitle <- pluck(sites_full, site_choice)
+  
+  ggplot(prop_biomass %>% filter(site == {{ site_choice }})) +
   aes(x = date, y = percent_sp_dry) +
   # calculating sum of proportion within stat_summary
   stat_summary(aes(col = taxon_phylum),
@@ -166,27 +179,184 @@ ggplot(prop_biomass %>% filter(site == "CARP")) +
   # theme(legend.position = "none") +
   labs(x = "Sampling date",
        y = "Proportion total biomass",
-       title = "Biomass by phylum through time for CARP",
+       title = "Biomass by phylum through time",
+       subtitle = subtitle,
        col = "Phylum")
+}
 
-ggplot(prop_biomass %>% filter(site == "CARP")) +
-  aes(x = date, y = percent_sp_dry) +
-  # calculating sum of proportion within stat_summary
-  stat_summary(aes(col = growth_form),
-               fun = "sum", geom = "line", size = 1) +
-  stat_summary(aes(col = growth_form),
-               fun = "sum", geom = "point", size = 2) +
-  # scale_color_manual(values = c("Chlorophyta" = chloro_col, 
-  #                               "Ochrophyta" = ochro_col, 
-  #                               "Rhodophyta" = rhodo_col)) +
-  scale_y_continuous(limits = c(0, 1), expand = c(0, 0)) +
-  theme_bw() +
-  labs(x = "Sampling date",
-       y = "Proportion total biomass",
-       title = "Biomass by growth form through time for CARP",
-       col = "Growth form")
+growth.form.plot <- function(site_choice) {
+  # choose a subtitle from sites_full
+  subtitle <- pluck(sites_full, site_choice)
+  
+  ggplot(prop_biomass %>% filter(site == {{ site_choice }})) +
+    aes(x = date, y = percent_sp_dry) +
+    # calculating sum of proportion within stat_summary
+    stat_summary(aes(col = growth_form),
+                 fun = "sum", geom = "line", size = 1) +
+    stat_summary(aes(col = growth_form),
+                 fun = "sum", geom = "point", size = 2) +
+    scale_y_continuous(limits = c(0, 1), expand = c(0, 0)) +
+    theme_bw() +
+    labs(x = "Sampling date",
+         y = "Proportion total biomass",
+         title = "Biomass by growth form through time",
+         subtitle = subtitle,
+         col = "Growth form")
+}
+
+spp.interest.plot <- function(site_choice) {
+  # choose a subtitle from sites_full
+  subtitle <- pluck(sites_full, site_choice)
+  
+  ggplot(prop_biomass %>% filter(site == {{ site_choice }})) +
+    aes(x = date, y = percent_sp_dry) +
+    # calculating sum of proportion within stat_summary
+    stat_summary(aes(col = algae_interest),
+                 fun = "sum", geom = "line", size = 1) +
+    stat_summary(aes(col = algae_interest),
+                 fun = "sum", geom = "point", size = 2) +
+    scale_y_continuous(limits = c(0, 1), expand = c(0, 0)) +
+    theme_bw() +
+    labs(x = "Sampling date",
+         y = "Proportion total biomass",
+         title = "Species of interest",
+         subtitle = subtitle, 
+         col = " ")
+}
+
 ```
 
+```{r}
+phylum.plot("bull")
+phylum.plot("aque")
+phylum.plot("ahnd")
+phylum.plot("napl")
+phylum.plot("ivee")
+phylum.plot("golb")
+phylum.plot("abur")
+phylum.plot("mohk")
+phylum.plot("carp")
+phylum.plot("scdi")
+phylum.plot("sctw")
+
+growth.form.plot("bull")
+growth.form.plot("aque")
+growth.form.plot("ahnd")
+growth.form.plot("napl")
+growth.form.plot("ivee")
+growth.form.plot("golb")
+growth.form.plot("abur")
+growth.form.plot("mohk")
+growth.form.plot("carp")
+growth.form.plot("scdi")
+growth.form.plot("sctw")
+
+spp.interest.plot("bull")
+spp.interest.plot("aque")
+spp.interest.plot("ahnd")
+spp.interest.plot("napl")
+spp.interest.plot("ivee")
+spp.interest.plot("golb")
+spp.interest.plot("abur")
+spp.interest.plot("mohk")
+spp.interest.plot("carp")
+spp.interest.plot("scdi")
+spp.interest.plot("sctw")
+```
+
+# 2. Tables of species contribution to biomass
+
+```{r}
+table_df <- biomass %>% 
+  select(site, scientific_name, dry_gm2, wm_gm2) %>% 
+  mutate(site = fct_relevel(site, "bull", "aque", "ahnd", "napl", "ivee", "golb", "abur",
+                            "mohk", "carp", "scdi", "sctw")) %>% 
+  # filter out MAPY
+  filter(scientific_name != "Macrocystis pyrifera") %>% 
+  # create a new column where total biomass for the whole survey is calculated
+  group_by(site) %>% 
+  mutate(total_dry = sum(dry_gm2),
+         total_wet = sum(wm_gm2)) %>% 
+  ungroup() %>% 
+  # create a new column where total biomass for the species for the whole survey is calculated
+  group_by(site, scientific_name) %>% 
+  mutate(total_sp_dry = sum(dry_gm2),
+         total_sp_wet = sum(wm_gm2)) %>% 
+  ungroup() %>% 
+  # create a new column where percent of total biomass per survey for each species is calculated
+  mutate(percent_sp_dry = total_sp_dry/total_dry,
+         percent_sp_wet = total_sp_wet/total_wet) %>% 
+  # double check to make sure the percents worked out...
+  select(site, scientific_name, 
+         # values that need to be unique: 
+         total_sp_dry, total_sp_wet, percent_sp_dry, percent_sp_wet) %>% 
+  unique() %>% 
+  group_by(site) %>% 
+  mutate(total_percent = sum(percent_sp_dry),
+         total_percent_wet = sum(percent_sp_wet)) %>% 
+  select(scientific_name, site, percent_sp_dry) %>% 
+  mutate(percent_sp_dry = round(percent_sp_dry, 4)) %>% 
+  mutate(percent_whole_sp_dry = percent_sp_dry*100) %>% 
+  select(-percent_sp_dry) %>% 
+  mutate(site = str_to_upper(site)) %>% 
+  pivot_wider(names_from = "site", values_from = "percent_whole_sp_dry") %>% 
+  left_join(., coarse_traits, by = "scientific_name") %>% 
+  slice(-2) %>% 
+  select(scientific_name, sp_code, BULL, AQUE, AHND, NAPL, IVEE, GOLB, ABUR,
+                            MOHK, CARP, SCDI, SCTW)
+
+table <- table_df %>% 
+  gt() %>% 
+  data_color(columns = 3,
+             colors = scales::col_numeric(palette = gradient_palette, 
+                                          domain = c(max(table_df[, 3]), 0))) %>% 
+  data_color(columns = 4,
+             colors = scales::col_numeric(palette = gradient_palette, 
+                                          domain = c(max(table_df[, 4]), 0))) %>% 
+  data_color(columns = 5,
+             colors = scales::col_numeric(palette = gradient_palette, 
+                                          domain = c(max(table_df[, 5]), 0))) %>% 
+  data_color(columns = 6,
+             colors = scales::col_numeric(palette = gradient_palette, 
+                                          domain = c(max(table_df[, 6]), 0))) %>% 
+  data_color(columns = 7,
+             colors = scales::col_numeric(palette = gradient_palette, 
+                                          domain = c(max(table_df[, 7]), 0))) %>% 
+  data_color(columns = 8,
+             colors = scales::col_numeric(palette = gradient_palette, 
+                                          domain = c(max(table_df[, 8]), 0))) %>% 
+  data_color(columns = 9,
+             colors = scales::col_numeric(palette = gradient_palette, 
+                                          domain = c(max(table_df[, 9]), 0))) %>% 
+  data_color(columns = 10,
+             colors = scales::col_numeric(palette = gradient_palette, 
+                                          domain = c(max(table_df[, 10]), 0))) %>% 
+  data_color(columns = 11,
+             colors = scales::col_numeric(palette = gradient_palette, 
+                                          domain = c(max(table_df[, 11]), 0))) %>% 
+  data_color(columns = 12,
+             colors = scales::col_numeric(palette = gradient_palette, 
+                                          domain = c(max(table_df[, 12]), 0))) %>% 
+  data_color(columns = 13,
+             colors = scales::col_numeric(palette = gradient_palette, 
+                                          domain = c(max(table_df[, 13]), 0))) %>% 
+  fmt_missing(columns = 3:13,
+              missing_text = "--") %>% 
+  tab_spanner(
+    label = "Sites",
+    columns = c(BULL, AQUE, AHND, NAPL, IVEE, GOLB, ABUR,
+                MOHK, CARP, SCDI, SCTW)
+  ) %>% 
+  tab_spanner(
+    label = "Species",
+    columns = c("scientific_name", "sp_code")
+  ) %>% 
+  cols_label(
+    scientific_name = "Scientific name",
+    sp_code = "Species code",
+  ) %>% 
+  gtsave("sp_site_table-selection.png", path = here::here("tables"))
+```
 
 
 
