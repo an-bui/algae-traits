@@ -119,8 +119,8 @@ hw_summary <- hw %>%
   # join with metadata: spp codes + specimen_ID
   left_join(., metadata_subsamples, by = "specimen_ID") %>% 
   drop_na(sp_code) %>% 
-  # join with algae_ct: spp codes + taxonomic info
-  left_join(., algae_ct, by = "sp_code") %>% 
+  # join with coarse_traits: spp codes + taxonomic info
+  left_join(., coarse_traits, by = "sp_code") %>% 
   # replace NAs with -99999
   mutate(max_height_cm = replace_na(max_height_cm, -99999),
          max_width_cm = replace_na(max_width_cm, -99999)) %>% 
