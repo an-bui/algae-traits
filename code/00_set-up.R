@@ -10,6 +10,7 @@ library(cluster) # to get gower distance on categorical variables
 library(FD) # functional diversity
 library(janitor) # cleaning names in data frames
 library(lubridate) # dealing with dates
+library(gt) # making tables
 
 # 2.  getting data from google drive --------------------------------------
 
@@ -66,7 +67,7 @@ benthic_cleaning_fxn <- function(df) {
     # create a sample_ID for each sampling date at each site
     unite("sample_ID", site, date, remove = FALSE) %>% 
     # change to lower case
-    mutate_at(c("group", "mobility", "growth_morph"), str_to_lower) %>% 
+    mutate_at(c("group", "mobility", "growth_morph", "site"), str_to_lower) %>% 
     # only include algae
     filter(group == "algae") %>% 
     # make sure that sp_code for Nienburgia andersoniana isn't NA
@@ -112,6 +113,20 @@ algae_common <- c("PH", "PTCA", # Pterygophora californica
                   "DP" # Dictyota spp. 
 )
 
+# 11 species from Miller et al. 2012 and from conversation with Bob on 2022-01-18
+algae_interest <- c("CYOS", # Stephanocystis osmundacea 
+                  "LAFA", # Laminaria farlowii 
+                  "MAPY", # Macrocystis pyrifera
+                  "PH", "PTCA", # Pterygophora californica 
+                  "CF", # Callophyllis flabellulata
+                  "CC", # Chondracanthus corymbiferus 
+                  "GS", # Gracilaria spp. 
+                  "POLA", # Polyneura latissima 
+                  "FTHR", # Pterosiphonia dendroidea 
+                  "R", # Rhodymenia californica 
+                  "EGME" # Egregia menziesii
+)
+
 # date
 todays_date <- Sys.Date()
 
@@ -119,6 +134,38 @@ todays_date <- Sys.Date()
 rhodo_col <- "#781416"
 ochro_col <- "#CC7540"
 chloro_col <- "#6D5A18"
+
+# site name vector
+sites <- c("bull", "aque", "ahnd", "napl", "ivee", "golb", 
+           "abur", "mohk", "carp", "scdi", "sctw")
+
+sites_full <- setNames(c("Bullito (BULL)", 
+                         "Arroyo Quemado (AQUE)",
+                         "Arroyo Hondo (AHND)",
+                         "Naples (NAPL)",
+                         "Isla Vista (IVEE)",
+                         "Goleta Beach (GOLB)",
+                         "Arroyo Burro (ABUR)",
+                         "Mohawk (MOHK)",
+                         "Carpinteria (CARP)",
+                         "Diablo Canyon (SCDI)",
+                         "Twin Harbors (SCTW)"), sites)
+
+# full names for sites
+bull_full <- "Bullito (BULL)"
+aque_full <- "Arroyo Quemado (AQUE)"
+ahnd_full <- "Arroyo Hondo (AHND)"
+napl_full <- "Naples (NAPL)"
+ivee_full <- "Isla Vista (IVEE)"
+golb_full <- "Goleta Beach (GOLB)"
+abur_full <- "Arroyo Burro (ABUR)"
+mohk_full <- "Mohawk (MOHK)"
+carp_full <- "Carpinteria (CARP)"
+scdi_full <- "Diablo Canyon (SCDI)"
+sctw_full <- "Twin Harbors (SCTW)"
+
+# gradient palette
+gradient_palette <- c("#FFFFFF", "#009BB0")
 
 
 
