@@ -124,7 +124,8 @@ algae_interest <- c("CYOS", # Stephanocystis osmundacea
                   "POLA", # Polyneura latissima 
                   "FTHR", # Pterosiphonia dendroidea 
                   "R", # Rhodymenia californica 
-                  "EGME" # Egregia menziesii
+                  "EGME", # Egregia menziesii
+                  "DL" # Desmarestia ligulata
 )
 
 # date
