@@ -1,0 +1,198 @@
+---
+title: "Proposal-Box2"
+author: "Bart DiFiore"
+date: "4/30/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+In the first box, I demonstrate how variation in a trait can cause the same two species to interact differently in different contexts. 
+
+Here, I would like to demonstrate that an alternative way for the same species to interact differently is based on historical context.
+
+I would like to build a toy discrete time model with three interacting species. Species 1 competes very strongly with species 2, such that species 1 and 3 coexist. I will test how historic variability in Species 1 can lead to different interaction strengths between the three species compared to simulations with low historic variability.
+
+Species 1 represents a competitive dominant. It is fast growing and competitive but highly suseptible to disturbance. 
+
+Species 2 is a competitive inferior. It is slower growing than 1, not very suseptible to disturbance, and negatively affected by species 1. 
+
+Species 3 is a slow growing species that can coexist with species 1, but is outcompeted by species 2.
+
+$$
+\frac{dN_i}{dt} = r_iN_i(\frac{k_i - N_i - \alpha_{ij}N_j}{k_i}) 
+$$
+
+All species grow to their carrying capacity in the absence of competitors.
+
+```{r}
+# Set some parameter values
+
+# library(tidyverse)
+k0 <- 1000
+u0 <- 100
+i0 <- 100
+r.k <- 0.3
+r.u <- 0.2
+r.i <- 0.1
+k.k <- 10000
+k.u <- 5000
+k.i <- 3000
+alpha.ku <- 0.1
+alpha.ki <- 0.01
+alpha.uk <- 0.5
+alpha.ui <- 0.1
+alpha.ik <- 0.01
+alpha.iu <- 0.1
+recruit <- 500
+
+
+
+tset <- seq(from = 0, to = 2000, length.out = 200000)
+k.simu <- NaN*tset; k.simu[1] <- k0
+u.simu <- NaN*tset; u.simu[1] <- u0 
+i.simu <- NaN*tset; i.simu[1] <- i0 
+dist <- rbinom(n = length(tset), size = 1, prob = 0.00001)
+
+for(i in 2:length(tset)){
+  dt <- tset[i]-tset[i-1]
+
+    if (dist[i] > 0){
+      K <- k.simu[i-1]*0.1
+      U <- u.simu[i-1]*0.9
+      I <- i.simu[i-1]*0.9
+  } else{
+    
+    K <- k.simu[i-1]
+    U <- u.simu[i-1]
+    I <- i.simu[i-1]
+  }
+    
+    dK <- (r.k*K*((k.k - K - alpha.ku*U - alpha.ki*I)/k.k) + recruit) * dt
+    dU <- (r.u*U*((k.u - U - alpha.uk*K - alpha.ui*I)/k.u) + recruit) * dt
+    dI <- (r.i*I*((k.i - I - alpha.ik*K - alpha.iu*U)/k.i) + recruit) * dt
+    
+    k.simu[i] <- K + dK
+    u.simu[i] <- U + dU
+    i.simu[i] <- I + dI
+}
+
+df.high <- data.frame(K = k.simu, U = u.simu, I = i.simu, t = tset) %>% pivot_longer(cols = c(K,U,I))
+df.low <- data.frame(K = k.simu, U = u.simu, I = i.simu, t = tset) %>% pivot_longer(cols = c(K,U,I))
+
+p2 <- ggplot(df.low, aes(x= t, y = value))+
+  geom_line(aes(color = name))+
+  scale_y_continuous(limits = c(0, 15000)) +
+  theme_classic()
+
+p2
+
+```
+
+```{r, include = T}
+
+# Set some parameter values
+parameters <- list(
+k0 = 1000,
+u0 = 100,
+i0 = 100,
+r.k = 0.3,
+r.u = 0.2,
+r.i = 0.1,
+k.k = 10000,
+k.u = 5000,
+k.i = 3000,
+alpha.ku = 0.1,
+alpha.ki = 0.01,
+alpha.uk = 0.5,
+alpha.ui = 0.1,
+alpha.ik = 0.01,
+alpha.iu = 0.1,
+recruit = 0.001
+)
+
+project <- function(params, end.t = 2000, prob = 0.0001){
+
+tset <- seq(from = 0, to = end.t, by = 0.01)
+k.simu <- NaN*tset; k.simu[1] <- params$k0
+u.simu <- NaN*tset; u.simu[1] <- params$u0 
+i.simu <- NaN*tset; i.simu[1] <- params$i0 
+dist <- rbinom(n = length(end.t), size = 1, prob = prob)
+
+
+for(i in 2:length(tset)){
+  dt <- tset[i]-tset[i-1]
+
+    if (dist[i] > 0){
+      K <- k.simu[i-1]*0.1
+      U <- u.simu[i-1]*0.9
+      I <- i.simu[i-1]*0.9
+  } else{
+    
+    K <- k.simu[i-1]
+    U <- u.simu[i-1]
+    I <- i.simu[i-1]
+  }
+    
+    dK <- with(params, (r.k*K*((k.k - K - alpha.ku*U - alpha.ki*I)/k.k) + recruit)) * dt
+    dU <- with(params, (r.u*U*((k.u - U - alpha.uk*K - alpha.ui*I)/k.u) + recruit)) * dt
+    dI <- with(params, (r.i*I*((k.i - I - alpha.ik*K - alpha.iu*U)/k.i) + recruit)) * dt
+    
+    k.simu[i] <- K + dK
+    u.simu[i] <- U + dU
+    i.simu[i] <- I + dI
+}
+ data.frame(K = k.simu, U = u.simu, I = i.simu, t = tset) %>% pivot_longer(cols = c(K,U,I))
+}
+
+df.low = project(params = parameters, end.t = 2000, prob = 0.0001)
+df.high = project(params = parameters, end.t = 2000, prob = 0.001)
+
+p1 <- ggplot(df.low, aes(x= t, y = value))+
+  geom_line(aes(color = name))+
+  theme_classic()
+
+p2 <- ggplot(df.high, aes(x= t, y = value))+
+  geom_line(aes(color = name))+
+  theme_classic()
+
+cowplot::plot_grid(p1, p2)
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
