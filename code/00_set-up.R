@@ -11,6 +11,8 @@ library(FD) # functional diversity
 library(janitor) # cleaning names in data frames
 library(lubridate) # dealing with dates
 library(gt) # making tables
+library(plotly) # for making the species biomass plot
+library(calecopal) # colors
 
 # 2.  getting data from google drive --------------------------------------
 

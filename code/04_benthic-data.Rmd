@@ -122,6 +122,7 @@ Since this worked, I felt comfortable doing this for the whole `biomass` data fr
 ### i. Calculations
 ```{r}
 prop_biomass <- biomass %>% 
+  filter(sp_code != "MAPY") %>% 
   select(sample_ID, site, year, date, sp_code, dry_gm2, wm_gm2) %>% 
   # create a new column where total biomass for the whole survey is calculated
   group_by(site, year) %>% 
@@ -224,6 +225,23 @@ spp.interest.plot <- function(site_choice) {
          col = " ")
 }
 
+species.plot <- function(site_choice) {
+  # choose a title from sites_full
+  title <- pluck(sites_full, site_choice)
+  
+  df <- prop_biomass %>% ungroup() %>% filter(site == {{ site_choice }})
+  
+  plot_ly(data = df, 
+          x = ~date, y = ~percent_sp_dry, 
+          color = ~scientific_name, colors = c(cal_palette(name = "tidepool", type = "continuous")), 
+          mode = "markers+lines") %>% 
+    add_trace(mode = "markers+lines", type = "scatter") %>% 
+    layout(title = title, 
+           xaxis = list(title = "Date", nticks = 8), 
+           yaxis = list(title = "Proportion total biomass"),
+           legend = list(title = list(text = '<b> Scientific name </b>')))
+}
+
 ```
 
 ```{r}
@@ -262,6 +280,18 @@ spp.interest.plot("mohk")
 spp.interest.plot("carp")
 spp.interest.plot("scdi")
 spp.interest.plot("sctw")
+
+species.plot("bull")
+species.plot("aque")
+species.plot("ahnd")
+species.plot("napl")
+species.plot("ivee")
+species.plot("golb")
+species.plot("abur")
+species.plot("mohk")
+species.plot("carp")
+species.plot("scdi")
+species.plot("sctw")
 ```
 
 # 2. Tables of species contribution to biomass
