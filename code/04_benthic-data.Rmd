@@ -238,7 +238,7 @@ species.plot <- function(site_choice) {
     add_trace(mode = "markers+lines", type = "scatter") %>% 
     layout(title = title, 
            xaxis = list(title = "Date", nticks = 8), 
-           yaxis = list(title = "Proportion total biomass"),
+           yaxis = list(title = "Proportion total biomass", range = c(-0.01, 1)),
            legend = list(title = list(text = '<b> Scientific name </b>')))
 }
 
