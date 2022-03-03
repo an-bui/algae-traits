@@ -77,9 +77,7 @@ volume_test <- volume %>%
   rename("volume_mL" = volume_total_mL) %>% 
   group_by(specimen_ID) %>% 
   summarize(volume_mL = sum(volume_mL))
-sa_summary_spp <- sa_peri %>% 
-  # drop all observations that haven't been processed
-  drop_na(results_file) %>% 
+sa_summary_spp <- sa_peri_summary %>% 
   select(specimen_ID, area_total) %>% 
   group_by(specimen_ID) %>% 
   summarize(area_total = sum(area_total)) %>% 
@@ -120,7 +118,7 @@ hw_summary_spp <- hw %>%
   pivot_longer(cols = height_cm:width_cm, names_to = "trait", values_to = "value")
 hw_test <- hw_summary %>% 
   select(specimen_ID, max_height_cm, max_width_cm)
-sta_summary_spp <- sa_summary %>% 
+sta_summary_spp <- sa_peri_summary %>% 
   left_join(., weight_summary, by = "specimen_ID") %>% 
   mutate(sta = area_total/weight_dry_g) %>% 
   # join with metadata: spp codes + specimen_ID
@@ -161,14 +159,16 @@ tbs_test <- full_join(fvfm_test, thickness_test, by = "specimen_ID") %>%
   full_join(., sta_test, by = "specimen_ID") %>% 
   full_join(., ct_test, by = "specimen_ID") %>% 
   select(-height_class) %>% 
-  drop_na() %>% 
+  drop_na(1:12) %>% 
   column_to_rownames("specimen_ID")
 ```
 
 ## c. attempt a PCoA
 
 ```{r}
-tbs_gower <- gowdis(tbs_test)
+tbs_gower <- tbs_test %>% 
+  select(1:12) %>% 
+  gowdis()
 tbs_pcoa <- cmdscale(tbs_gower, eig = TRUE)
 # tbs_pcoa <- wcmdscale(tbs_gower, eig = TRUE)
 # tbs_pcoa <- ape::pcoa(tbs_gower, correction = "none")
@@ -199,7 +199,7 @@ PCAscores <- scores(tbs_pca, display = "sites") %>%
 PCAvect <- scores(tbs_pca, display = "species") %>% 
   as.data.frame()
 plot_PCA <- ggplot() +
-  geom_point(data = PCAscores, aes(x = PC1, y = PC2, color = scientific_name.x)) +
+  geom_point(data = PCAscores, aes(x = PC1, y = PC2, color = scientific_name)) +
   # scale_color_manual(values = pal) +
   geom_vline(xintercept = c(0), color = "grey70", linetype = 2) +
   geom_hline(yintercept = c(0), color = "grey70", linetype = 2) +
