@@ -13,6 +13,13 @@ library(lubridate) # dealing with dates
 library(gt) # making tables
 library(plotly) # for making the species biomass plot
 library(calecopal) # colors
+library(patchwork) # putting plots together
+library(lme4) # GLMERs
+library(MuMIn) # lms
+library(glmmTMB) # GLMM
+library(emmeans) # effect sizes
+library(DHARMa) # plotting residuals from `glmmTMB`
+library(multcompView) # pairwise comparisons on plots
 
 # 2.  getting data from google drive --------------------------------------
 
@@ -60,7 +67,7 @@ fvfm_raw <- path %>%
 
 ## a. traits 
 # coarse trait data
-coarse_traits <- read_csv(here::here("data", "algae_all.csv"))
+coarse_traits <- read_csv(here::here("data", "algae-traits_literature-search_2022-02-28.csv"))
 
 ## b. benthics
 benthic_cleaning_fxn <- function(df) {
@@ -84,7 +91,9 @@ biomass <- read_csv(here::here("data", "SBC-LTER-benthics",
                                "Annual_All_Species_Biomass_at_transect_20210108.csv")) %>% 
   benthic_cleaning_fxn() %>% 
   # replace all -99999 values with 0
-  mutate(dry_gm2 = replace(dry_gm2, dry_gm2 < 0, 0)) %>% 
+  mutate(dry_gm2 = replace(dry_gm2, dry_gm2 < 0, 0),
+         wm_gm2 = replace(wm_gm2, wm_gm2 < 0, 0),
+         density = replace(density, density < 0, 0)) %>% 
   mutate(date = ymd(date))
 
 # percent cover
@@ -129,6 +138,13 @@ algae_interest <- c("CYOS", # Stephanocystis osmundacea
                   "EGME", # Egregia menziesii
                   "DL" # Desmarestia ligulata
 )
+
+# algae list in proposal
+algae_proposal <- c("CYOS",
+                    "LAFA", 
+                    "CC", 
+                    "EGME", 
+                    "DL")
 
 # date
 todays_date <- Sys.Date()
