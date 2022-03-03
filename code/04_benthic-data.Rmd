@@ -671,27 +671,12 @@ kelp_biomass_summary <- biomass %>%
   summarize(mean_kelp = mean(dry_gm2, na.rm = TRUE)) %>% 
   ungroup()
 
-# metadata for plotting
-community_metadata <- biomass %>% 
-  # filter out SCI sites
-  filter(site %in% c("bull", "aque", "napl", "ivee", "mohk", "carp")) %>% 
-  select(sample_ID, site, year) %>% 
-  unique() %>% 
-  filter(sample_ID %in% rownames(community_matrix)) %>% 
-  left_join(., urchin_summary, by = "sample_ID") %>% 
-  left_join(., substrate_summary, by = "sample_ID") %>% 
-  left_join(., kelp_biomass_summary, by = "sample_ID") %>% 
-  # drop the site with the NA value (AQUE_2019-07-23) - just need to change the date
-  drop_na() %>% 
-  # sqrt transform environmental variables
-  mutate(urchin_sqrt = sqrt(mean_urchin_density),
-         sand_sqrt = sqrt(mean_sand),
-         kelp_sqrt = sqrt(mean_kelp))
-
 # site by species matrix
 community_matrix <- prop_biomass %>% 
-  # filter out SCI sites
-  filter(site %in% c("bull", "aque", "napl", "ivee", "mohk", "carp")) %>% 
+  # filter out SCI sites and AHND
+  filter(!(site %in% c("sctw", "scdi", "ahnd"))) %>% 
+  # filter out sites of interest
+  # filter(site %in% c("bull", "aque", "napl", "ivee", "mohk", "carp")) %>% 
   select(sample_ID, sp_code, total_sp_dry) %>% 
   pivot_wider(names_from = "sp_code", values_from = "total_sp_dry") %>% 
   # take out surveys with 0 observations
@@ -702,6 +687,25 @@ community_matrix <- prop_biomass %>%
   filter(sample_ID != "AQUE_2019-07-23") %>% 
   select(-sum) %>% 
   column_to_rownames("sample_ID")
+
+# metadata for plotting
+community_metadata <- biomass %>% 
+  # filter out sites of interest
+  # filter(site %in% c("bull", "aque", "napl", "ivee", "mohk", "carp")) %>% 
+  # filter out SCI sites and AHND
+  filter(!(site %in% c("sctw", "scdi", "ahnd"))) %>% 
+  select(sample_ID, site, year) %>% 
+  unique() %>% 
+  filter(sample_ID %in% rownames(community_matrix)) %>% 
+  left_join(., urchin_summary, by = "sample_ID") %>% 
+  left_join(., substrate_summary, by = "sample_ID") %>% 
+  left_join(., kelp_biomass_summary, by = "sample_ID") %>% 
+  # drop the site with the NA value (AQUE_2019-07-23) - just need to change the date
+  # drop_na() %>% 
+  # sqrt transform environmental variables
+  mutate(urchin_sqrt = sqrt(mean_urchin_density),
+         sand_sqrt = sqrt(mean_sand),
+         kelp_sqrt = sqrt(mean_kelp))
 
 # check to make sure rows match up
 rownames(community_matrix) == community_metadata$sample_ID
@@ -793,8 +797,11 @@ head(summary(sim))
 ## d. NMDS using Jaccard index (presence/absence)
 
 ```{r}
-community_dist <- vegdist(community_matrix, method = "jaccard", binary = TRUE)
-community_mds <- metaMDS(community_dist, distance = "jaccard")
+# turn the community matrix into presence absence
+community_presabs <- community_matrix %>% 
+  mutate(across(.cols = everything(), ~replace(., . > 0, 1)))
+
+community_mds <- metaMDS(community_presabs, distance = "jaccard")
 
 stressplot(community_mds)
 
@@ -819,6 +826,7 @@ anova(disper)
 
 fit <- community_metadata %>% 
   select(sample_ID, site, mean_urchin_density, mean_sand) %>% 
+  mutate(across(.cols = 3:4, ~replace(., is.na(.), 0))) %>% 
   envfit(community_mds, ., perm = 999)
 
 fit.vect <- scores(fit, display = "vectors") %>% 
