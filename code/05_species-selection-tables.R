@@ -1,6 +1,6 @@
 table_df <- biomass %>% 
   select(site, scientific_name, dry_gm2, wm_gm2) %>% 
-  filter(site %in% c("bull", "aque", "napl", "ivee", "abur", "mohk", "carp")) %>% 
+  filter(site %in% c("napl")) %>% 
   # mutate(site = fct_relevel(site, "aque", "napl", "ivee", "mohk", "carp")) %>% 
   # filter out MAPY
   filter(scientific_name != "Macrocystis pyrifera") %>% 
@@ -21,7 +21,7 @@ table_df <- biomass %>%
   mutate(percent_sp_dry = round(percent_sp_dry, 4)) %>% 
   mutate(percent_whole_sp_dry = percent_sp_dry*100) %>% 
   select(-percent_sp_dry) %>% 
-  left_join(., coarse_traits, by = "scientific_name") %>% 
+  left_join(., coarse_traits, by = "scientific_name") 
   filter(taxon_phylum == "Rhodophyta")
   select(scientific_name, sp_code, site, percent_whole_sp_dry) %>% 
   pivot_wider(names_from = "site", values_from = "percent_whole_sp_dry") 
