@@ -41,6 +41,8 @@ When I create the data frame, there are then "duplicate" observations for total 
 
 ### i. Calculations
 
+This is just a test to make sure the calculations worked.
+
 ```{r}
 test <- biomass %>% 
   filter(sample_ID %in% c("SCTW_2010-07-29", "SCTW_2016-07-20", "SCTW_2020-07-29")) %>% 
@@ -71,6 +73,8 @@ test <- biomass %>%
 ```
 
 ### ii. Plots
+
+These are tests of the plots.
 
 ```{r}
 # plot of proportion total biomass by phylum faceted by sampling date
@@ -114,52 +118,19 @@ ggplot(test) +
        col = "Phylum")
 ```
 
-
 ## c. Biomass data set
 
-Since this worked, I felt comfortable doing this for the whole `biomass` data frame.
+Since this worked, I felt comfortable doing this for the whole `biomass` data frame.  
 
 ### i. Calculations
-```{r}
-prop_biomass <- biomass %>% 
-  filter(sp_code != "MAPY") %>% 
-  select(sample_ID, site, year, date, sp_code, dry_gm2, wm_gm2) %>% 
-  # create a new column where total biomass for the whole survey is calculated
-  group_by(site, year) %>% 
-  mutate(total_dry = sum(dry_gm2),
-         total_wet = sum(wm_gm2)) %>% 
-  ungroup() %>% 
-  # create a new column where total biomass for the species for the whole survey is calculated
-  group_by(site, year, sp_code) %>% 
-  mutate(total_sp_dry = sum(dry_gm2),
-         total_sp_wet = sum(wm_gm2)) %>% 
-  ungroup() %>% 
-  # create a new column where percent of total biomass per survey for each species is calculated
-  mutate(percent_sp_dry = total_sp_dry/total_dry,
-         percent_sp_wet = total_sp_wet/total_wet) %>% 
-  # replace NaNs with 0 (which happens when there's nothing in the survey)
-  # mutate_at(vars("percent_sp_dry", "percent_sp_wet"), list(~ ifelse(. = NaN, 0, .))) %>% 
-  # double check to make sure the percents worked out...
-  select(sample_ID, site, year, date, sp_code, 
-         # values that need to be unique: 
-         total_sp_dry, total_sp_wet, percent_sp_dry, percent_sp_wet) %>% 
-  unique() %>% 
-  group_by(sample_ID) %>% 
-  mutate(total_percent = sum(percent_sp_dry),
-         total_percent_wet = sum(percent_sp_wet)) %>% 
-  # join with coarse traits data frame, which includes taxonomy
-  left_join(., coarse_traits, by = "sp_code") %>% 
-  # include a column for whether or not the species is in the "interesting species" list
-  mutate(algae_interest = case_when(
-    sp_code %in% algae_interest ~ "species of interest",
-    TRUE ~ "other species"
-  ))
-  
-```
+
+**Note:** as of 2022-03-04, the code to create the `prop_biomass` data frame is in the `00_set-up.R` script.  
 
 ### ii. Plots
 
-Made some plot functions to keep things tidy.
+Made some plot functions to keep things tidy.  
+
+**Note:** FIX THIS. YOU NEED TO REDO THESE PLOTS BECAUSE THE DATA FRAME THEY'RE BUILT ON DOESN'T TAKE THE AVERAGE AT THE SITE ANYMORE.  
 ```{r}
 phylum.plot <- function(site_choice) {
   # choose a subtitle from sites_full
@@ -281,6 +252,7 @@ spp.interest.plot("carp")
 spp.interest.plot("scdi")
 spp.interest.plot("sctw")
 
+# these use plotly so that you can look at species on their own
 species.plot("bull")
 species.plot("aque")
 species.plot("ahnd")
@@ -295,6 +267,8 @@ species.plot("sctw")
 ```
 
 # 2. Tables of species contribution to biomass
+
+This is a big table of percent species contribution to community biomass for each site across all sampling points. It's useful for figuring out where to sample what. `05_species-selection-tables.R` is a separate script with this code, essentially to play around with sites.
 
 ```{r}
 table_df <- biomass %>% 
@@ -384,8 +358,8 @@ table <- table_df %>%
   cols_label(
     scientific_name = "Scientific name",
     sp_code = "Species code",
-  ) %>% 
-  gtsave("sp_site_table-selection.png", path = here::here("tables"))
+  )
+#   %>% gtsave("sp_site_table-selection.png", path = here::here("tables"))
 ```
 
 ```{r}
@@ -441,46 +415,11 @@ filtered_table_df <- biomass %>%
                             MOHK, CARP, SCDI, SCTW)
 ```
 
-
 # 3. Urchin density at each site
 
+Plots using `stat_summary` of mean urchin density at each site and a timeseries:
+
 ```{r}
-urchins <- read_csv(here::here("data", "SBC-LTER-benthics", 
-                               "Annual_All_Species_Biomass_at_transect_20210108.csv")) %>% 
-  clean_names() %>% 
-  # create a sample_ID for each sampling date at each site
-  unite("sample_ID", site, date, remove = FALSE) %>% 
-  filter(sp_code == "SPL") %>% 
-  mutate_at(c("site"), str_to_lower)
-
-urchin_aov <- aov(urchins$density ~ urchins$site)
-
-urchin_tukey <- TukeyHSD(urchin_aov)
-
-urchin_cld <- multcompLetters4(urchin_aov, urchin_tukey)
-
-urchin_cld_df <- enframe(urchin_cld[[1]]$Letters)
-
-urchin_plot_summary <- urchins %>% 
-  filter(site %in% c("bull", "aque", "ivee", "mohk", "napl", "carp")) %>% 
-  group_by(site) %>% 
-  summarize(mean = mean(density, na.rm = TRUE),
-            se = sd(density)/sqrt(length(density))) %>% 
-  left_join(., urchin_cld_df, by = c("site" = "name")) %>% 
-  mutate(value = fct_relevel(value, "a", "b", "bc", "c")) %>% 
-  arrange(value) %>% 
-  mutate(site = fct_relevel(site, "napl", "bull", "carp", "aque", "ivee", "mohk"))
-
-urchin_plot_new <- ggplot(urchin_plot_summary, aes(x = site, y = mean)) +
-  geom_col() +
-  geom_errorbar(aes(ymin = mean - se, ymax = mean + se), width = 0.5) +
-  geom_text(aes(label = value, y = mean + se + 1)) + 
-  labs(x = "Site", y = "Mean urchin density (number/m2)",
-       title = "Purple urchin density") +
-  scale_y_continuous(expand = c(0, 0)) +
-  coord_cartesian(ylim = c(0, 28)) +
-  theme_bw()
-
 urchin_plot <- ggplot(urchins %>% filter(site %in% c("bull", "aque", "napl", "ivee", "mohk", "carp")), aes(x = reorder(site, density), y = density)) +
   stat_summary(aes(fill = site), 
                fun = "mean", geom = "col") +
@@ -492,6 +431,8 @@ urchin_plot <- ggplot(urchins %>% filter(site %in% c("bull", "aque", "napl", "iv
   coord_cartesian(ylim = c(0, 35)) +
   theme_bw() +
   theme(legend.position = "none")
+
+urchin_plot
 
 urchins_time_plot <- ggplot(urchins, aes(x = year, y = density)) +
   stat_summary(aes(col = site), 
@@ -505,48 +446,56 @@ urchins_time_plot <- ggplot(urchins, aes(x = year, y = density)) +
   scale_y_continuous(expand = c(0, 0)) +
   coord_cartesian(ylim = c(-1, 100)) +
   theme_bw()
+
+urchins_time_plot
 ```
 
-# 4. Sand cover
+Plot with pairwise comparisons of means:
 
 ```{r}
-substrate <- read_csv(here::here("data/SBC-LTER-benthics", "Annual_Substrate_All_Years_20211020.csv")) %>% 
-  clean_names() %>% 
-  # create a sample_ID for each sampling date at each site
-  unite("sample_ID", site, date, remove = FALSE) %>% 
-  # change to lower case
-  mutate_at(c("site"), str_to_lower) %>% 
-  filter(!(site %in% c("sctw", "scdi")))
+# analysis of variance
+urchin_aov <- aov(na.omit(urchins$density) ~ urchins$site)
 
-sand <- substrate %>% 
-  filter(common_name == "Sand") %>% 
-  filter(site %in% c("bull", "aque", "ivee", "mohk", "napl", "carp"))
+# Tukey HSD
+urchin_tukey <- TukeyHSD(urchin_aov)
 
-sand_aov <- aov(sand$percent_cover ~ sand$site)
+# compact letter display
+urchin_cld <- multcompLetters4(urchin_aov, urchin_tukey)
 
-sand_tukey <- TukeyHSD(sand_aov)
+# output of compact letter display in data frame
+urchin_cld_df <- enframe(urchin_cld[[1]]$Letters)
 
-sand_cld <- multcompLetters4(sand_aov, sand_tukey)
-
-sand_cld_df <- enframe(sand_cld[[1]]$Letters)
-
-sand_plot_summary <- sand %>% 
+# summary data frame for plotting
+urchin_plot_summary <- urchins %>% 
+  # filter(site %in% c("bull", "aque", "ivee", "mohk", "napl", "carp")) %>% 
   group_by(site) %>% 
-  summarize(mean = mean(percent_cover, na.rm = TRUE),
-            se = sd(percent_cover)/sqrt(length(percent_cover))) %>% 
-  left_join(., sand_cld_df, by = c("site" = "name")) %>% 
-  mutate(site = fct_relevel(site, "napl", "bull", "carp", "aque", "ivee", "mohk"))
+  summarize(mean = mean(density, na.rm = TRUE),
+            se = se(density)) %>% 
+  left_join(., urchin_cld_df, by = c("site" = "name")) %>% 
+  # mutate(value = fct_relevel(value, "a", "b", "bc", "c")) %>% 
+  arrange(value)
+  # mutate(site = fct_relevel(site, "napl", "bull", "carp", "aque", "ivee", "mohk"))
 
-sand_plot_new <- ggplot(sand_plot_summary, aes(x = site, y = mean)) +
+# new plot
+urchin_plot_new <- ggplot(urchin_plot_summary, aes(x = site, y = mean)) +
   geom_col() +
   geom_errorbar(aes(ymin = mean - se, ymax = mean + se), width = 0.5) +
   geom_text(aes(label = value, y = mean + se + 1)) + 
-  labs(x = "Site", y = "Mean sand percent cover (%)",
-       title = "Sand cover across sites") +
+  labs(x = "Site", y = "Mean urchin density (number/m2)",
+       title = "Purple urchin density") +
   scale_y_continuous(expand = c(0, 0)) +
-  coord_cartesian(ylim = c(0, 24)) +
+  # coord_cartesian(ylim = c(0, 28)) +
   theme_bw()
 
+urchin_plot_new
+```
+
+
+# 4. Sand cover
+
+Plot using `stat_summary`:
+
+```{r}
 sand_plot <- ggplot(substrate %>% filter(common_name == "Sand"), aes(x = site, y = percent_cover)) +
   stat_summary(aes(fill = site), 
                fun = "mean", geom = "col") +
@@ -559,6 +508,8 @@ sand_plot <- ggplot(substrate %>% filter(common_name == "Sand"), aes(x = site, y
   coord_cartesian(ylim = c(0, 90)) +
   theme_bw() +
   theme(legend.position = "none")
+
+sand_plot
 
 sand_time_plot <- ggplot(substrate %>% filter(common_name == "Sand"), aes(x = year, y = percent_cover)) +
   stat_summary(aes(col = site), 
@@ -574,6 +525,12 @@ sand_time_plot <- ggplot(substrate %>% filter(common_name == "Sand"), aes(x = ye
   coord_cartesian(ylim = c(-1, 105)) +
   theme_bw() 
 
+sand_time_plot
+```
+
+In case saving plots is of interest: 
+
+```{r}
 plots_together <- urchin_plot / sand_plot
 
 # ggsave(here::here("figures/habitat-characteristics", 
@@ -587,11 +544,56 @@ plots_together <- urchin_plot / sand_plot
 #        plots_together)
 ```
 
+Plot with pairwise comparisons of means:
+
+```{r}
+# filter out sand
+sand <- substrate %>% 
+  filter(common_name == "Sand")
+  # filter(site %in% c("bull", "aque", "ivee", "mohk", "napl", "carp"))
+
+# analysis of variance
+sand_aov <- aov(na.omit(sand$percent_cover) ~ sand$site)
+
+# Tukey HSD
+sand_tukey <- TukeyHSD(sand_aov)
+
+# compact letter display
+sand_cld <- multcompLetters4(sand_aov, sand_tukey)
+
+# results into data frame
+sand_cld_df <- enframe(sand_cld[[1]]$Letters)
+
+# summary data frame
+sand_plot_summary <- sand %>% 
+  group_by(site) %>% 
+  summarize(mean = mean(percent_cover, na.rm = TRUE),
+            se = se(percent_cover)) %>% 
+  left_join(., sand_cld_df, by = c("site" = "name"))
+  # mutate(site = fct_relevel(site, "napl", "bull", "carp", "aque", "ivee", "mohk"))
+
+# new plot
+sand_plot_new <- ggplot(sand_plot_summary, aes(x = site, y = mean)) +
+  geom_col() +
+  geom_errorbar(aes(ymin = mean - se, ymax = mean + se), width = 0.5) +
+  geom_text(aes(label = value, y = mean + se + 1)) + 
+  labs(x = "Site", y = "Mean sand percent cover (%)",
+       title = "Sand cover across sites") +
+  scale_y_continuous(expand = c(0, 0)) +
+  # coord_cartesian(ylim = c(0, 24)) +
+  theme_bw()
+
+sand_plot_new
+```
+
 # 5. Kelp cover
+
+Plot using `stat_summary`:
 
 ```{r}
 biomass %>% 
   filter(sp_code == "MAPY") %>% 
+  filter(!(site %in% c("scdi", "sctw"))) %>% 
   # replace all -99999 values with 0
   mutate(wm_gm2 = replace(wm_gm2, wm_gm2 < 0, 0)) %>% 
   ggplot(aes(x = reorder(site, wm_gm2), y = wm_gm2)) +
@@ -605,13 +607,67 @@ biomass %>%
   theme(legend.position = "none") +
   labs(x = "Site", y = "Kelp biomass (wet g/m2)",
        title = "Kelp biomass across sites")
+
+biomass %>% 
+  filter(sp_code == "MAPY") %>% 
+  filter(site == "carp") %>% 
+  # filter(!(site %in% c("scdi", "sctw"))) %>% 
+  # replace all -99999 values with 0
+  mutate(wm_gm2 = replace(wm_gm2, wm_gm2 < 0, 0)) %>% 
+  ggplot(aes(x = year, y = wm_gm2)) +
+  stat_summary(aes(col = site), 
+               fun = "mean", geom = "point", size = 3) +
+  stat_summary(aes(col = site),
+               fun = "mean", geom = "line") +
+  stat_summary(aes(col = site), 
+               fun.data = mean_se, geom = "errorbar", width = 0.5) +
+  theme_bw() 
+```
+
+Plot with pairwise comparisons:  
+
+**Note:** does it make sense that mean kelp biomass is the same across all sites?
+
+```{r}
+mapy <- biomass %>% 
+  # filter(!(site %in% c("sctw", "scdi"))) %>% 
+  filter(site %in% c("aque", "ivee", "mohk", "napl", "carp")) %>% 
+  filter(sp_code == "MAPY") %>% 
+  group_by(site, year) %>% 
+  summarize(total = sum(dry_gm2)) 
+
+mapy_aov <- aov(na.omit(mapy$total) ~ mapy$site)
+
+mapy_tukey <- TukeyHSD(mapy_aov)
+
+mapy_cld <- multcompLetters4(mapy_aov, mapy_tukey)
+
+mapy_cld_df <- enframe(mapy_cld[[1]]$Letters)
+
+mapy_plot_summary <- mapy %>% 
+  group_by(site) %>% 
+  summarize(mean = mean(total, na.rm = TRUE),
+            se = se(total)) %>% 
+  left_join(., mapy_cld_df, by = c("site" = "name")) 
+
+mapy_plot_new <- ggplot(mapy_plot_summary, aes(x = site, y = mean)) +
+  geom_col() +
+  geom_errorbar(aes(ymin = mean - se, ymax = mean + se), width = 0.5) +
+  geom_text(aes(label = value, y = mean + se + 70)) + 
+  labs(x = "Site", y = "Mean biomass (g dry/m2)",
+       title = "MAPY biomass across sites") +
+  # scale_y_continuous(expand = c(0, 0)) +
+  # coord_cartesian(ylim = c(0, 1600)) +
+  theme_bw()
+
+mapy_plot_new
 ```
 
 # 6. Understory biomass
 
 ```{r}
 macrobio <- biomass %>% 
-  filter(site %in% c("bull", "aque", "ivee", "mohk", "napl", "carp")) %>% 
+  filter(site %in% c("aque", "ivee", "mohk", "napl", "carp")) %>% 
   filter(sp_code != "MAPY") %>% 
   group_by(site, year) %>% 
   summarize(total = sum(dry_gm2))
@@ -628,8 +684,8 @@ macrobio_plot_summary <- macrobio %>%
   group_by(site) %>% 
   summarize(mean = mean(total, na.rm = TRUE),
             se = sd(total)/sqrt(length(total))) %>% 
-  left_join(., macrobio_cld_df, by = c("site" = "name")) %>% 
-  mutate(site = fct_relevel(site, "napl", "bull", "carp", "aque", "ivee", "mohk"))
+  left_join(., macrobio_cld_df, by = c("site" = "name")) 
+  # mutate(site = fct_relevel(site, "napl", "carp", "aque", "ivee", "mohk"))
 
 macrobio_plot_new <- ggplot(macrobio_plot_summary, aes(x = site, y = mean)) +
   geom_col() +
@@ -638,10 +694,44 @@ macrobio_plot_new <- ggplot(macrobio_plot_summary, aes(x = site, y = mean)) +
   labs(x = "Site", y = "Mean biomass (g dry/m2)",
        title = "Understory macroalgal biomass across sites") +
   scale_y_continuous(expand = c(0, 0)) +
-  coord_cartesian(ylim = c(0, 1600)) +
+  # coord_cartesian(ylim = c(0, 1600)) +
   theme_bw()
 
 macrobio_plot_new
+
+# all algae
+
+all_macro <- biomass %>% 
+  filter(site %in% c("aque", "ivee", "mohk", "napl", "carp")) %>% 
+  group_by(site, year) %>% 
+  summarize(total = sum(dry_gm2))
+
+all_macro_aov <- aov(all_macro$total ~ all_macro$site)
+
+all_macro_tukey <- TukeyHSD(all_macro_aov)
+
+all_macro_cld <- multcompLetters4(all_macro_aov, all_macro_tukey)
+
+all_macro_cld_df <- enframe(all_macro_cld[[1]]$Letters)
+
+all_macro_plot_summary <- all_macro %>% 
+  group_by(site) %>% 
+  summarize(mean = mean(total, na.rm = TRUE),
+            se = sd(total)/sqrt(length(total))) %>% 
+  left_join(., all_macro_cld_df, by = c("site" = "name")) 
+  # mutate(site = fct_relevel(site, "napl", "carp", "aque", "ivee", "mohk"))
+
+all_macro_plot_new <- ggplot(all_macro_plot_summary, aes(x = site, y = mean)) +
+  geom_col() +
+  geom_errorbar(aes(ymin = mean - se, ymax = mean + se), width = 0.5) +
+  geom_text(aes(label = value, y = mean + se + 80)) + 
+  labs(x = "Site", y = "Mean biomass (g dry/m2)",
+       title = "Whole community biomass across sites") +
+  scale_y_continuous(expand = c(0, 0)) +
+  # coord_cartesian(ylim = c(0, 4500)) +
+  theme_bw()
+
+all_macro_plot_new
 ```
 
 # 7. Community metrics
@@ -650,68 +740,12 @@ macrobio_plot_new
 
 Going to make a site by species matrix for each sampling date. There are a couple of anomalies: CARP_2000-09-08 and NAPL_2000-09-18 don't have any observations, and AQUE_2019-07-23 is missing the sand cover data because sand cover was taken on 2019-07-24. Going to fix that later.   
 
-```{r}
-urchin_summary <- urchins %>% 
-  group_by(sample_ID) %>%
-  summarize(mean_urchin_density = mean(density, na.rm = TRUE),
-            total_urchin_density = sum(density)) %>% 
-  ungroup() 
-
-substrate_summary <- substrate %>% 
-  filter(common_name == "Sand") %>% 
-  group_by(sample_ID) %>% 
-  summarize(mean_sand = mean(percent_cover, na.rm = TRUE)) %>% 
-  ungroup()
-
-kelp_biomass_summary <- biomass %>% 
-  filter(sp_code == "MAPY") %>% 
-  # replace all -99999 values with 0
-  mutate(wm_gm2 = replace(wm_gm2, wm_gm2 < 0, 0)) %>% 
-  group_by(sample_ID) %>% 
-  summarize(mean_kelp = mean(dry_gm2, na.rm = TRUE)) %>% 
-  ungroup()
-
-# site by species matrix
-community_matrix <- prop_biomass %>% 
-  # filter out SCI sites and AHND
-  filter(!(site %in% c("sctw", "scdi", "ahnd"))) %>% 
-  # filter out sites of interest
-  # filter(site %in% c("bull", "aque", "napl", "ivee", "mohk", "carp")) %>% 
-  select(sample_ID, sp_code, total_sp_dry) %>% 
-  pivot_wider(names_from = "sp_code", values_from = "total_sp_dry") %>% 
-  # take out surveys with 0 observations
-  rowwise() %>% 
-  mutate(sum = sum(c_across(1:50))) %>% 
-  ungroup() %>% 
-  filter(sum > 0) %>% # only 2: CARP_2000-09-08 and NAPL_2000-09-18
-  filter(sample_ID != "AQUE_2019-07-23") %>% 
-  select(-sum) %>% 
-  column_to_rownames("sample_ID")
-
-# metadata for plotting
-community_metadata <- biomass %>% 
-  # filter out sites of interest
-  # filter(site %in% c("bull", "aque", "napl", "ivee", "mohk", "carp")) %>% 
-  # filter out SCI sites and AHND
-  filter(!(site %in% c("sctw", "scdi", "ahnd"))) %>% 
-  select(sample_ID, site, year) %>% 
-  unique() %>% 
-  filter(sample_ID %in% rownames(community_matrix)) %>% 
-  left_join(., urchin_summary, by = "sample_ID") %>% 
-  left_join(., substrate_summary, by = "sample_ID") %>% 
-  left_join(., kelp_biomass_summary, by = "sample_ID") %>% 
-  # drop the site with the NA value (AQUE_2019-07-23) - just need to change the date
-  # drop_na() %>% 
-  # sqrt transform environmental variables
-  mutate(urchin_sqrt = sqrt(mean_urchin_density),
-         sand_sqrt = sqrt(mean_sand),
-         kelp_sqrt = sqrt(mean_kelp))
-
-# check to make sure rows match up
-rownames(community_matrix) == community_metadata$sample_ID
-```
+**Note:** as of 2022-03-04, the code to create `community_matrix` and `community_metadata` are in the `00_set-up.R` script.
 
 ## b. Species richness/diversity
+
+### i. Richness
+
 ```{r}
 sp_rich <- specnumber(community_matrix) %>% 
   enframe() %>% 
@@ -731,7 +765,7 @@ sp_rich_plot_summary <- sp_rich %>%
   summarize(mean = mean(richness, na.rm = TRUE),
             se = sd(richness)/sqrt(length(richness))) %>% 
   left_join(., sp_rich_cld_df, by = c("site" = "name")) %>% 
-  mutate(site = fct_relevel(site, "napl", "bull", "carp", "aque", "ivee", "mohk"))
+  mutate(site = fct_relevel(site, "napl", "carp", "aque", "ivee", "mohk"))
 
 sp_rich_plot_new <- ggplot(sp_rich_plot_summary, aes(x = site, y = mean)) +
   geom_col() +
@@ -744,7 +778,10 @@ sp_rich_plot_new <- ggplot(sp_rich_plot_summary, aes(x = site, y = mean)) +
   theme_bw()
 
 sp_rich_plot_new
+```
 
+### ii. Diversity
+```{r}
 sp_div <- diversity(community_matrix, index = "shannon") %>% 
   enframe() %>% 
   left_join(., community_metadata, by = c("name" = "sample_ID")) %>% 
@@ -763,7 +800,7 @@ sp_div_plot_summary <- sp_div %>%
   summarize(mean = mean(shandiv, na.rm = TRUE),
             se = sd(shandiv)/sqrt(length(shandiv))) %>% 
   left_join(., sp_div_cld_df, by = c("site" = "name")) %>% 
-  mutate(site = fct_relevel(site, "napl", "bull", "carp", "aque", "ivee", "mohk"))
+  mutate(site = fct_relevel(site, "napl", "carp", "aque", "ivee", "mohk"))
 
 sp_div_plot_new <- ggplot(sp_div_plot_summary, aes(x = site, y = mean)) +
   geom_col() +
@@ -794,57 +831,125 @@ sim <- with(community_metadata, simper(community_matrix, site))
 head(summary(sim))
 ```
 
-## d. NMDS using Jaccard index (presence/absence)
+## d. NMDS 
+
+### i. Jaccard (presence/absence)
 
 ```{r}
-# turn the community matrix into presence absence
-community_presabs <- community_matrix %>% 
-  mutate(across(.cols = everything(), ~replace(., . > 0, 1)))
+community_mds_jacc <- metaMDS(community_presabs, distance = "jaccard")
 
-community_mds <- metaMDS(community_presabs, distance = "jaccard")
+community_dist_jacc <- vegdist(community_presabs, method = "jaccard")
 
-stressplot(community_mds)
+stressplot(community_mds_jacc)
 
-community_mds_scores_sites <- scores(community_mds, display = "sites") %>% 
+community_mds_sites_jacc <- scores(community_mds_jacc, display = "sites") %>% 
   as.data.frame() %>% 
   rownames_to_column("sample_ID") %>% 
   left_join(., community_metadata, by = "sample_ID") 
 
-community_mds_scores_spp <- scores(community_mds, display = "species") %>% 
+community_mds_spp_jacc <- scores(community_mds_jacc, display = "species") %>% 
   as.data.frame() %>% 
   rownames_to_column("sp_code") %>% 
   left_join(., coarse_traits, by = "sp_code") %>% 
-  filter(sp_code %in% algae_interest)
+  filter(sp_code %in% algae_proposal)
 
-perm <- adonis(community_dist ~ site, data = community_metadata)
+perm <- adonis(community_dist_jacc ~ site, data = community_metadata)
 
 perm
 
-disper <- betadisper(community_dist, community_metadata$site)
+pairwise.results <- pairwise.adonis(community_presabs, factors = community_metadata$site, sim.method = "jaccard")
+
+disper <- betadisper(community_dist_jacc, community_metadata$site)
 
 anova(disper)
 
-fit <- community_metadata %>% 
-  select(sample_ID, site, mean_urchin_density, mean_sand) %>% 
-  mutate(across(.cols = 3:4, ~replace(., is.na(.), 0))) %>% 
-  envfit(community_mds, ., perm = 999)
+TukeyHSD(disper)
 
-fit.vect <- scores(fit, display = "vectors") %>% 
+fit_jacc <- community_metadata %>% 
+  select(sample_ID, site, urchin_density, mean_sand) %>% 
+  mutate(across(.cols = 3:4, ~replace(., is.na(.), 0))) %>% 
+  envfit(community_mds_jacc, ., perm = 999)
+
+fit_vect_jacc <- scores(fit, display = "vectors") %>% 
   as.data.frame()
 
-ggplot() +
-  geom_point(data = community_mds_scores_sites, aes(x = NMDS1, y = NMDS2, color = site)) +
-  # scale_color_manual(values = pal) +
+nmds_plot_jacc <- ggplot() +
+  # x and y axes
   geom_vline(xintercept = c(0), color = "grey70", linetype = 2) +
   geom_hline(yintercept = c(0), color = "grey70", linetype = 2) +
-  stat_ellipse(data = community_mds_scores_sites, aes(x = NMDS1, y = NMDS2, color = site), level = 0.95, size = 1) +
-  # geom_segment(data = community_mds_scores_spp, aes(x = 0, y = 0, xend = NMDS1, yend = NMDS2), arrow = arrow(length = unit(0.2, "cm"))) +
-  # geom_text(data = community_mds_scores_spp, aes(x = NMDS1, y = NMDS2, label = scientific_name)) +
-  geom_segment(data = fit.vect, aes(x = 0, y = 0, xend = NMDS1, yend = NMDS2), arrow = arrow(length = unit(0.2, "cm"))) +
-  geom_text(data = fit.vect, aes(x = NMDS1, y = NMDS2, label = rownames(fit.vect))) +
+  # points for sites
+  geom_point(data = community_mds_sites_jacc, aes(x = NMDS1, y = NMDS2, color = site)) +
+  stat_ellipse(data = community_mds_sites_jacc, aes(x = NMDS1, y = NMDS2, color = site), level = 0.95, size = 1) +
+  # # arrows for species
+  # geom_segment(data = community_mds_spp_jacc, aes(x = 0, y = 0, xend = NMDS1, yend = NMDS2), arrow = arrow(length = unit(0.2, "cm")), color = "blue") +
+  # geom_text(data = community_mds_spp_jacc, aes(x = NMDS1, y = NMDS2, label = scientific_name), color = "blue") +
+  # # arrows for environmental characteristics (vector fitting)
+  # geom_segment(data = fit_vect_jacc, aes(x = 0, y = 0, xend = NMDS1, yend = NMDS2), arrow = arrow(length = unit(0.2, "cm"))) +
+  # geom_text(data = fit_vect_jacc, aes(x = NMDS1, y = NMDS2, label = rownames(fit.vect))) +
+  # theme
   theme_bw() +
   guides(colour = guide_legend(nrow = 5)) +
   theme(legend.position = "bottom", legend.box = "vertical", legend.margin = margin()) 
+
+nmds_plot_jacc
+```
+
+
+### ii. Bray-Curtis
+
+```{r}
+community_mds_bray <- metaMDS(community_matrix, distance = "bray")
+
+community_dist_bray <- vegdist(community_matrix, method = "bray")
+
+stressplot(community_mds_bray)
+
+community_mds_sites_bray <- scores(community_mds_bray, display = "sites") %>% 
+  as.data.frame() %>% 
+  rownames_to_column("sample_ID") %>% 
+  left_join(., community_metadata, by = "sample_ID") 
+
+community_mds_spp_bray <- scores(community_mds_bray, display = "species") %>% 
+  as.data.frame() %>% 
+  rownames_to_column("sp_code") %>% 
+  left_join(., coarse_traits, by = "sp_code") %>% 
+  filter(sp_code %in% algae_proposal)
+
+perm <- adonis(community_dist_bray ~ site, data = community_metadata)
+
+perm
+
+pairwise.results <- pairwise.adonis(community_matrix, factors = community_metadata$site, sim.method = "bray")
+
+disper <- betadisper(community_dist_bray, community_metadata$site)
+
+anova(disper)
+
+TukeyHSD(disper)
+
+fit <- community_metadata %>% 
+  select(sample_ID, site, urchin_density, mean_sand) %>% 
+  mutate(across(.cols = 3:4, ~replace(., is.na(.), 0))) %>% 
+  envfit(community_mds_bray, ., perm = 999)
+
+fit_vect_bray <- scores(fit, display = "vectors") %>% 
+  as.data.frame()
+
+nmds_plot_bray <- ggplot() +
+  geom_point(data = community_mds_sites_bray, aes(x = NMDS1, y = NMDS2, color = site)) +
+  # scale_color_manual(values = pal) +
+  geom_vline(xintercept = c(0), color = "grey70", linetype = 2) +
+  geom_hline(yintercept = c(0), color = "grey70", linetype = 2) +
+  stat_ellipse(data = community_mds_sites_bray, aes(x = NMDS1, y = NMDS2, color = site), level = 0.95, size = 1) +
+  # geom_segment(data = community_mds_scores_spp, aes(x = 0, y = 0, xend = NMDS1, yend = NMDS2), arrow = arrow(length = unit(0.2, "cm"))) +
+  # geom_text(data = community_mds_scores_spp, aes(x = NMDS1, y = NMDS2, label = scientific_name)) +
+  geom_segment(data = fit_vect_bray, aes(x = 0, y = 0, xend = NMDS1, yend = NMDS2), arrow = arrow(length = unit(0.2, "cm"))) +
+  geom_text(data = fit_vect_bray, aes(x = NMDS1, y = NMDS2, label = rownames(fit.vect))) +
+  theme_bw() +
+  guides(colour = guide_legend(nrow = 5)) +
+  theme(legend.position = "bottom", legend.box = "vertical", legend.margin = margin()) 
+
+nmds_plot_bray
 ```
 
 ## e. RDA (in proposal)
@@ -904,8 +1009,8 @@ Now that it seems ok, going to do the rest of the data set.
 
 ```{r}
 prop_traits <- prop_biomass %>% 
-  filter(site %in% c("bull", "aque", "ahnd", "napl", "ivee", "golb", 
-           "abur", "mohk", "carp")) %>% 
+  # filter(site %in% c("bull", "aque", "ahnd", "napl", "ivee", "golb", 
+  #          "abur", "mohk", "carp")) %>% 
   select(sample_ID, site, year, sp_code, growth_form,
          total_sp_dry, total_sp_wet, percent_sp_dry, percent_sp_wet) %>% 
   # create a new column where total biomass for the whole survey is calculated
@@ -957,7 +1062,7 @@ df <- biomass %>%
   # filter(total_gf_dry > 0) %>% 
   drop_na()
 
-ggplot(df, aes(x = mean_urchin_density, y = mean_gf_dry)) +
+ggplot(df, aes(x = urchin_density, y = mean_gf_dry)) +
   geom_point() +
   geom_smooth(method = "lm", se = FALSE) 
 
@@ -968,8 +1073,8 @@ ggplot(df, aes(x = mean_sand, y = mean_gf_dry)) +
 ggplot(df %>% filter(mean_gf_dry > 0), aes(x = mean_gf_dry)) +
   geom_histogram()
 
-# GLM with tweedie distribution
-model1 <- glmmTMB(mean_gf_dry ~ mean_urchin_density + mean_sand + mean_urchin_density*mean_sand + (1|site.x) + (1|year.x), 
+# GLM with tweedie distribution for leathery macrophytes
+model1 <- glmmTMB(mean_gf_dry ~ urchin_density + mean_sand + urchin_density*mean_sand + (1|site.x) + (1|year.x), 
               data = df, family = tweedie(link = "log"))
 
 summary(model1)
@@ -985,7 +1090,7 @@ testDispersion(simul.resid)
 # no over dispersion
 
 # GLM with gamma distribution and a log link function, but without the interaction between urchins and sand
-model2 <- glmmTMB(total_gf_dry ~ mean_urchin_density + mean_sand + (1|site.x) + (1|year.x), 
+model2 <- glmmTMB(total_gf_dry ~ urchin_density + mean_sand + (1|site.x) + (1|year.x), 
               data = df, family = Gamma(link = "log"))
 
 summary(model2)
@@ -995,23 +1100,90 @@ AIC(model1, model2)
 predict.glm(model1, type = "response")
 
 # GLM with beta
-model1.prop <- glmmTMB(percent_gf_dry ~ mean_urchin_density + mean_sand + mean_urchin_density*mean_sand + (1|site.x) + (1|year.x),
+model1.prop <- glmmTMB(percent_gf_dry ~ urchin_density + mean_sand + mean_kelp + (1|site.x) + (1|year.x),
                        data = df, family = beta_family(link = "logit"))
 
 summary(model1.prop)
 
-emmeans(model1, "mean_urchin_density")
+emmeans(model1, "urchin_density")
+```
 
+# 9. Community-weighted means
 
+These are calculated using the `functcomp` function in the `FD` package. The function requires a matrix with functional traits and a matrix of species abundances (or presence-absence). In the trait matrix, rows are species and columns are traits. In the species matrix, rows are samples and columns are species.  
 
+The first step is to get the `coarse_traits` data frame into a functional form (lol).
 
+```{r}
+trait_matrix <- coarse_traits %>% 
+  select(sp_code, growth_morph, growth_form, pigment_type, 
+         height_class, longevity, posture, branching_yn) %>% 
+  filter(sp_code != "MAPY") %>% 
+  column_to_rownames("sp_code")
+
+# making sure the rownames in the trait matrix == columns in the community matrix
+rownames(trait_matrix) == colnames(community_matrix)
+```
+
+Then the community matrix has to be a matrix, not a data frame (why?).
+```{r}
+comm_matrix <- as.matrix(community_matrix)
 ```
 
 
+Then, you're ready to calculate community-weighted means.
+
+```{r}
+CWM_cat <- functcomp(trait_matrix, comm_matrix, 
+                  CWM.type = c("all")) %>% 
+  rownames_to_column("sample_ID") %>% 
+  left_join(., community_metadata, by = "sample_ID") %>% 
+  # to get the glmm to work!!!!!!
+  mutate(across(.cols = everything(), .fns = ~ replace(., . == 1, 0.999)))
+```
+
+For categorical traits, the output is the exact same as the `prop_traits` data frame up top - each cell is the proportion of the community biomass that is attributed to a specific category (for example, within `growth_morph`, at CARP in 2000, there is 92% `solitary` and 8 % `aggregated`).
+
+Now to plot?
+
+```{r}
+lm_plot <- ggplot(CWM_cat, 
+                  aes(x = urchin_density, y = growth_form_leathery_macrophyte)) +
+  # scale_x_continuous(expand = c(0, 0)) +
+  # scale_y_continuous(expand = c(0, 0)) +
+  coord_cartesian(ylim = c(-0.001, 1)) +
+  geom_point(aes(col = site)) +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(x = "Urchin density", y = "Proportion biomass (dry g/m2)",
+       title = "Proportion leathery macrophytes")
+
+lm_plot
+
+model_lm <- glmmTMB(growth_form_leathery_macrophyte ~ urchin_density + (1|site) + (1|year), 
+              data = CWM_cat, ziformula = ~1, family = beta_family(link = "logit"))
+
+model_lm
+
+summary(model_lm)
+
+model_lm_resid <- simulateResiduals(model_lm)
+
+plot(model_lm_resid)
+
+temp <- ggpredict(model_lm, terms = "urchin_density")
+
+# predict(model_lm)
+
+plot(temp, add.data = TRUE)
+```
 
 
+```{r}
+ggplot(CWM_cat, aes(x = urchin_density, y = mean_sand)) +
+  geom_point() 
 
-
+cor.test(CWM_cat$urchin_density, CWM_cat$mean_sand)
+```
 
 
 
