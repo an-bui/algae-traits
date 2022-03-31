@@ -11,163 +11,18 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r}
 # source the cleaning/summarizing script, which sources the set up
-source(here::here("code", "01_cleaning-and-summarizing.R"))
+source(here::here("code", "00_set-up.R"))
 ```
 
-# 1. trait PCA
- 
-traits are rows, species (by species code) are columns
-cell values are average trait values for species... bummer dude
+# 0. Orientation
 
-## a. summarize traits by species
-```{r}
-fvfm_summary_spp <- fvfm_raw %>% 
-  # only use FvFm, drop the NAs, change the column name
-  select(specimen_ID, '1:Fv/Fm') %>% 
-  drop_na() %>%
-  rename('fvfm_meas' = '1:Fv/Fm') %>% 
-  # make sure that fvfm_meas is numeric
-  mutate(fvfm_meas = as.numeric(fvfm_meas)) %>%
-  # join with metadata: spp codes + specimen_ID
-  left_join(., metadata, by = "specimen_ID") %>% 
-  # calculate mean, variance, standard deviation
-  group_by(sp_code) %>% 
-  summarize(fvfm = mean(fvfm_meas)) %>% 
-  pivot_longer(cols = fvfm, names_to = "trait", values_to = "value")
-fvfm_test <- fvfm_summary %>% 
-  select(specimen_ID, mean) %>% 
-  rename("fvfm" = mean)
-thickness_summary_spp <- thickness %>% 
-  pivot_longer(cols = thickness_01:thickness_10, names_to = "measurement_n", values_to = "thickness_mm") %>% 
-  # replace NAs for 20210709-MOHK-004 with the quickfix value
-  mutate(thickness_mm = replace(thickness_mm, 
-                                is.na(thickness_mm) & specimen_ID == "20210709-MOHK-004", 
-                                quickfix)) %>% 
-  # join with metadata_subsamples: spp codes + specimen_ID
-  left_join(., metadata_subsamples, by = "specimen_ID") %>% 
-  group_by(sp_code) %>% 
-  summarize(thickness_mm = mean(thickness_mm)) %>% 
-  pivot_longer(cols = thickness_mm, names_to = "trait", values_to = "value") %>% 
-  drop_na()
-thickness_test <- thickness_summary %>% 
-  select(specimen_ID, mean) %>% 
-  rename("thickness_mm" = mean)
-weight_summary_spp <- weight %>% 
-  filter(type == "thallus") %>% 
-  # join with metadata: spp codes + specimen_ID
-  left_join(., metadata, by = "specimen_ID") %>% 
-  drop_na(sp_code) %>% 
-  group_by(sp_code) %>% 
-  summarize(weight_wet_g = mean(weight_wet_g),
-            weight_dry_g = mean(weight_dry_g),
-            dmc = weight_dry_g/weight_wet_g) %>% 
-  pivot_longer(cols = weight_wet_g:dmc, names_to = "trait", values_to = "value")
-weight_test <- weight_summary %>% 
-  select(specimen_ID, weight_wet_g, weight_dry_g, tdmc)
-volume_summary_spp <- volume %>% 
-  filter(type == "thallus") %>% 
-  # join with metadata: spp codes + specimen_ID
-  left_join(., metadata_subsamples, by = "specimen_ID") %>% 
-  drop_na(sp_code) %>% 
-  group_by(sp_code) %>% 
-  summarize(volume_mL = mean(volume_total_mL)) %>% 
-  pivot_longer(cols = volume_mL, names_to = "trait", values_to = "value")
-volume_test <- volume %>% 
-  select(specimen_ID, volume_total_mL) %>% 
-  rename("volume_mL" = volume_total_mL) %>% 
-  group_by(specimen_ID) %>% 
-  summarize(volume_mL = sum(volume_mL))
-sa_summary_spp <- sa_peri_summary %>% 
-  select(specimen_ID, area_total) %>% 
-  group_by(specimen_ID) %>% 
-  summarize(area_total = sum(area_total)) %>% 
-  ungroup() %>% 
-  drop_na(area_total) %>% 
-  # join with metadata_subsamples: spp code + specimen_ID
-  left_join(., metadata_subsamples, by = "specimen_ID") %>% 
-  group_by(sp_code) %>% 
-  summarize(sa_mm2 = mean(area_total)) %>% 
-  pivot_longer(cols = sa_mm2, names_to = "trait", values_to = "value")
-sa_peri_test <- sa_peri_summary %>% 
-  select(specimen_ID, area_total, peri_total, ratio) 
-# %>% 
-#   group_by(specimen_ID) %>% 
-#   summarize(area_total = sum(area_total),
-#             peri_total = sum(peri_total))
-peri_summary_spp <- sa_peri %>% 
-  # drop all observations that haven't been processed
-  drop_na(results_file) %>% 
-  select(specimen_ID, peri_total) %>% 
-  group_by(specimen_ID) %>% 
-  summarize(peri_total = sum(peri_total)) %>% 
-  ungroup() %>% 
-  # join with metadata_subsamples: spp code + specimen_ID
-  left_join(., metadata_subsamples, by = "specimen_ID") %>% 
-  group_by(sp_code) %>% 
-  summarize(peri_mm = mean(peri_total)) %>% 
-  pivot_longer(cols = peri_mm, names_to = "trait", values_to = "value")
-hw_summary_spp <- hw %>% 
-  filter(type == "whole") %>% 
-  drop_na(max_width_cm) %>% 
-  # join with metadata: spp codes + specimen_ID
-  left_join(., metadata_subsamples, by = "specimen_ID") %>% 
-  drop_na(sp_code) %>% 
-  group_by(sp_code) %>% 
-  summarize(height_cm = mean(max_height_cm),
-            width_cm = mean(max_width_cm)) %>% 
-  pivot_longer(cols = height_cm:width_cm, names_to = "trait", values_to = "value")
-hw_test <- hw_summary %>% 
-  select(specimen_ID, max_height_cm, max_width_cm)
-sta_summary_spp <- sa_peri_summary %>% 
-  left_join(., weight_summary, by = "specimen_ID") %>% 
-  mutate(sta = area_total/weight_dry_g) %>% 
-  # join with metadata: spp codes + specimen_ID
-  left_join(., metadata_subsamples, by = "specimen_ID") %>% 
-  drop_na(sp_code, sta) %>% 
-  group_by(sp_code) %>% 
-  summarize(sta = mean(sta)) %>% 
-  pivot_longer(cols = sta, names_to = "trait", values_to = "value")
-sta_test <- sta_summary %>% 
-  select(specimen_ID, sta_mm_mg)
-ct_summary_spp <- coarse_traits %>% 
-  select(sp_code, growth_form, pigment_type) %>% 
-  filter(sp_code %in% pull(hw_summary_spp, sp_code)) %>% 
-  pivot_longer(cols = growth_form:pigment_type, names_to = "trait", values_to = "value") 
-ct_test <- metadata_subsamples %>% 
-  select(specimen_ID, sp_code) %>% 
-  left_join(., coarse_traits, by = "sp_code")
-```
+Necessary data frames are `tbs_matrix` created in the set up script.
 
-## b. make trait by species matrix
-```{r}
-tbs_matrix <- rbind(fvfm_summary_spp, thickness_summary_spp,
-                    weight_summary_spp, volume_summary_spp,
-                    sa_summary_spp, peri_summary_spp, hw_summary_spp,
-                    sta_summary_spp) %>% 
-  pivot_wider(names_from = "trait", values_from = "value") %>% 
-  select(-sa_mm2, -peri_mm, -weight_wet_g, -weight_dry_g) %>%
-  filter(sp_code != "UV") %>%
-  drop_na(sta) %>% 
-  full_join(., ct_summary_spp, by = "sp_code") %>%
-  column_to_rownames("sp_code") %>% 
-  drop_na()
-tbs_test <- full_join(fvfm_test, thickness_test, by = "specimen_ID") %>% 
-  full_join(., weight_test, by = "specimen_ID") %>% 
-  full_join(., volume_test, by = "specimen_ID") %>% 
-  full_join(., sa_peri_test, by = "specimen_ID") %>% 
-  full_join(., hw_test, by = "specimen_ID") %>% 
-  full_join(., sta_test, by = "specimen_ID") %>% 
-  full_join(., ct_test, by = "specimen_ID") %>% 
-  select(-height_class) %>% 
-  drop_na(1:12) %>% 
-  column_to_rownames("specimen_ID")
-```
-
-## c. attempt a PCoA
+# 1. trait PCoA
 
 ```{r}
-tbs_gower <- tbs_test %>% 
-  select(1:12) %>% 
+tbs_gower <- tbs_matrix %>% 
+  select(2:13) %>% 
   gowdis()
 tbs_pcoa <- cmdscale(tbs_gower, eig = TRUE)
 # tbs_pcoa <- wcmdscale(tbs_gower, eig = TRUE)
@@ -177,27 +32,39 @@ biplot(ape::pcoa(tbs_gower, correction = "none"))
 # tbs.wa <- wascores(tbs_pcoa$points[,1:2], tbs_matrix)
 # text(tbs.wa, rownames(tbs.wa), cex=0.7, col="red")
 # biplot.pcoa(tbs_gower, tbs_pcoa, dir.axis1 = -1)
-tbs_pcoa$species <- wascores(tbs_pcoa$points, tbs_test[, 1:12], expand = TRUE)
+tbs_pcoa$species <- wascores(tbs_pcoa$points, tbs_matrix[, 2:13], expand = TRUE)
 p1 <- ordiplot(tbs_pcoa, type = "none")
 points1 <- points(p1, "sites", pch = 21, col = "red", bg = "yellow")
 text(p1, "species", col = "blue", cex = 0.9)
 # identify(p1, "spec")
 ```
 
-## d. attempt a PCA
+# 2. PCA
+
+2022-03-14: none of this seems right? Some scaling needs to happen...
 
 ```{r}
 # only include numeric variables
-tbs_tf <- decostand(tbs_test[, 1:12], method = "log")
-tbs_pca <- rda(tbs_tf)
+tbs_pca <- rda(tbs_matrix[, 2:13])
+
+# extract proportion explained for each axis
+summary(tbs_pca)
+
+# simple biplot (compare with ggplot output to make sure it's right)
 biplot(tbs_pca)
+
+# species points
 PCAscores <- scores(tbs_pca, display = "sites") %>% 
   as.data.frame() %>% 
   rownames_to_column("specimen_ID") %>% 
   left_join(metadata_subsamples, by = "specimen_ID") %>% 
   left_join(., coarse_traits, by = "sp_code")
+
+# trait vectors
 PCAvect <- scores(tbs_pca, display = "species") %>% 
   as.data.frame()
+
+# plot PCA
 plot_PCA <- ggplot() +
   geom_point(data = PCAscores, aes(x = PC1, y = PC2, color = scientific_name)) +
   # scale_color_manual(values = pal) +
@@ -208,22 +75,22 @@ plot_PCA <- ggplot() +
   theme_bw() +
   guides(colour = guide_legend(nrow = 5)) +
   theme(legend.position = "bottom", legend.box = "vertical", legend.margin = margin()) +
-  labs(x = "PC1 (17.823%)",
-       y = "PC2 (3.218%)",
+  labs(x = "PC1 (98.67%)",
+       y = "PC2 (1.33%)",
        title = "Principal Components Analysis",
        color = "Scientific name") 
 plot_PCA
+
 # ggsave(here::here("figures/prelim-ordinations",
 #                   paste("PCA_spp-", todays_date, ".jpg", sep = "")),
 #        plot_PCA,
 #        width = 8, height = 8, dpi = 150)
 ```
 
-
-## e. make a corrplot
+# 3. Corrplot
 
 ```{r}
-M <- tbs_test[, 1:12] %>% 
+M <- tbs_matrix[, 2:13] %>% 
   # take out variables with NAs
   # select(-growth_form, -pigment_type) %>% 
   # take out UV
