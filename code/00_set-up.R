@@ -55,13 +55,14 @@ volume <- read_sheet(sheet_id, sheet = "07-volume", na = "NA")
 # 3.  getting FvFm data ---------------------------------------------------
 
 # creating a vector of file names for .csv
-path <- here::here("data", c(
+path <- here::here("data/fvfm", c(
   "20210630-MOHK-v2-cleaned.csv",
   "20210709-MOHK-v2-cleaned.csv",
   "20210719-IVEE-v2-cleaned.csv",
   "20210720-CARP-v2-cleaned.csv",
   "20210721-BULL-v2-cleaned.csv",
-  "20210722-AQUE-v2-cleaned.csv"))
+  "20210722-AQUE-v2-cleaned.csv",
+  "20220405-MOHK-cleaned.csv"))
 
 # read in all .csv files into one data frame
 fvfm_raw <- path %>% 

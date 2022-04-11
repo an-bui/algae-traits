@@ -23,18 +23,58 @@ source(here::here("code", "01_cleaning-and-summarizing.R"))
 
 # 1. FvFm 
 
-## a. box plot
+## a. analysis of variance
 
 ```{r}
-fvfm_boxplot <- ggplot(fvfm_summary, aes(x = sp_code, y = mean)) +
-  geom_boxplot() +
-  geom_jitter(alpha = 0.45) +
+fvfm_df <- fvfm_raw %>% 
+  # only use FvFm, drop the NAs, change the column name
+  select(specimen_ID, '1:Fv/Fm') %>% 
+  drop_na() %>%
+  rename('fvfm_meas' = '1:Fv/Fm') %>% 
+  # make sure that fvfm_meas is numeric
+  mutate(fvfm_meas = as.numeric(fvfm_meas)) %>% 
+  # join with metadata: spp codes + specimen_ID
+  left_join(., metadata, by = "specimen_ID") %>% 
+  # join with coarse_traits
+  left_join(., coarse_traits, by = "sp_code")
+
+# analysis of variance
+fvfm_sp_aov <- aov(fvfm_meas ~ sp_code, data = fvfm_df)
+
+fvfm_tax_aov <- aov(fvfm_meas ~ taxon_phylum, data = fvfm_df)
+
+summary(fvfm_sp_aov)
+summary(fvfm_tax_aov)
+# both significant
+
+# Tukey HSD
+fvfm_tukey <- TukeyHSD(fvfm_sp_aov)
+
+# compact letter display
+fvfm_cld <- multcompLetters4(fvfm_sp_aov, fvfm_tukey)
+
+# output of compact letter display in data frame
+fvfm_cld_df <- enframe(fvfm_cld[[1]]$Letters) %>% 
+  rename(sp_code = "name")
+```
+
+## b. box plot
+
+```{r}
+fvfm_boxplot <- fvfm_summary %>% 
+  left_join(., fvfm_cld_df, by = "sp_code") %>% 
+  group_by(sp_code) %>% 
+  ggplot(aes(x = sp_code, y = mean, group = sp_code)) +
+  geom_boxplot(aes(fill = value)) +
+  geom_jitter() +
+  geom_text(aes(label = value, y = max(mean)), nudge_y = 0.01) + 
   facet_wrap(~ pigment_type, scales = "free_x") +
   scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
   theme_bw() +
   labs(title = "Photosynthetic efficiency",
        x = "Species code",
-       y = "Fv/Fm")
+       y = "Fv/Fm") +
+  theme(legend.position = "none")
 
 fvfm_boxplot
 
@@ -46,18 +86,61 @@ fvfm_boxplot
 
 # 2. Thickness
 
-## a. box plot
+## a. analysis of variance
 
 ```{r}
-thickness_boxplot <- ggplot(thickness_summary, aes(x = sp_code, y = mean)) +
-  geom_boxplot() +
-  geom_jitter(alpha = 0.45) +
+thickness_df <- thickness %>% 
+  pivot_longer(cols = thickness_01:thickness_10, names_to = "measurement_n", values_to = "thickness_mm") %>% 
+  # replace NAs for 20210709-MOHK-004 with the quickfix value
+  mutate(thickness_mm = replace(thickness_mm, 
+                                is.na(thickness_mm) & specimen_ID == "20210709-MOHK-004", 
+                                quickfix)) %>% 
+  group_by(specimen_ID) %>% 
+  # join with metadata_subsamples: spp codes + specimen_ID
+  left_join(., metadata_subsamples, by = "specimen_ID") %>% 
+  # join with coarse_traits
+  left_join(., coarse_traits, by = "sp_code") %>% 
+  unique()
+
+# analysis of variance
+thickness_sp_aov <- aov(thickness_mm.x ~ sp_code, data = thickness_df)
+
+thickness_tax_aov <- aov(thickness_mm.x ~ taxon_phylum, data = thickness_df)
+
+summary(thickness_sp_aov)
+summary(thickness_tax_aov)
+# both significant
+
+# Tukey HSD
+thickness_tukey <- TukeyHSD(thickness_sp_aov)
+
+# compact letter display
+thickness_cld <- multcompLetters4(thickness_sp_aov, thickness_tukey)
+
+# output of compact letter display in data frame
+thickness_cld_df <- enframe(thickness_cld[[1]]$Letters) %>% 
+  rename(sp_code = "name")
+```
+
+
+## b. box plot
+
+```{r}
+thickness_boxplot <- thickness_summary %>% 
+  left_join(., thickness_cld_df, by = "sp_code") %>% 
+  drop_na(site, mean) %>% 
+  group_by(sp_code) %>% 
+  ggplot(aes(x = sp_code, y = mean, group = sp_code)) +
+  geom_boxplot(aes(fill = value)) +
+  geom_jitter() +
+  geom_text(aes(label = value, y = max(mean)), nudge_y = 0.01) + 
   facet_wrap(~ pigment_type, scales = "free_x") +
   scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
   theme_bw() +
   labs(title = "Thallus thickness",
        x = "Species code",
-       y = "Thickness (mm)")
+       y = "Thickness (mm)") +
+  theme(legend.position = "none")
 
 thickness_boxplot
 
@@ -69,18 +152,66 @@ thickness_boxplot
 
 # 3. Weights
 
-## a. box plot
+# a. analysis of variance
 
 ```{r}
-dryw_boxplot <- ggplot(weight_summary, aes(x = sp_code, y = weight_dry_g)) +
-  geom_boxplot() +
-  geom_jitter(alpha = 0.45) +
+# analysis of variance
+dryw_sp_aov <- aov(weight_dry_mg ~ sp_code, data = weight_summary %>% filter(!(sp_code %in% c("BO", "CO"))))
+
+dryw_tax_aov <- aov(weight_dry_mg ~ taxon_phylum, data = weight_summary %>% filter(!(sp_code %in% c("BO", "CO"))))
+
+summary(dryw_sp_aov)
+summary(dryw_tax_aov)
+# species significant, phylum not significant
+
+# Tukey HSD
+dryw_tukey <- TukeyHSD(dryw_sp_aov)
+
+# compact letter display
+dryw_cld <- multcompLetters4(dryw_sp_aov, dryw_tukey)
+
+# output of compact letter display in data frame
+dryw_cld_df <- enframe(dryw_cld[[1]]$Letters) %>% 
+  rename(sp_code = "name")
+
+# analysis of variance
+tdmc_sp_aov <- aov(tdmc ~ sp_code, data = weight_summary %>% filter(!(sp_code %in% c("BO", "CO"))))
+
+tdmc_tax_aov <- aov(tdmc ~ taxon_phylum, data = weight_summary %>% filter(!(sp_code %in% c("BO", "CO"))))
+
+summary(tdmc_sp_aov)
+summary(tdmc_tax_aov)
+# species not significant, phylum significant???
+
+# Tukey HSD
+tdmc_tukey <- TukeyHSD(tdmc_tax_aov)
+
+# compact letter display
+tdmc_cld <- multcompLetters4(tdmc_tax_aov, tdmc_tukey)
+
+# output of compact letter display in data frame
+tdmc_cld_df <- enframe(tdmc_cld[[1]]$Letters) %>% 
+  rename(taxon_phylum = "name")
+```
+
+
+## b. box plot
+
+```{r}
+dryw_boxplot <- weight_summary %>% 
+  filter(sp_code != "BO") %>% 
+  left_join(., dryw_cld_df, by = "sp_code") %>% 
+  ggplot(aes(x = sp_code, y = weight_dry_g)) +
+  geom_boxplot(aes(fill = value)) +
+  geom_jitter() +
+  geom_text(aes(label = value, y = 9), nudge_y = 0.01) + 
   facet_wrap(~ pigment_type, scales = "free_x") +
   scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
-  theme_bw()  +
+  theme_bw() +
   labs(title = "Oven dry weight",
        x = "Species code",
-       y = "Dry weight (g)")
+       y = "Dry weight (g)") +
+  theme(legend.position = "none")
 
 dryw_boxplot
 
@@ -106,10 +237,15 @@ wetw_boxplot
 #        wetw_boxplot,
 #        width = 8, height = 5, dpi = 150)
 
-tdmc_boxplot <- ggplot(weight_summary %>% filter(sp_code != "BO"), aes(x = sp_code, y = tdmc)) +
-  geom_boxplot() +
-  geom_jitter(alpha = 0.45) +
+tdmc_boxplot <- weight_summary %>% 
+  filter(!(sp_code %in% c("BO", "CO"))) %>% 
+  left_join(., tdmc_cld_df, by = "taxon_phylum") %>% 
+  ggplot(aes(x = sp_code, y = tdmc)) +
+  geom_boxplot(aes(fill = value)) +
+  geom_jitter() +
+  geom_text(aes(label = value, y = 0.3), nudge_y = 0.01) + 
   facet_wrap(~ pigment_type, scales = "free_x") +
+  scale_y_continuous(limits = c(0, 0.4)) +
   scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
   theme_bw() +
   labs(title = "Thallus dry matter content",
@@ -279,12 +415,46 @@ width_boxplot
 
 # 10. specific thallus area
 
+## a. analysis of variance
+
+```{r}
+sta_df <- sta_summary %>% 
+  drop_na(sta_mm_mg) %>% 
+  slice(-125) 
+
+# analysis of variance
+sta_sp_aov <- aov(sta_mm_mg ~ sp_code, data = sta_df)
+
+sta_tax_aov <- aov(sta_mm_mg ~ taxon_phylum, data = sta_df)
+
+summary(sta_sp_aov)
+summary(sta_tax_aov)
+# both significant
+
+# Tukey HSD
+sta_tukey <- TukeyHSD(sta_sp_aov)
+
+# compact letter display
+sta_cld <- multcompLetters4(sta_sp_aov, sta_tukey)
+
+# output of compact letter display in data frame
+sta_cld_df <- enframe(sta_cld[[1]]$Letters) %>% 
+  rename(sp_code = "name")
+```
+
+## b. boxplot
+
 thallus area:dry weight
 
 ```{r}
-sta_boxplot <- ggplot(sta_summary %>% drop_na(sta_mm_mg) %>% slice(-125), aes(x = sp_code, y = sta_mm_mg)) +
+sta_boxplot <- sta_summary %>% 
+  drop_na(sta_mm_mg) %>% 
+  slice(-125) %>% 
+  left_join(., sta_cld_df, by = "sp_code") %>% 
+  ggplot(aes(x = sp_code, y = sta_mm_mg)) +
   geom_boxplot() +
   geom_jitter(alpha = 0.45) +
+  geom_text(aes(label = value, y = max(sta_mm_mg)*1.05), nudge_y = 0.01) + 
   facet_wrap(~ pigment_type, scales = "free_x") +
   scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
   theme_bw() +
