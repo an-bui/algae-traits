@@ -38,6 +38,9 @@ fvfm_df <- fvfm_raw %>%
   # join with coarse_traits
   left_join(., coarse_traits, by = "sp_code")
 
+bartlett.test(fvfm_meas ~ sp_code, data = fvfm_df)
+# definitely heterogeneous variances
+
 # analysis of variance
 fvfm_sp_aov <- aov(fvfm_meas ~ sp_code, data = fvfm_df)
 
@@ -84,6 +87,161 @@ fvfm_boxplot
 #        width = 8, height = 5, dpi = 150)
 ```
 
+## c. boxplot (PTCA adults vs recruits)
+
+```{r}
+test <- fvfm_raw %>% 
+  rename('fvfm_meas' = '1:Fv/Fm') %>% 
+  mutate(fvfm_meas = as.numeric(fvfm_meas)) %>% 
+  select(specimen_ID, subsample_ID, fvfm_meas) %>% 
+  group_by(specimen_ID) %>% 
+  summarize(mean = mean(fvfm_meas),
+            var = var(fvfm_meas),
+            sd = sd(fvfm_meas)) %>% 
+  left_join(., metadata, by = "specimen_ID") %>% 
+  filter(sp_code == "PTCA" & site %in% c("Mohawk", "Arroyo Quemado")) %>% 
+  mutate(lifestage = case_when(
+    date_collected %in% c("20220405", "20220407") ~ "adult",
+    TRUE ~ "new_recruit"
+  ))
+
+var.test(mean ~ lifestage, data = test %>% filter(site == "Arroyo Quemado"))
+var.test(mean ~ lifestage, data = test %>% filter(site == "Mohawk"))
+# both homogeneous variances
+
+t.test(mean ~ lifestage, data = test %>% filter(site == "Arroyo Quemado"))
+t.test(mean ~ lifestage, data = test %>% filter(site == "Mohawk"))
+
+var.test(mean ~ site, data = test %>% filter(lifestage == "adult"))
+var.test(mean ~ site, data = test %>% filter(lifestage == "new_recruit"))
+# homogeneous variance
+t.test(mean ~ site, data = test %>% filter(lifestage == "adult"))
+t.test(mean ~ site, data = test %>% filter(lifestage == "new_recruit"))
+# not significantly different
+
+test_plot <- fvfm_raw %>% 
+  rename('fvfm_meas' = '1:Fv/Fm') %>% 
+  mutate(fvfm_meas = as.numeric(fvfm_meas)) %>% 
+  select(specimen_ID, subsample_ID, fvfm_meas) %>% 
+  group_by(specimen_ID) %>% 
+  summarize(mean = mean(fvfm_meas),
+            var = var(fvfm_meas),
+            sd = sd(fvfm_meas)) %>% 
+  left_join(., metadata, by = "specimen_ID") %>% 
+  filter(sp_code == "PTCA" & site %in% c("Mohawk", "Arroyo Quemado")) %>% 
+  mutate(lifestage = case_when(
+    date_collected %in% c("20220405", "20220407") ~ "adult",
+    TRUE ~ "new_recruit"
+  )) %>% 
+  ggplot(aes(x = lifestage, y = mean)) +
+  geom_boxplot(aes(fill = lifestage)) +
+  geom_jitter() +
+  scale_fill_manual(values = c("#70601d", "#b59b33")) +
+  facet_wrap(~site) +
+  theme_bw() +
+  theme(legend.position = "none") +
+  labs(title = "PTCA Fv/Fm",
+       caption = "t-test: Arroyo Quemado: t(3.67) = 7.05, p = 0.003, Mohawk: t(2.4) = 6.7, p = 0.01") 
+
+test_plot
+
+# ggsave(here::here("figures/prelim-visualizations",
+#                   paste("fvfm-boxplot-lifestage-", todays_date, ".jpg", sep = "")),
+#        test_plot,
+#        width = 8, height = 5, dpi = 150)
+```
+
+## d. boxplot (PTCA recruits across sites)
+
+```{r}
+fvfm_ptca <- fvfm_raw %>% 
+  rename('fvfm_meas' = '1:Fv/Fm') %>% 
+  mutate(fvfm_meas = as.numeric(fvfm_meas)) %>% 
+  select(specimen_ID, subsample_ID, fvfm_meas) %>% 
+  group_by(specimen_ID) %>% 
+  summarize(mean = mean(fvfm_meas),
+            var = var(fvfm_meas),
+            sd = sd(fvfm_meas)) %>% 
+  left_join(., metadata, by = "specimen_ID") %>% 
+  filter(sp_code == "PTCA") %>% 
+  mutate(lifestage = case_when(
+    date_collected %in% c("20220405", "20220407") ~ "adult",
+    TRUE ~ "new_recruit"
+  )) %>% 
+  filter(lifestage == "new_recruit")
+
+bartlett.test(mean ~ site, data = fvfm_ptca)
+# significantly different variances
+leveneTest(mean ~ site, data = fvfm_ptca)
+
+summary(aov(mean ~ site, 
+            data = fvfm_ptca %>% 
+              filter(lifestage == "new_recruit" & 
+              site %in% c("Arroyo Quemado", "Bullito", "Mohawk"))))
+
+fvfm_boxplot_ptca <- fvfm_ptca %>% 
+  filter(lifestage == "new_recruit" & 
+           site %in% c("Arroyo Quemado", "Bullito", "Mohawk")) %>% 
+  ggplot(aes(x = site, y = mean)) +
+  geom_boxplot() +
+  geom_jitter() +
+  theme_bw()
+fvfm_boxplot_ptca
+
+# ggsave(here::here("figures/prelim-visualizations",
+#                   paste("fvfm-boxplot-PTCA_recruits-", todays_date, ".jpg", sep = "")),
+#        fvfm_boxplot_ptca,
+#        width = 8, height = 5, dpi = 150)
+```
+
+
+## e. boxplot (BF BULL vs IVEE)
+
+```{r}
+bf_fvfm <- fvfm_raw %>% 
+  rename('fvfm_meas' = '1:Fv/Fm') %>% 
+  mutate(fvfm_meas = as.numeric(fvfm_meas)) %>% 
+  select(specimen_ID, subsample_ID, fvfm_meas) %>% 
+  group_by(specimen_ID) %>% 
+  summarize(mean = mean(fvfm_meas),
+            var = var(fvfm_meas),
+            sd = sd(fvfm_meas)) %>% 
+  left_join(., metadata, by = "specimen_ID") %>% 
+  filter(sp_code == "BF" & site %in% c("Bullito", "Isla Vista"))
+
+var.test(mean ~ site, data = bf_fvfm)
+# homogeneous variances, use t-test
+t.test(mean ~ site, data = bf_fvfm, var.equal = TRUE)
+
+bf_tukey <- TukeyHSD(bf_aov)
+bf_tukey
+
+bf_plot <- fvfm_raw %>% 
+  rename('fvfm_meas' = '1:Fv/Fm') %>% 
+  mutate(fvfm_meas = as.numeric(fvfm_meas)) %>% 
+  select(specimen_ID, subsample_ID, fvfm_meas) %>% 
+  group_by(specimen_ID) %>% 
+  summarize(mean = mean(fvfm_meas),
+            var = var(fvfm_meas),
+            sd = sd(fvfm_meas)) %>% 
+  left_join(., metadata, by = "specimen_ID") %>% 
+  filter(sp_code == "BF" & site %in% c("Bullito", "Isla Vista")) %>% 
+  ggplot(aes(x = site, y = mean)) +
+  geom_boxplot(aes(fill = site)) +
+  geom_jitter() +
+  labs(title = "BF Fv/Fm",
+       caption = "t-test: t(22) = 2.46, p = 0.02") +
+  theme_bw() +
+  theme(legend.position = "none")
+
+bf_plot
+
+# ggsave(here::here("figures/prelim-visualizations",
+#                   paste("fvfm-boxplot-bf-", todays_date, ".jpg", sep = "")),
+#        bf_plot,
+#        width = 8, height = 5, dpi = 150)
+```
+
 # 2. Thickness
 
 ## a. analysis of variance
@@ -101,6 +259,9 @@ thickness_df <- thickness %>%
   # join with coarse_traits
   left_join(., coarse_traits, by = "sp_code") %>% 
   unique()
+
+bartlett.test(thickness_mm.x ~ sp_code, data = thickness_df)
+# definitely heterogeneous variances
 
 # analysis of variance
 thickness_sp_aov <- aov(thickness_mm.x ~ sp_code, data = thickness_df)
@@ -150,9 +311,39 @@ thickness_boxplot
 #        width = 8, height = 5, dpi = 150)
 ```
 
+## c. boxplot (BF BULL vs IVEE)
+
+```{r}
+var.test(mean ~ site, data = thickness_summary %>% filter(sp_code == "BF"))
+# homogeneous variance, can use two-sample t-test
+t.test(mean ~ site, data = thickness_summary %>% filter(sp_code == "BF"), var.equal = TRUE)
+
+thickness_boxplot_bf <- thickness_summary %>% 
+  filter(sp_code == "BF") %>% 
+  group_by(sp_code) %>% 
+  ggplot(aes(x = site, y = mean)) +
+  geom_boxplot(aes(fill = site)) +
+  geom_jitter() +
+  theme_bw() +
+  labs(title = "BF thallus thickness",
+       x = "Site",
+       y = "Thickness (mm)",
+       caption = "t-test: t(22) = 2.3, p = 0.03") +
+  theme(legend.position = "none")
+
+thickness_boxplot_bf
+
+# ggsave(here::here("figures/prelim-visualizations",
+#                   paste("thickness-boxplot-bf-", todays_date, ".jpg", sep = "")),
+#        thickness_boxplot_bf,
+#        width = 8, height = 5, dpi = 150)
+
+```
+
+
 # 3. Weights
 
-# a. analysis of variance
+## a. analysis of variance
 
 ```{r}
 # analysis of variance
@@ -173,6 +364,9 @@ dryw_cld <- multcompLetters4(dryw_sp_aov, dryw_tukey)
 # output of compact letter display in data frame
 dryw_cld_df <- enframe(dryw_cld[[1]]$Letters) %>% 
   rename(sp_code = "name")
+
+# test homogeneity of variance
+# bartlett.test(tdmc ~ sp_code, data = weight_summary %>% filter(!(sp_code %in% c("BO", "CO"))))
 
 # analysis of variance
 tdmc_sp_aov <- aov(tdmc ~ sp_code, data = weight_summary %>% filter(!(sp_code %in% c("BO", "CO"))))
@@ -263,6 +457,64 @@ tdmc_boxplot
 As a note: something needs to happen to be able to filter out the things that are true thalli (e.g. thallus on PTCA) AND things that are whole individuals that are basically thalli (e.g. BF). Maybe code those in as "thallus" and go from there?  
 
 Note: Changed that on 2021-10-25. If it's a whole individual that is a thallus, it's coded in as "thallus" in the weight data sheet.
+
+## c. boxplot (TDMC, BF BULL vs IVEE)
+
+```{r}
+var.test(tdmc ~ site, data = weight_summary %>% filter(sp_code == "BF"))
+# homogeneous variance
+t.test(tdmc ~ site, data = weight_summary %>% filter(sp_code == "BF"), var.equal = TRUE)
+# not significantly different
+
+tdmc_boxplot_bf <- weight_summary %>% 
+  filter(sp_code == "BF") %>% 
+  ggplot(aes(x = site, y = tdmc)) +
+  geom_boxplot(aes(fill = site)) +
+  geom_jitter() +
+  theme_bw() +
+  labs(title = "BF TDMC",
+       x = "Site",
+       y = "TDMC",
+       caption = "t-test: t(22) = 1.85, p = 0.07") +
+  theme(legend.position = "none")
+
+tdmc_boxplot_bf
+
+# ggsave(here::here("figures/prelim-visualizations",
+#                   paste("tdmc-boxplot-bf-", todays_date, ".jpg", sep = "")),
+#        tdmc_boxplot_bf,
+#        width = 8, height = 5, dpi = 150)
+```
+
+## d. boxplot (dry weight, BF BULL vs IVEE)
+
+```{r}
+var.test(weight_dry_mg ~ site, data = weight_summary %>% filter(sp_code == "BF"))
+# heterogeneous variance
+t.test(weight_dry_mg ~ site, data = weight_summary %>% filter(sp_code == "BF"), var.equal = FALSE)
+# not significantly different
+
+dryw_boxplot_bf <- weight_summary %>% 
+  filter(sp_code == "BF") %>% 
+  ggplot(aes(x = site, y = weight_dry_mg)) +
+  geom_boxplot(aes(fill = site)) +
+  geom_jitter() +
+  theme_bw() +
+  labs(title = "BF dry weight",
+       x = "Site",
+       y = "Weight (mg)",
+       caption = "t-test: t(18.33) = 1.88, p = 0.07") +
+  theme(legend.position = "none")
+
+dryw_boxplot_bf
+
+# ggsave(here::here("figures/prelim-visualizations",
+#                   paste("dryw-boxplot-bf-", todays_date, ".jpg", sep = "")),
+#        dryw_boxplot_bf,
+#        width = 8, height = 5, dpi = 150)
+```
+
+
 
 # 4. volume
 
@@ -413,6 +665,7 @@ width_boxplot
 #        width = 8, height = 5, dpi = 150)
 ```
 
+
 # 10. specific thallus area
 
 ## a. analysis of variance
@@ -421,6 +674,9 @@ width_boxplot
 sta_df <- sta_summary %>% 
   drop_na(sta_mm_mg) %>% 
   slice(-125) 
+
+# test homogeneity of variance
+bartlett.test(sta_mm_mg ~ sp_code, data = sta_df)
 
 # analysis of variance
 sta_sp_aov <- aov(sta_mm_mg ~ sp_code, data = sta_df)
@@ -452,8 +708,8 @@ sta_boxplot <- sta_summary %>%
   slice(-125) %>% 
   left_join(., sta_cld_df, by = "sp_code") %>% 
   ggplot(aes(x = sp_code, y = sta_mm_mg)) +
-  geom_boxplot() +
-  geom_jitter(alpha = 0.45) +
+  geom_boxplot(aes(fill = value)) +
+  geom_jitter() +
   geom_text(aes(label = value, y = max(sta_mm_mg)*1.05), nudge_y = 0.01) + 
   facet_wrap(~ pigment_type, scales = "free_x") +
   scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
@@ -469,6 +725,35 @@ sta_boxplot
 #        sta_boxplot,
 #        width = 8, height = 5, dpi = 150)
 ```
+
+## c. boxplot (BF BULL vs IVEE)
+
+```{r}
+var.test(sta_mm_mg ~ site, data = sta_df %>% filter(sp_code == "BF"))
+# heterogeneous variances
+t.test(sta_mm_mg ~ site, data = sta_df %>% filter(sp_code == "BF"), var.equal = FALSE)
+# no significant difference in means
+
+sta_boxplot_bf <- sta_summary %>% 
+  filter(sp_code == "BF") %>% 
+  ggplot(aes(x = site, y = sta_mm_mg)) +
+  geom_boxplot(aes(fill = site)) +
+  geom_jitter() +
+  theme_bw() +
+  labs(title = "BF STA",
+       x = "Site",
+       y = "Thallus area/dry weight",
+       caption = "Welch t-test: t(8.62) = -0.09, p = 0.93") +
+  theme(legend.position = "none")
+
+sta_boxplot_bf
+
+# ggsave(here::here("figures/prelim-visualizations",
+#                   paste("sta-boxplot-bf-", todays_date, ".jpg", sep = "")),
+#        sta_boxplot_bf,
+#        width = 8, height = 5, dpi = 150)
+```
+
 
 # 11. branching order
 
