@@ -97,10 +97,5 @@ M <- tbs_matrix[, 2:13] %>%
   # slice(-16) %>% 
   cor()
 
-corr_traits <- corrplot(M, method = "circle", type = "lower")
-
-# ggsave(here::here("figures/prelim-ordinations",
-#                   paste("corrplot_traits-", todays_date, ".jpg", sep = "")),
-#        corr_traits,
-#        width = 8, height = 8, dpi = 150)
+corr_traits <- corrplot(M, method = "circle", type = "lower", insig = "blank", addCoef.col = "black")
 ```

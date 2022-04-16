@@ -36,7 +36,8 @@ fvfm_df <- fvfm_raw %>%
   # join with metadata: spp codes + specimen_ID
   left_join(., metadata, by = "specimen_ID") %>% 
   # join with coarse_traits
-  left_join(., coarse_traits, by = "sp_code")
+  left_join(., coarse_traits, by = "sp_code") %>% 
+  filter(sp_code %in% algae_proposal)
 
 bartlett.test(fvfm_meas ~ sp_code, data = fvfm_df)
 # definitely heterogeneous variances
@@ -109,14 +110,14 @@ var.test(mean ~ lifestage, data = test %>% filter(site == "Arroyo Quemado"))
 var.test(mean ~ lifestage, data = test %>% filter(site == "Mohawk"))
 # both homogeneous variances
 
-t.test(mean ~ lifestage, data = test %>% filter(site == "Arroyo Quemado"))
-t.test(mean ~ lifestage, data = test %>% filter(site == "Mohawk"))
+t.test(mean ~ lifestage, data = test %>% filter(site == "Arroyo Quemado"), var.equal = TRUE)
+t.test(mean ~ lifestage, data = test %>% filter(site == "Mohawk"), var.equal = TRUE)
 
 var.test(mean ~ site, data = test %>% filter(lifestage == "adult"))
 var.test(mean ~ site, data = test %>% filter(lifestage == "new_recruit"))
 # homogeneous variance
-t.test(mean ~ site, data = test %>% filter(lifestage == "adult"))
-t.test(mean ~ site, data = test %>% filter(lifestage == "new_recruit"))
+t.test(mean ~ site, data = test %>% filter(lifestage == "adult"), var.equal = TRUE)
+t.test(mean ~ site, data = test %>% filter(lifestage == "new_recruit"), var.equal = TRUE)
 # not significantly different
 
 test_plot <- fvfm_raw %>% 
@@ -141,7 +142,7 @@ test_plot <- fvfm_raw %>%
   theme_bw() +
   theme(legend.position = "none") +
   labs(title = "PTCA Fv/Fm",
-       caption = "t-test: Arroyo Quemado: t(3.67) = 7.05, p = 0.003, Mohawk: t(2.4) = 6.7, p = 0.01") 
+       caption = "t-test: Arroyo Quemado: t(14) = 9.4, p < 0.001, Mohawk: t(28) = 7.13, p < 0.001") 
 
 test_plot
 
@@ -194,8 +195,49 @@ fvfm_boxplot_ptca
 #        width = 8, height = 5, dpi = 150)
 ```
 
+## e. boxplot (PTCA adults across sites)
 
-## e. boxplot (BF BULL vs IVEE)
+```{r}
+fvfm_ptca <- fvfm_raw %>% 
+  rename('fvfm_meas' = '1:Fv/Fm') %>% 
+  mutate(fvfm_meas = as.numeric(fvfm_meas)) %>% 
+  select(specimen_ID, subsample_ID, fvfm_meas) %>% 
+  group_by(specimen_ID) %>% 
+  summarize(mean = mean(fvfm_meas),
+            var = var(fvfm_meas),
+            sd = sd(fvfm_meas)) %>% 
+  left_join(., metadata, by = "specimen_ID") %>% 
+  filter(sp_code == "PTCA") %>% 
+  mutate(lifestage = case_when(
+    date_collected %in% c("20220405", "20220407") ~ "adult",
+    TRUE ~ "new_recruit"
+  )) %>% 
+  filter(lifestage == "adult")
+
+bartlett.test(mean ~ site, data = fvfm_ptca)
+# not significantly different variances
+leveneTest(mean ~ site, data = fvfm_ptca)
+
+t.test(mean ~ site, data = fvfm_ptca, var.equal = TRUE)
+# no significant differences in adults
+
+fvfm_boxplot_ptca <- fvfm_ptca %>% 
+  filter(lifestage == "adult" & 
+           site %in% c("Arroyo Quemado", "Mohawk")) %>% 
+  ggplot(aes(x = site, y = mean)) +
+  geom_boxplot() +
+  geom_jitter() +
+  theme_bw() +
+  labs(caption = "t-test: t(13) = 0.97, p = 0.35")
+fvfm_boxplot_ptca
+
+# ggsave(here::here("figures/prelim-visualizations",
+#                   paste("fvfm-boxplot-PTCA_adults-", todays_date, ".jpg", sep = "")),
+#        fvfm_boxplot_ptca,
+#        width = 8, height = 5, dpi = 150)
+```
+
+## f. boxplot (BF BULL vs IVEE)
 
 ```{r}
 bf_fvfm <- fvfm_raw %>% 
@@ -323,7 +365,8 @@ thickness_boxplot_bf <- thickness_summary %>%
   group_by(sp_code) %>% 
   ggplot(aes(x = site, y = mean)) +
   geom_boxplot(aes(fill = site)) +
-  geom_jitter() +
+  # geom_jitter() +
+  geom_text(aes(x = site, y = mean, label = specimen_ID)) +
   theme_bw() +
   labs(title = "BF thallus thickness",
        x = "Site",
@@ -338,6 +381,47 @@ thickness_boxplot_bf
 #        thickness_boxplot_bf,
 #        width = 8, height = 5, dpi = 150)
 
+```
+
+## d. boxplot (PTCA adults vs recruits)
+
+```{r}
+thickness_ptca <- thickness_summary %>% 
+  filter(sp_code == "PTCA") %>% 
+  filter(site %in% c("Mohawk")) %>% 
+  mutate(lifestage = case_when(
+    date_collected %in% c("20220405", "20220407") ~ "adult",
+    TRUE ~ "new_recruit"
+  )) 
+
+var.test(mean ~ lifestage, data = thickness_ptca)
+bartlett.test(mean ~ lifestage, data = thickness_ptca)
+leveneTest(mean ~ lifestage, data = thickness_ptca)
+# significantly different variances
+
+summary(aov(mean ~ lifestage, 
+            data = thickness_ptca %>% 
+              filter(site %in% c("Mohawk"))))
+# significantly different between lifestages
+
+thickness_boxplot_ptca <- thickness_ptca %>% 
+  filter(site %in% c("Mohawk")) %>% 
+  ggplot(aes(x = lifestage, y = mean)) +
+  geom_boxplot(aes(fill = lifestage)) +
+  scale_fill_manual(values = c("#70601d", "#b59b33")) +
+  geom_jitter() +
+  theme_bw() +
+  facet_wrap(~site) +
+  labs(title = "PTCA adult vs recruit thickness",
+       y = "mm",
+       caption = "significantly different variances") +
+  theme(legend.position = "none")
+thickness_boxplot_ptca
+
+# ggsave(here::here("figures/prelim-visualizations",
+#                   paste("thickness-boxplot-lifestage-", todays_date, ".jpg", sep = "")),
+#        thickness_boxplot_ptca,
+#        width = 8, height = 5, dpi = 150)
 ```
 
 
@@ -378,10 +462,10 @@ summary(tdmc_tax_aov)
 # species not significant, phylum significant???
 
 # Tukey HSD
-tdmc_tukey <- TukeyHSD(tdmc_tax_aov)
+tdmc_tukey <- TukeyHSD(tdmc_sp_aov)
 
 # compact letter display
-tdmc_cld <- multcompLetters4(tdmc_tax_aov, tdmc_tukey)
+tdmc_cld <- multcompLetters4(tdmc_sp_aov, tdmc_tukey)
 
 # output of compact letter display in data frame
 tdmc_cld_df <- enframe(tdmc_cld[[1]]$Letters) %>% 
@@ -673,7 +757,9 @@ width_boxplot
 ```{r}
 sta_df <- sta_summary %>% 
   drop_na(sta_mm_mg) %>% 
-  slice(-125) 
+  slice(-125) %>% 
+  filter(sp_code %in% algae_proposal) %>% 
+  filter(sp_code != "CO")
 
 # test homogeneity of variance
 bartlett.test(sta_mm_mg ~ sp_code, data = sta_df)
@@ -796,6 +882,26 @@ toughness_boxplot
 #        toughness_boxplot,
 #        width = 8, height = 5, dpi = 150)
 ```
+
+# 13. correlation between STA and TDMC
+
+```{r}
+ggplot(sta_summary %>% filter(!(sp_code %in% c("Nandersoniana", "PTCA"))) %>% drop_na(tdmc), aes(x = sta_mm_mg, y = tdmc, col = sp_code)) +
+  geom_point() +
+  geom_smooth(aes(col = sp_code), method = "lm", se = FALSE) +
+  geom_smooth(method = "lm", se = TRUE, col = "black")
+
+sta_tdmc_lme <- lmer(tdmc ~ sta_mm_mg + (1|sp_code), data = sta_summary %>% filter(!(sp_code %in% c("Nandersoniana", "PTCA"))))
+summary(sta_tdmc_lme)
+testResiduals(sta_tdmc_lme)
+
+sta_tdmc_lm <- lm(tdmc ~ sta_mm_mg*sp_code, data = sta_summary %>% filter(!(sp_code %in% c("Nandersoniana", "PTCA"))))
+summary(sta_tdmc_lm)
+testResiduals(sta_tdmc_lm)
+```
+
+
+
 
 ```{r include = FALSE}
 # Use `rmarkdown::render(here::here("code", "02_prelim-visualizations.Rmd"))` to knit the document.

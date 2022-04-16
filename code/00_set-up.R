@@ -26,6 +26,7 @@ library(performance) # checks of collinearity, amongst other things
 library(car) # checking VIR
 library(cati) # partitioning species composition/intraspecific variation
 
+
 # 2.  getting data from google drive --------------------------------------
 
 # gets the file data from google drive
@@ -104,10 +105,10 @@ benthic_cleaning_fxn <- function(df) {
 biomass <- read_csv(here::here("data", "SBC-LTER-benthics", 
                                "Annual_All_Species_Biomass_at_transect_20210108.csv")) %>% 
   benthic_cleaning_fxn() %>% 
-  # replace all -99999 values with 0
-  mutate(dry_gm2 = replace(dry_gm2, dry_gm2 < 0, 0),
-         wm_gm2 = replace(wm_gm2, wm_gm2 < 0, 0),
-         density = replace(density, density < 0, 0)) %>% 
+  # replace all -99999 values with NA
+  mutate(dry_gm2 = replace(dry_gm2, dry_gm2 < 0, NA),
+         wm_gm2 = replace(wm_gm2, wm_gm2 < 0, NA),
+         density = replace(density, density < 0, NA)) %>% 
   mutate(date = ymd(date))
 
 #### * d. percent cover ####
@@ -371,15 +372,16 @@ se <- function(x,...){
 fvfm_summary <- fvfm_raw %>% 
   # only use FvFm, drop the NAs, change the column name
   select(specimen_ID, '1:Fv/Fm') %>% 
-  drop_na() %>%
+  drop_na(specimen_ID) %>%
   rename('fvfm_meas' = '1:Fv/Fm') %>% 
   # make sure that fvfm_meas is numeric
   mutate(fvfm_meas = as.numeric(fvfm_meas)) %>%
   # calculate mean, variance, standard deviation
   group_by(specimen_ID) %>% 
-  summarize(mean = mean(fvfm_meas),
-            var = var(fvfm_meas),
-            sd = sd(fvfm_meas)) %>% 
+  summarize(mean = mean(fvfm_meas, na.rm = TRUE),
+            var = var(fvfm_meas, na.rm = TRUE),
+            sd = sd(fvfm_meas, na.rm = TRUE)) %>% 
+  
   # join with metadata: spp codes + specimen_ID
   left_join(., metadata, by = "specimen_ID") %>% 
   # select columns of interest
@@ -397,28 +399,15 @@ fvfm_prep <- fvfm_summary %>%
 
 #### * b. thickness ####
 
-# 20210709-MOHK-004 only has 7 measurements for thickness, for whatever reason
-# this calculates the average thickness of those 7 measurements
-quickfix <- thickness %>% 
-  filter(specimen_ID == "20210709-MOHK-004") %>% 
-  select(1:8) %>% 
-  pivot_longer(cols = 2:8, names_to = "measurement_n", values_to = "thickness_mm") %>% 
-  pull(thickness_mm) %>% 
-  mean()
-
 # some problems with the subsampling - used the metadata_subsamples df
 
 # calculate mean thickness per individual
 thickness_summary <- thickness %>% 
   pivot_longer(cols = thickness_01:thickness_10, names_to = "measurement_n", values_to = "thickness_mm") %>% 
-  # replace NAs for 20210709-MOHK-004 with the quickfix value
-  mutate(thickness_mm = replace(thickness_mm, 
-                                is.na(thickness_mm) & specimen_ID == "20210709-MOHK-004", 
-                                quickfix)) %>% 
   group_by(specimen_ID) %>% 
-  summarize(mean = mean(thickness_mm),
-            var = var(thickness_mm),
-            sd = sd(thickness_mm)) %>% 
+  summarize(mean = mean(thickness_mm, na.rm = TRUE),
+            var = var(thickness_mm, na.rm = TRUE),
+            sd = sd(thickness_mm, na.rm = TRUE)) %>% 
   # join with metadata_subsamples: spp codes + specimen_ID
   left_join(., metadata_subsamples, by = "specimen_ID") %>% 
   # select columns of interest
@@ -594,7 +583,7 @@ tbspp_matrix <- full_join(fvfm_prep, thickness_prep, by = "specimen_ID") %>%
   select(specimen_ID, sp_code,
          fvfm, thickness_mm, weight_dry_g, tdmc, volume_mL,
          area_total, peri_total, ratio, max_height_cm, max_width_cm, sta_mm_mg) %>% 
-  filter(sp_code %in% algae_proposal) %>% 
+  # filter(sp_code %in% algae_proposal) %>% 
   # calculate mean trait value for each species
   group_by(sp_code) %>% 
   summarize_at(vars(fvfm:sta_mm_mg), mean, na.rm = TRUE) %>% 
