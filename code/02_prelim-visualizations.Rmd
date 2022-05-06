@@ -453,7 +453,7 @@ dryw_cld_df <- enframe(dryw_cld[[1]]$Letters) %>%
 # bartlett.test(tdmc ~ sp_code, data = weight_summary %>% filter(!(sp_code %in% c("BO", "CO"))))
 
 # analysis of variance
-tdmc_sp_aov <- aov(tdmc ~ sp_code, data = weight_summary %>% filter(!(sp_code %in% c("BO", "CO"))))
+tdmc_sp_aov <- aov(tdmc ~ sp_code, data = weight_summary %>% filter(!(sp_code %in% c("BO", "CO"))) %>% filter(sp_code %in% algae_proposal))
 
 tdmc_tax_aov <- aov(tdmc ~ taxon_phylum, data = weight_summary %>% filter(!(sp_code %in% c("BO", "CO"))))
 
@@ -469,7 +469,7 @@ tdmc_cld <- multcompLetters4(tdmc_sp_aov, tdmc_tukey)
 
 # output of compact letter display in data frame
 tdmc_cld_df <- enframe(tdmc_cld[[1]]$Letters) %>% 
-  rename(taxon_phylum = "name")
+  rename(sp_code = "name")
 ```
 
 
@@ -517,7 +517,7 @@ wetw_boxplot
 
 tdmc_boxplot <- weight_summary %>% 
   filter(!(sp_code %in% c("BO", "CO"))) %>% 
-  left_join(., tdmc_cld_df, by = "taxon_phylum") %>% 
+  left_join(., tdmc_cld_df, by = "sp_code") %>% 
   ggplot(aes(x = sp_code, y = tdmc)) +
   geom_boxplot(aes(fill = value)) +
   geom_jitter() +
@@ -595,6 +595,43 @@ dryw_boxplot_bf
 # ggsave(here::here("figures/prelim-visualizations",
 #                   paste("dryw-boxplot-bf-", todays_date, ".jpg", sep = "")),
 #        dryw_boxplot_bf,
+#        width = 8, height = 5, dpi = 150)
+```
+
+## e. boxplot PTCA adults vs recruits
+```{r}
+tdmc_ptca <- weight_summary %>% 
+  filter(sp_code == "PTCA") %>% 
+  mutate(lifestage = case_when(
+    date_collected %in% c("20220405", "20220407") ~ "adult",
+    TRUE ~ "new_recruit"
+  )) %>% 
+  # take out weird sample
+  filter(specimen_ID != "20210721-BULL-005-B")
+
+var.test(tdmc ~ lifestage, data = tdmc_ptca)
+# not significantly different variances
+t.test(tdmc ~ lifestage, data = tdmc_ptca, var.equal = TRUE)
+# signficantly different
+
+tdmc_boxplot_ptca <- tdmc_ptca %>% 
+  ggplot(aes(x = lifestage, y = tdmc)) +
+  geom_boxplot(aes(fill = lifestage)) +
+  # geom_text(aes(x = lifestage, y = tdmc, label = specimen_ID))
+  geom_jitter() +
+  theme_bw() +
+  labs(title = "PTCA TDMC",
+       x = "lifestage",
+       y = "TDMC",
+       caption = "t-test: t(178) = 7.097, p < 0.001") +
+  theme(legend.position = "none") +
+  facet_wrap(~site)
+
+tdmc_boxplot_ptca
+
+# ggsave(here::here("figures/prelim-visualizations",
+#                   paste("tdmc-boxplot-ptca-", todays_date, ".jpg", sep = "")),
+#        tdmc_boxplot_ptca,
 #        width = 8, height = 5, dpi = 150)
 ```
 
@@ -759,7 +796,8 @@ sta_df <- sta_summary %>%
   drop_na(sta_mm_mg) %>% 
   slice(-125) %>% 
   filter(sp_code %in% algae_proposal) %>% 
-  filter(sp_code != "CO")
+  filter(sp_code != "CO") %>% 
+  filter()
 
 # test homogeneity of variance
 bartlett.test(sta_mm_mg ~ sp_code, data = sta_df)
@@ -840,6 +878,53 @@ sta_boxplot_bf
 #        width = 8, height = 5, dpi = 150)
 ```
 
+## d. boxplot (PTCA adults vs recruits)
+
+```{r}
+sta_ptca <- sta_summary %>% 
+  filter(sp_code == "PTCA") %>% 
+  filter(site %in% c("Mohawk", "Arroyo Quemado")) %>% 
+  mutate(lifestage = case_when(
+    date_collected %in% c("20220405", "20220407") ~ "adult",
+    TRUE ~ "new_recruit"
+  )) 
+
+var.test(sta_mm_mg ~ lifestage, data = sta_ptca)
+bartlett.test(sta_mm_mg ~ lifestage, data = sta_ptca)
+leveneTest(sta_mm_mg ~ lifestage, data = sta_ptca)
+# significantly different variances
+
+summary(aov(sta_mm_mg ~ lifestage, 
+            data = sta_ptca %>% 
+              filter(site %in% c("Mohawk", "Arroyo Quemado"))))
+# significantly different between lifestages
+
+summary(aov(sta_mm_mg ~ site, 
+            data = sta_ptca %>% 
+              filter(lifestage == "new_recruit")))
+var.test(sta_mm_mg ~ site, data = sta_ptca %>% filter(lifestage == "new_recruit"))
+# significantly different STA between sites for new recruits (significantly different variances)
+summary(aov(sta_mm_mg ~ site, 
+            data = sta_ptca %>% 
+              filter(lifestage == "adult")))
+var.test(sta_mm_mg ~ site, data = sta_ptca %>% filter(lifestage == "adult"))
+# not for adults
+
+sta_boxplot_ptca <- sta_ptca %>% 
+  filter(site %in% c("Mohawk", "Arroyo Quemado")) %>% 
+  ggplot(aes(x = lifestage, y = sta_mm_mg)) +
+  geom_boxplot(aes(fill = lifestage)) +
+  scale_fill_manual(values = c("#70601d", "#b59b33")) +
+  geom_jitter() +
+  theme_bw() +
+  facet_wrap(~site) +
+  labs(title = "PTCA adult vs recruit sta",
+       y = "mm/mg",
+       caption = "significantly different variances") +
+  theme(legend.position = "none")
+sta_boxplot_ptca
+```
+
 
 # 11. branching order
 
@@ -886,20 +971,85 @@ toughness_boxplot
 # 13. correlation between STA and TDMC
 
 ```{r}
-ggplot(sta_summary %>% filter(!(sp_code %in% c("Nandersoniana", "PTCA"))) %>% drop_na(tdmc), aes(x = sta_mm_mg, y = tdmc, col = sp_code)) +
+ggplot(sta_summary %>% filter(!(sp_code %in% c("Nandersoniana", "CO"))) %>% drop_na(tdmc), aes(x = sta_mm_mg, y = tdmc, col = sp_code)) +
   geom_point() +
   geom_smooth(aes(col = sp_code), method = "lm", se = FALSE) +
-  geom_smooth(method = "lm", se = TRUE, col = "black")
+  geom_smooth(method = "lm", se = TRUE, col = "black") +
+  theme_bw() +
+  labs(title = "Thallus dry matter content predicted by specific thallus area",
+       x = "Specific thallus area (mm2/mg)",
+       y = "Thallus dry matter content (dry mg/wet mg)", 
+       caption = "Linear mixed model: lme(tdmc ~ sta_mm_mg, random = ~ 1|sp_code)")
 
-sta_tdmc_lme <- lmer(tdmc ~ sta_mm_mg + (1|sp_code), data = sta_summary %>% filter(!(sp_code %in% c("Nandersoniana", "PTCA"))))
+sta_tdmc_lmer <- lmer(tdmc ~ sta_mm_mg + (1|sp_code), data = sta_summary %>% filter(!(sp_code %in% c("Nandersoniana", "CO"))) %>% drop_na(tdmc))
+sta_tdmc_lme <- lme(tdmc ~ sta_mm_mg, random = ~ 1|sp_code, data = sta_summary %>% filter(!(sp_code %in% c("Nandersoniana", "CO"))) %>% drop_na(tdmc))
 summary(sta_tdmc_lme)
+summary(sta_tdmc_lmer)
 testResiduals(sta_tdmc_lme)
+check_model(sta_tdmc_lmer)
 
-sta_tdmc_lm <- lm(tdmc ~ sta_mm_mg*sp_code, data = sta_summary %>% filter(!(sp_code %in% c("Nandersoniana", "PTCA"))))
+sta_tdmc_lm <- lm(tdmc ~ sta_mm_mg, data = sta_summary %>% filter(!(sp_code %in% c("Nandersoniana", "CO"))))
 summary(sta_tdmc_lm)
 testResiduals(sta_tdmc_lm)
 ```
 
+# 14. correlation between FvFm and TDMC
+
+```{r}
+fvfm_tdmc_lme <- lme(fvfm ~ tdmc, random = ~ 1|sp_code, data = sp_int_matrix %>% filter(!(sp_code %in% c("Nandersoniana", "CO"))) %>% drop_na(tdmc))
+fvfm_tdmc_lmer <- lmer(fvfm ~ tdmc + (1|sp_code), data = sp_int_matrix %>% filter(!(sp_code %in% c("Nandersoniana", "CO"))) %>% drop_na(tdmc))
+summary(fvfm_tdmc_lmer)
+testResiduals(fvfm_tdmc_lmer)
+check_model(fvfm_tdmc_lmer)
+grid <- ref_grid(fvfm_tdmc_lmer, cov.keep = c("tdmc", "sp_code"))
+emm <- emmeans(grid, spec = c("tdmc"), level = 0.95) %>% 
+  data.frame(.)
+
+tdmc_fvfm_lm <- lm(tdmc ~ fvfm + sp_code, data = sp_int_matrix %>% filter(!(sp_code %in% c("Nandersoniana", "CO"))) %>% drop_na(tdmc))
+summary(tdmc_fvfm_lm)
+testResiduals(tdmc_fvfm_lm)
+
+
+
+ggplot() +
+  geom_point(data = sp_int_matrix %>% filter(!(sp_code %in% c("Nandersoniana", "CO"))) %>% drop_na(tdmc), aes(x = tdmc, y = fvfm, col = sp_code, shape = sp_code), size = 2) +
+  geom_smooth(data = sp_int_matrix %>% filter(!(sp_code %in% c("Nandersoniana", "CO"))) %>% drop_na(tdmc), aes(x = tdmc, y = fvfm, col = sp_code), method = "lm", se = FALSE) +
+  geom_line(data = emm, aes(x = tdmc, y = emmean)) +
+  geom_ribbon(data = emm, aes(x = tdmc, y = emmean, ymin = lower.CL, ymax = upper.CL), alpha = 0.2) +
+  # geom_smooth(data = sp_int_matrix %>% filter(!(sp_code %in% c("Nandersoniana", "CO"))) %>% drop_na(tdmc), aes(x = tdmc, y = fvfm), method = "lm", se = TRUE, col = "black") +
+  theme_bw() +
+  labs(title = "Thallus dry matter content as predictor of photosynthetic efficiency",
+       caption = "Linear model: lme(tdmc ~ fvfm, random = ~ 1|sp_code) \n
+                  significant intercept (0.19, p < 0.001), non-significant slope (-0.15, p = 0.36)")
+  
+
+
+```
+
+# 15. correlation between STA and FvFM
+
+```{r}
+fvfm_sta_lme <- lme(fvfm ~ sta_mm_mg, random = ~ 1|sp_code, data = sp_int_matrix %>% filter(!(sp_code %in% c("Nandersoniana", "CO"))) %>% drop_na(sta_mm_mg))
+fvfm_sta_lmer <- lmer(fvfm ~ sta_mm_mg + (1|sp_code), data = sp_int_matrix %>% filter(!(sp_code %in% c("Nandersoniana", "CO"))) %>% drop_na(sta_mm_mg))
+summary(fvfm_sta_lme)
+testResiduals(fvfm_sta_lmer)
+check_model(fvfm_sta_lmer)
+predicted <- ggpredict(fvfm_sta_lmer, terms = c("sta_mm_mg", "sp_code"), type = "fixed")
+grid <- ref_grid(fvfm_sta_lmer, cov.keep = c("sta_mm_mg", "sp_code"))
+emm <- emmeans(grid, spec = c("sta_mm_mg"), level = 0.95) %>% 
+  data.frame(.)
+
+ggplot() +
+  geom_point(data = sp_int_matrix %>% filter(!(sp_code %in% c("Nandersoniana", "CO"))) %>% drop_na(tdmc), aes(x = sta_mm_mg, y = fvfm, col = sp_code, shape = sp_code), size = 2) +
+  geom_smooth(data = sp_int_matrix %>% filter(!(sp_code %in% c("Nandersoniana", "CO"))) %>% drop_na(tdmc), aes(x = sta_mm_mg, y = fvfm, col = sp_code), method = "lm", se = FALSE) +
+  geom_line(data = emm, aes(x = sta_mm_mg, y = emmean)) +
+  geom_ribbon(data = emm, aes(x = sta_mm_mg, y = emmean, ymin = lower.CL, ymax = upper.CL), alpha = 0.2) +
+  # geom_smooth(data = sp_int_matrix %>% filter(!(sp_code %in% c("Nandersoniana", "CO"))) %>% drop_na(tdmc), aes(x = tdmc, y = fvfm), method = "lm", se = TRUE, col = "black") +
+  theme_bw() +
+  labs(title = "Specific thallus area as predictor of photosynthetic efficiency",
+       caption = "Linear model: lme(sta ~ fvfm, random = ~ 1|sp_code) \n
+                  significant intercept (0.51, p < 0.001), non-significant slope (0, p = 0.66)")
+```
 
 
 

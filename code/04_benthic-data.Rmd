@@ -461,7 +461,9 @@ Plot with pairwise comparisons of means:
 
 ```{r urchin-aov}
 # analysis of variance
-urchin_aov <- aov(na.omit(urchins$density) ~ urchins$site)
+urchin_aov <- urchins %>% 
+  filter(site %in% c("bull", "aque", "napl", "ivee", "mohk", "carp")) %>% 
+  aov(na.omit(density) ~ site, data = .)
 
 # Tukey HSD
 urchin_tukey <- TukeyHSD(urchin_aov)
@@ -474,25 +476,34 @@ urchin_cld_df <- enframe(urchin_cld[[1]]$Letters)
 
 # summary data frame for plotting
 urchin_plot_summary <- urchins %>% 
-  # filter(site %in% c("bull", "aque", "ivee", "mohk", "napl", "carp")) %>% 
+  filter(site %in% c("bull", "aque", "ivee", "mohk", "napl", "carp")) %>% 
   group_by(site) %>% 
   summarize(mean = mean(density, na.rm = TRUE),
             se = se(density)) %>% 
   left_join(., urchin_cld_df, by = c("site" = "name")) %>% 
-  # mutate(value = fct_relevel(value, "a", "b", "bc", "c")) %>% 
-  arrange(value)
-  # mutate(site = fct_relevel(site, "napl", "bull", "carp", "aque", "ivee", "mohk"))
+  mutate(value = fct_relevel(value, "a", "b", "bc", "c")) %>% 
+  arrange(value) %>% 
+  mutate(site = fct_relevel(site, "bull", "aque", "ivee", "mohk", "napl", "carp"))
 
 # new plot
 urchin_plot_new <- ggplot(urchin_plot_summary, aes(x = site, y = mean)) +
-  geom_col() +
+  geom_col(aes(fill = value)) +
+  scale_fill_manual(values = c("a" = "#4e1f70", 
+                               "b" = "#814aa8",
+                               "bc" = "#a06cc4",
+                               "c" = "#cba0e8")) +
   geom_errorbar(aes(ymin = mean - se, ymax = mean + se), width = 0.5) +
   geom_text(aes(label = value, y = mean + se + 1)) + 
   labs(x = "Site", y = "Mean urchin density (number/m2)",
        title = "Purple urchin density") +
   scale_y_continuous(expand = c(0, 0)) +
-  # coord_cartesian(ylim = c(0, 28)) +
-  theme_bw()
+  coord_cartesian(ylim = c(0, 28)) +
+  theme_bw() +
+  theme(legend.position = "none",
+        axis.title = element_text(size = 14),
+        axis.text = element_text(size = 14),
+        plot.title = element_text(size = 16),
+        panel.grid = element_blank())
 
 urchin_plot_new
 ```
@@ -556,8 +567,8 @@ Plot with pairwise comparisons of means:
 ```{r plots-pairwise}
 # filter out sand
 sand <- substrate %>% 
-  filter(common_name == "Sand")
-  # filter(site %in% c("bull", "aque", "ivee", "mohk", "napl", "carp"))
+  filter(common_name == "Sand") %>% 
+  filter(site %in% c("bull", "aque", "ivee", "mohk", "napl", "carp"))
 
 # analysis of variance
 sand_aov <- aov(na.omit(sand$percent_cover) ~ sand$site)
@@ -576,21 +587,38 @@ sand_plot_summary <- sand %>%
   group_by(site) %>% 
   summarize(mean = mean(percent_cover, na.rm = TRUE),
             se = se(percent_cover)) %>% 
-  left_join(., sand_cld_df, by = c("site" = "name"))
-  # mutate(site = fct_relevel(site, "napl", "bull", "carp", "aque", "ivee", "mohk"))
+  left_join(., sand_cld_df, by = c("site" = "name")) %>% 
+  mutate(site = fct_relevel(site, "bull", "aque", "ivee", "mohk", "napl", "carp"))
 
 # new plot
 sand_plot_new <- ggplot(sand_plot_summary, aes(x = site, y = mean)) +
-  geom_col() +
+  geom_col(aes(fill = value)) +
+  scale_fill_manual(values = c("a" = "#bda36f",
+                               "b" = "#8c733f",
+                               "c" = "#614815")) +
   geom_errorbar(aes(ymin = mean - se, ymax = mean + se), width = 0.5) +
   geom_text(aes(label = value, y = mean + se + 1)) + 
   labs(x = "Site", y = "Mean sand percent cover (%)",
        title = "Sand cover across sites") +
   scale_y_continuous(expand = c(0, 0)) +
-  # coord_cartesian(ylim = c(0, 24)) +
-  theme_bw()
+  coord_cartesian(ylim = c(0, 24)) +
+  theme_bw() +
+  theme(legend.position = "none",
+        axis.title = element_text(size = 14),
+        axis.text = element_text(size = 14),
+        plot.title = element_text(size = 16),
+        panel.grid = element_blank())
 
 sand_plot_new
+```
+
+Together:
+```{r}
+plots_together <- urchin_plot_new / sand_plot_new
+
+# ggsave(here::here("figures/habitat-characteristics",
+#                   paste("habitat-characteristics-", todays_date, ".jpg", sep = "")),
+#        plots_together)
 ```
 
 # 5. Kelp cover
@@ -1157,7 +1185,12 @@ lm_plot <- ggplot(CWM_cat,
   geom_smooth(method = "lm", se = FALSE, aes(col = site)) +
   geom_smooth(method = "lm", col = "black") +
   labs(x = "Urchin density", y = "Proportion biomass (dry g/m2)",
-       title = "Proportion leathery macrophytes")
+       title = "Proportion leathery macrophytes") +
+  theme_bw() +
+  theme(plot.title = element_text(size = 16),
+        axis.title = element_text(size = 14),
+        axis.text = element_text(size = 14),
+        panel.grid = element_blank())
 # missing values for mean sand
 
 lm_plot
@@ -1195,10 +1228,28 @@ performance::r2_zeroinflated(model_lm_01b, method = "correlation")
 AIC(model_lm_01a, model_lm_01b)
 
 # plot predicted values on top of predictor
-temp <- ggpredict(model_lm_01a, terms = c("urchin_density", "site"), type = "re")
+temp <- ggpredict(model_lm_01a, terms = c("urchin_density", "site"), type = "fixed") %>% 
+  rename("site" = group) %>% 
+  rename("urchin_density" = x)
 
-# predict(model_lm_01a)
-plot(temp, add.data = TRUE)
+# no data in the global ggplot call
+ggplot() +
+  # just some expansions of the axes to make them go from 0 - 1
+  scale_x_continuous(expand = c(0, 0)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  coord_cartesian(ylim = c(-0.001, 1)) +
+  # raw data
+  geom_point(data = CWM_cat, aes(x = urchin_density, y = growth_form_leathery_macrophyte), alpha = 0.5) +
+  # lines from ggpredict
+  # confidence interval
+  geom_ribbon(data = temp, aes(x = urchin_density, y = predicted, ymin = conf.low, ymax = conf.high, fill = site), alpha = 0.2) +
+  # line
+  geom_line(data = temp, aes(x = urchin_density, y = predicted, color = site)) +
+  # axis labels
+  labs(x = "Urchin density", y = "Proportion biomass (dry g/m2)",
+       title = "Proportion leathery macrophytes") +
+  # facet using group
+  facet_wrap(~site)
 ```
 
 ## b. Checking correlations
@@ -1284,7 +1335,7 @@ plot(model_thickness_01b_resid)
 model_thickness_02_resid <- simulateResiduals(model_thickness_02)
 plot(model_thickness_02_resid)
 
-summary(model_thickness_01)
+summary(model_thickness_01a)
 summary(model_thickness_02)
 
 # check collinearity

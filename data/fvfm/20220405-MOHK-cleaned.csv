@@ -1,4 +1,4 @@
-Datetime,Time (abs/ms),Time (rel/ms),Date,Time,Type,No.,1:F,1:Fm',1:PAR,1:Fv/Fm,1:ETR,specimen_ID,subsample_ID
+Datetime,Time (abs/ms),Time (rel/ms),Date,Time,Type,No.,1:F,1:Fm',1:PAR,1:Y (II),1:ETR,specimen_ID,subsample_ID
 4/5/22 16:52,1.65E+12,3032,4/5/22,16:52:22,FO,4,5,9,0,-,-,NA,NA
 4/5/22 16:52,1.65E+12,8050,4/5/22,16:52:27,FO,5,8,11,0,-,-,NA,NA
 4/5/22 16:52,1.65E+12,12131,4/5/22,16:52:31,FO,6,7,10,0,-,-,NA,NA
