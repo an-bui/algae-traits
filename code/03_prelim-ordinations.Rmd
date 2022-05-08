@@ -47,7 +47,7 @@ sp_int_matrix_test <- ind_traits %>%
   filter(!(sp_code %in% c("CO", "Nandersoniana")))
 
 pca_mat <- sp_int_matrix_test %>% 
-  select(specimen_ID, maximum_height, sta_mean, ldmc_mean, sav_mean, sap_mean, fvfm_mean, total_volume, total_dry) %>% 
+  select(specimen_ID, maximum_height, sta_mean, ldmc_mean, sav_mean, sap_mean, fvfm_mean, total_volume, total_dry, thickness_mm_mean) %>% 
   column_to_rownames("specimen_ID") %>% 
   drop_na()
 ```
@@ -99,7 +99,7 @@ PCAvect_13 <- scores(tbs_pca, display = "species", choices = c(1, 3)) %>%
 plot_PCA_12 <- ggplot() +
   coord_cartesian() +
   geom_point(data = PCAscores, aes(x = PC1, y = PC2, color = scientific_name, shape = site), size = 2) +
-  geom_text(data = PCAscores, aes(x = PC1, y = PC2, color = scientific_name, label = specimen_ID)) +
+  # geom_text(data = PCAscores, aes(x = PC1, y = PC2, color = scientific_name, label = specimen_ID)) +
   # scale_color_manual(values = pal) +
   geom_vline(xintercept = c(0), color = "grey70", linetype = 2) +
   geom_hline(yintercept = c(0), color = "grey70", linetype = 2) +
@@ -111,8 +111,8 @@ plot_PCA_12 <- ggplot() +
         legend.box = "vertical", 
         legend.margin = margin(),
         axis.title = element_text(size = 12)) +
-  labs(x = "PC1 (44.13%)",
-       y = "PC2 (24.09%)",
+  labs(x = "PC1 (49.61%)",
+       y = "PC2 (25.21%)",
        title = "Principal Components Analysis - PC1 and PC2",
        subtitle = "Species in proposal", 
        color = "Scientific name") 
@@ -133,16 +133,21 @@ plot_PCA_13 <- ggplot() +
         legend.box = "vertical", 
         legend.margin = margin(),
         axis.title = element_text(size = 12)) +
-  labs(x = "PC1 (44.13%)",
-       y = "PC3 (14.92%)",
+  labs(x = "PC1 (52.65%)",
+       y = "PC3 (9.78%)",
        title = "Principal Components Analysis - PC1 and PC3",
        subtitle = "Species in proposal", 
        color = "Scientific name") 
 plot_PCA_13
 
 # ggsave(here::here("figures/prelim-ordinations",
-#                   paste("PCA_spp-all-", todays_date, ".jpg", sep = "")),
-#        plot_PCA,
+#                   paste("PCA_spp-all-12", todays_date, ".jpg", sep = "")),
+#        plot_PCA_12,
+#        width = 8, height = 8, dpi = 150)
+# 
+# ggsave(here::here("figures/prelim-ordinations",
+#                   paste("PCA_spp-all-13", todays_date, ".jpg", sep = "")),
+#        plot_PCA_13,
 #        width = 8, height = 8, dpi = 150)
 ```
 
@@ -154,6 +159,9 @@ M <- sp_int_matrix[, 2:10] %>%
   # select(-growth_form, -pigment_type) %>% 
   # take out UV
   # slice(-16) %>% 
+  cor()
+
+M <- pca_mat %>% 
   cor()
 
 corr_traits <- corrplot(M, method = "circle", type = "lower", insig = "blank", addCoef.col = "black")

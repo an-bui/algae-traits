@@ -39,13 +39,21 @@ fvfm_df <- fvfm_raw %>%
   left_join(., coarse_traits, by = "sp_code") %>% 
   filter(sp_code %in% algae_proposal)
 
-bartlett.test(fvfm_meas ~ sp_code, data = fvfm_df)
+fvfm_df <- fvfm_ind %>% 
+  left_join(., metadata_ind, by = "specimen_ID") %>% 
+  # join with coarse_traits
+  left_join(., coarse_traits, by = "sp_code") %>% 
+  filter(sp_code %in% algae_proposal) %>% 
+  # remove GR and CO because only 1 observation
+  filter(!(sp_code %in% c("GR", "CO")))
+
+bartlett.test(fvfm_mean ~ sp_code, data = fvfm_df)
 # definitely heterogeneous variances
 
 # analysis of variance
-fvfm_sp_aov <- aov(fvfm_meas ~ sp_code, data = fvfm_df)
+fvfm_sp_aov <- aov(fvfm_mean ~ sp_code, data = fvfm_df)
 
-fvfm_tax_aov <- aov(fvfm_meas ~ taxon_phylum, data = fvfm_df)
+fvfm_tax_aov <- aov(fvfm_mean ~ taxon_phylum, data = fvfm_df)
 
 summary(fvfm_sp_aov)
 summary(fvfm_tax_aov)
@@ -65,13 +73,13 @@ fvfm_cld_df <- enframe(fvfm_cld[[1]]$Letters) %>%
 ## b. box plot
 
 ```{r}
-fvfm_boxplot <- fvfm_summary %>% 
+fvfm_boxplot <- ind_traits %>% 
   left_join(., fvfm_cld_df, by = "sp_code") %>% 
   group_by(sp_code) %>% 
-  ggplot(aes(x = sp_code, y = mean, group = sp_code)) +
+  ggplot(aes(x = sp_code, y = fvfm_mean, group = sp_code)) +
   geom_boxplot(aes(fill = value)) +
   geom_jitter() +
-  geom_text(aes(label = value, y = max(mean)), nudge_y = 0.01) + 
+  geom_text(aes(label = value, y = 0.83), nudge_y = 0.01) + 
   facet_wrap(~ pigment_type, scales = "free_x") +
   scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
   theme_bw() +
@@ -91,50 +99,33 @@ fvfm_boxplot
 ## c. boxplot (PTCA adults vs recruits)
 
 ```{r}
-test <- fvfm_raw %>% 
-  rename('fvfm_meas' = '1:Fv/Fm') %>% 
-  mutate(fvfm_meas = as.numeric(fvfm_meas)) %>% 
-  select(specimen_ID, subsample_ID, fvfm_meas) %>% 
-  group_by(specimen_ID) %>% 
-  summarize(mean = mean(fvfm_meas),
-            var = var(fvfm_meas),
-            sd = sd(fvfm_meas)) %>% 
-  left_join(., metadata, by = "specimen_ID") %>% 
-  filter(sp_code == "PTCA" & site %in% c("Mohawk", "Arroyo Quemado")) %>% 
-  mutate(lifestage = case_when(
-    date_collected %in% c("20220405", "20220407") ~ "adult",
-    TRUE ~ "new_recruit"
-  ))
+ptca_fvfm <- fvfm_ind %>% 
+  # rename('fvfm_meas' = '1:Fv/Fm') %>% 
+  # mutate(fvfm_meas = as.numeric(fvfm_meas)) %>% 
+  # select(specimen_ID, subsample_ID, fvfm_meas) %>% 
+  # group_by(specimen_ID) %>% 
+  # summarize(mean = mean(fvfm_meas),
+  #           var = var(fvfm_meas),
+  #           sd = sd(fvfm_meas)) %>% 
+  left_join(., metadata_ind, by = "specimen_ID") %>% 
+  filter(sp_code == "PTCA" & site %in% c("Mohawk", "Arroyo Quemado")) 
 
-var.test(mean ~ lifestage, data = test %>% filter(site == "Arroyo Quemado"))
-var.test(mean ~ lifestage, data = test %>% filter(site == "Mohawk"))
+var.test(fvfm_mean ~ lifestage, data = ptca_fvfm %>% filter(site == "Arroyo Quemado"))
+var.test(fvfm_mean ~ lifestage, data = ptca_fvfm %>% filter(site == "Mohawk"))
 # both homogeneous variances
 
-t.test(mean ~ lifestage, data = test %>% filter(site == "Arroyo Quemado"), var.equal = TRUE)
-t.test(mean ~ lifestage, data = test %>% filter(site == "Mohawk"), var.equal = TRUE)
+t.test(fvfm_mean ~ lifestage, data = ptca_fvfm %>% filter(site == "Arroyo Quemado"), var.equal = TRUE)
+t.test(fvfm_mean ~ lifestage, data = ptca_fvfm %>% filter(site == "Mohawk"), var.equal = TRUE)
 
-var.test(mean ~ site, data = test %>% filter(lifestage == "adult"))
-var.test(mean ~ site, data = test %>% filter(lifestage == "new_recruit"))
+var.test(fvfm_mean ~ site, data = ptca_fvfm %>% filter(lifestage == "adult"))
+var.test(fvfm_mean ~ site, data = ptca_fvfm %>% filter(lifestage == "recruit"))
 # homogeneous variance
-t.test(mean ~ site, data = test %>% filter(lifestage == "adult"), var.equal = TRUE)
-t.test(mean ~ site, data = test %>% filter(lifestage == "new_recruit"), var.equal = TRUE)
+t.test(fvfm_mean ~ site, data = ptca_fvfm %>% filter(lifestage == "adult"), var.equal = TRUE)
+t.test(fvfm_mean ~ site, data = ptca_fvfm %>% filter(lifestage == "recruit"), var.equal = TRUE)
 # not significantly different
 
-test_plot <- fvfm_raw %>% 
-  rename('fvfm_meas' = '1:Fv/Fm') %>% 
-  mutate(fvfm_meas = as.numeric(fvfm_meas)) %>% 
-  select(specimen_ID, subsample_ID, fvfm_meas) %>% 
-  group_by(specimen_ID) %>% 
-  summarize(mean = mean(fvfm_meas),
-            var = var(fvfm_meas),
-            sd = sd(fvfm_meas)) %>% 
-  left_join(., metadata, by = "specimen_ID") %>% 
-  filter(sp_code == "PTCA" & site %in% c("Mohawk", "Arroyo Quemado")) %>% 
-  mutate(lifestage = case_when(
-    date_collected %in% c("20220405", "20220407") ~ "adult",
-    TRUE ~ "new_recruit"
-  )) %>% 
-  ggplot(aes(x = lifestage, y = mean)) +
+ptca_fvfm_plot <- ptca_fvfm %>% 
+  ggplot(aes(x = lifestage, y = fvfm_mean)) +
   geom_boxplot(aes(fill = lifestage)) +
   geom_jitter() +
   scale_fill_manual(values = c("#70601d", "#b59b33")) +
@@ -142,133 +133,109 @@ test_plot <- fvfm_raw %>%
   theme_bw() +
   theme(legend.position = "none") +
   labs(title = "PTCA Fv/Fm",
-       caption = "t-test: Arroyo Quemado: t(14) = 9.4, p < 0.001, Mohawk: t(28) = 7.13, p < 0.001") 
+       caption = "t-test: Arroyo Quemado: t(14) = 3.52, p = 0.003, Mohawk: t(28) = 7.13, p < 0.001") 
 
-test_plot
+ptca_fvfm_plot
+
+# test_plot <- fvfm_raw %>% 
+#   rename('fvfm_meas' = '1:Fv/Fm') %>% 
+#   mutate(fvfm_meas = as.numeric(fvfm_meas)) %>% 
+#   select(specimen_ID, subsample_ID, fvfm_meas) %>% 
+#   group_by(specimen_ID) %>% 
+#   summarize(mean = mean(fvfm_meas),
+#             var = var(fvfm_meas),
+#             sd = sd(fvfm_meas)) %>% 
+#   left_join(., metadata, by = "specimen_ID") %>% 
+#   filter(sp_code == "PTCA" & site %in% c("Mohawk", "Arroyo Quemado")) %>% 
+#   mutate(lifestage = case_when(
+#     date_collected %in% c("20220405", "20220407") ~ "adult",
+#     TRUE ~ "new_recruit"
+#   )) %>% 
+#   ggplot(aes(x = lifestage, y = mean)) +
+#   geom_boxplot(aes(fill = lifestage)) +
+#   geom_jitter() +
+#   scale_fill_manual(values = c("#70601d", "#b59b33")) +
+#   facet_wrap(~site) +
+#   theme_bw() +
+#   theme(legend.position = "none") +
+#   labs(title = "PTCA Fv/Fm",
+#        caption = "t-test: Arroyo Quemado: t(14) = 9.4, p < 0.001, Mohawk: t(28) = 7.13, p < 0.001") 
+# 
+# test_plot
 
 # ggsave(here::here("figures/prelim-visualizations",
 #                   paste("fvfm-boxplot-lifestage-", todays_date, ".jpg", sep = "")),
-#        test_plot,
+#        ptca_fvfm_plot,
 #        width = 8, height = 5, dpi = 150)
 ```
 
 ## d. boxplot (PTCA recruits across sites)
 
 ```{r}
-fvfm_ptca <- fvfm_raw %>% 
-  rename('fvfm_meas' = '1:Fv/Fm') %>% 
-  mutate(fvfm_meas = as.numeric(fvfm_meas)) %>% 
-  select(specimen_ID, subsample_ID, fvfm_meas) %>% 
-  group_by(specimen_ID) %>% 
-  summarize(mean = mean(fvfm_meas),
-            var = var(fvfm_meas),
-            sd = sd(fvfm_meas)) %>% 
-  left_join(., metadata, by = "specimen_ID") %>% 
-  filter(sp_code == "PTCA") %>% 
-  mutate(lifestage = case_when(
-    date_collected %in% c("20220405", "20220407") ~ "adult",
-    TRUE ~ "new_recruit"
-  )) %>% 
-  filter(lifestage == "new_recruit")
+fvfm_ptca_recruit <- fvfm_ind %>% 
+  left_join(., metadata_ind, by = "specimen_ID") %>% 
+  filter(lifestage == "recruit")
 
-bartlett.test(mean ~ site, data = fvfm_ptca)
-# significantly different variances
-leveneTest(mean ~ site, data = fvfm_ptca)
+bartlett.test(fvfm_mean ~ site, data = fvfm_ptca)
+# not significantly different variances
 
-summary(aov(mean ~ site, 
-            data = fvfm_ptca %>% 
-              filter(lifestage == "new_recruit" & 
-              site %in% c("Arroyo Quemado", "Bullito", "Mohawk"))))
+summary(aov(fvfm_mean ~ site, 
+            data = fvfm_ptca_recruit))
 
-fvfm_boxplot_ptca <- fvfm_ptca %>% 
-  filter(lifestage == "new_recruit" & 
-           site %in% c("Arroyo Quemado", "Bullito", "Mohawk")) %>% 
-  ggplot(aes(x = site, y = mean)) +
+fvfm_boxplot_ptca_recruit <- fvfm_ptca_recruit %>% 
+  ggplot(aes(x = site, y = fvfm_mean)) +
   geom_boxplot() +
   geom_jitter() +
-  theme_bw()
-fvfm_boxplot_ptca
+  theme_bw() +
+  labs(caption = "significantly different across sites, p < 0.001")
+fvfm_boxplot_ptca_recruit
 
 # ggsave(here::here("figures/prelim-visualizations",
 #                   paste("fvfm-boxplot-PTCA_recruits-", todays_date, ".jpg", sep = "")),
-#        fvfm_boxplot_ptca,
+#        fvfm_boxplot_ptca_recruit,
 #        width = 8, height = 5, dpi = 150)
 ```
 
 ## e. boxplot (PTCA adults across sites)
 
 ```{r}
-fvfm_ptca <- fvfm_raw %>% 
-  rename('fvfm_meas' = '1:Fv/Fm') %>% 
-  mutate(fvfm_meas = as.numeric(fvfm_meas)) %>% 
-  select(specimen_ID, subsample_ID, fvfm_meas) %>% 
-  group_by(specimen_ID) %>% 
-  summarize(mean = mean(fvfm_meas),
-            var = var(fvfm_meas),
-            sd = sd(fvfm_meas)) %>% 
-  left_join(., metadata, by = "specimen_ID") %>% 
-  filter(sp_code == "PTCA") %>% 
-  mutate(lifestage = case_when(
-    date_collected %in% c("20220405", "20220407") ~ "adult",
-    TRUE ~ "new_recruit"
-  )) %>% 
+fvfm_ptca_adult <- fvfm_ind %>% 
+  left_join(., metadata_ind, by = "specimen_ID") %>% 
   filter(lifestage == "adult")
 
-bartlett.test(mean ~ site, data = fvfm_ptca)
+bartlett.test(fvfm_mean ~ site, data = fvfm_ptca_adult)
 # not significantly different variances
-leveneTest(mean ~ site, data = fvfm_ptca)
 
-t.test(mean ~ site, data = fvfm_ptca, var.equal = TRUE)
+t.test(fvfm_mean ~ site, data = fvfm_ptca_adult, var.equal = TRUE)
 # no significant differences in adults
 
-fvfm_boxplot_ptca <- fvfm_ptca %>% 
-  filter(lifestage == "adult" & 
-           site %in% c("Arroyo Quemado", "Mohawk")) %>% 
-  ggplot(aes(x = site, y = mean)) +
+fvfm_boxplot_ptca_adult <- fvfm_ptca_adult %>% 
+  ggplot(aes(x = site, y = fvfm_mean)) +
   geom_boxplot() +
   geom_jitter() +
   theme_bw() +
-  labs(caption = "t-test: t(13) = 0.97, p = 0.35")
-fvfm_boxplot_ptca
+  labs(caption = "t-test: t(15) = -0.08, p = 0.94")
+fvfm_boxplot_ptca_adult
 
 # ggsave(here::here("figures/prelim-visualizations",
 #                   paste("fvfm-boxplot-PTCA_adults-", todays_date, ".jpg", sep = "")),
-#        fvfm_boxplot_ptca,
+#        fvfm_boxplot_ptca_adult,
 #        width = 8, height = 5, dpi = 150)
 ```
 
 ## f. boxplot (BF BULL vs IVEE)
 
 ```{r}
-bf_fvfm <- fvfm_raw %>% 
-  rename('fvfm_meas' = '1:Fv/Fm') %>% 
-  mutate(fvfm_meas = as.numeric(fvfm_meas)) %>% 
-  select(specimen_ID, subsample_ID, fvfm_meas) %>% 
-  group_by(specimen_ID) %>% 
-  summarize(mean = mean(fvfm_meas),
-            var = var(fvfm_meas),
-            sd = sd(fvfm_meas)) %>% 
-  left_join(., metadata, by = "specimen_ID") %>% 
+bf_fvfm <- fvfm_ind %>% 
+  left_join(., metadata_ind, by = "specimen_ID") %>% 
   filter(sp_code == "BF" & site %in% c("Bullito", "Isla Vista"))
 
-var.test(mean ~ site, data = bf_fvfm)
+var.test(fvfm_mean ~ site, data = bf_fvfm)
 # homogeneous variances, use t-test
-t.test(mean ~ site, data = bf_fvfm, var.equal = TRUE)
+t.test(fvfm_mean ~ site, data = bf_fvfm, var.equal = TRUE)
 
-bf_tukey <- TukeyHSD(bf_aov)
-bf_tukey
-
-bf_plot <- fvfm_raw %>% 
-  rename('fvfm_meas' = '1:Fv/Fm') %>% 
-  mutate(fvfm_meas = as.numeric(fvfm_meas)) %>% 
-  select(specimen_ID, subsample_ID, fvfm_meas) %>% 
-  group_by(specimen_ID) %>% 
-  summarize(mean = mean(fvfm_meas),
-            var = var(fvfm_meas),
-            sd = sd(fvfm_meas)) %>% 
-  left_join(., metadata, by = "specimen_ID") %>% 
-  filter(sp_code == "BF" & site %in% c("Bullito", "Isla Vista")) %>% 
-  ggplot(aes(x = site, y = mean)) +
+bf_plot <- bf_fvfm %>% 
+  ggplot(aes(x = site, y = fvfm_mean)) +
   geom_boxplot(aes(fill = site)) +
   geom_jitter() +
   labs(title = "BF Fv/Fm",
@@ -289,30 +256,18 @@ bf_plot
 ## a. analysis of variance
 
 ```{r}
-thickness_df <- thickness %>% 
-  pivot_longer(cols = thickness_01:thickness_10, names_to = "measurement_n", values_to = "thickness_mm") %>% 
-  # replace NAs for 20210709-MOHK-004 with the quickfix value
-  mutate(thickness_mm = replace(thickness_mm, 
-                                is.na(thickness_mm) & specimen_ID == "20210709-MOHK-004", 
-                                quickfix)) %>% 
-  group_by(specimen_ID) %>% 
-  # join with metadata_subsamples: spp codes + specimen_ID
-  left_join(., metadata_subsamples, by = "specimen_ID") %>% 
-  # join with coarse_traits
-  left_join(., coarse_traits, by = "sp_code") %>% 
-  unique()
+thickness_df <- ind_traits %>% 
+  filter(sp_code %in% algae_proposal) %>% 
+  # remove GR and CO because only 1 observation
+  filter(!(sp_code %in% c("GR", "CO")))
 
-bartlett.test(thickness_mm.x ~ sp_code, data = thickness_df)
+bartlett.test(thickness_mm_mean ~ sp_code, data = thickness_df)
 # definitely heterogeneous variances
 
 # analysis of variance
-thickness_sp_aov <- aov(thickness_mm.x ~ sp_code, data = thickness_df)
-
-thickness_tax_aov <- aov(thickness_mm.x ~ taxon_phylum, data = thickness_df)
+thickness_sp_aov <- aov(thickness_mm_mean ~ sp_code, data = thickness_df)
 
 summary(thickness_sp_aov)
-summary(thickness_tax_aov)
-# both significant
 
 # Tukey HSD
 thickness_tukey <- TukeyHSD(thickness_sp_aov)
@@ -325,18 +280,17 @@ thickness_cld_df <- enframe(thickness_cld[[1]]$Letters) %>%
   rename(sp_code = "name")
 ```
 
-
 ## b. box plot
 
 ```{r}
-thickness_boxplot <- thickness_summary %>% 
+thickness_boxplot <- ind_traits %>% 
   left_join(., thickness_cld_df, by = "sp_code") %>% 
-  drop_na(site, mean) %>% 
+  # drop_na(site, mean) %>% 
   group_by(sp_code) %>% 
-  ggplot(aes(x = sp_code, y = mean, group = sp_code)) +
+  ggplot(aes(x = sp_code, y = thickness_mm_mean, group = sp_code)) +
   geom_boxplot(aes(fill = value)) +
   geom_jitter() +
-  geom_text(aes(label = value, y = max(mean)), nudge_y = 0.01) + 
+  geom_text(aes(label = value, y = 0.75), nudge_y = 0.01) + 
   facet_wrap(~ pigment_type, scales = "free_x") +
   scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
   theme_bw() +

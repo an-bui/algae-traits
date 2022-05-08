@@ -34,38 +34,51 @@ library(cati) # partitioning species composition/intraspecific variation
 # gets the file data from google drive
 sheet_id <- "1h2eHoL5kXMRwExt3hjrLavxG0pajHOvA1UfJd24pRk4"
 
-metadata <- read_sheet(sheet_id, sheet = "00b-metadata") %>% 
-  filter(site != "Campus Point")
+# metadata for subsamples
+metadata_sub <- read_sheet(sheet_id, sheet = "00d-metadata-test") 
 
-metadata_subsamples <- read_sheet(sheet_id, sheet = "00c-metadata-subsamples") %>% 
-  filter(site != "Campus Point")
+# metadata_subsamples <- read_sheet(sheet_id, sheet = "00c-metadata-subsamples") %>% 
+#   filter(site != "Campus Point")
+# 
+# metadata_test <- read_sheet(sheet_id, sheet = "00d-metadata-test") 
 
-metadata_test <- read_sheet(sheet_id, sheet = "00d-metadata-test") 
-
-metadata_ind <- metadata_test %>% 
+# metadata for individuals 
+metadata_ind <- metadata_sub %>% 
   select(specimen_ID, date_collected, site, sp_code, lifestage) %>% 
   unique()
 
-hw <- read_sheet(sheet_id, sheet = "02-hw", na = "NA") 
+# hw <- read_sheet(sheet_id, sheet = "02-hw", na = "NA") 
 
+# individual maximum height
 ind_height <- read_sheet(sheet_id, sheet = "02a-ind_height", na = "NA") 
+
+# thallus length and width
 lw <- read_sheet(sheet_id, sheet = "02b-lw", na = "NA") 
 
-thickness <- read_sheet(sheet_id, sheet = "03-thickness", na = "NA") 
-thickness_test <- read_sheet(sheet_id, sheet = "03a-thickness", na = "NA")
+# thickness <- read_sheet(sheet_id, sheet = "03-thickness", na = "NA") 
 
-weight <- read_sheet(sheet_id, sheet = "04-weight", na = "NA") 
-weight_test <- read_sheet(sheet_id, sheet = "04a-weight", na = "NA")
+# thallus thickness
+thickness <- read_sheet(sheet_id, sheet = "03a-thickness", na = "NA")
 
-sa_peri <- read_sheet(sheet_id, sheet = "05a-scans") 
-sa_peri_test <- read_sheet(sheet_id, sheet = "05a-scans_test") 
+# weight <- read_sheet(sheet_id, sheet = "04-weight", na = "NA") 
 
+# wet and dry weight
+weight <- read_sheet(sheet_id, sheet = "04a-weight", na = "NA")
+
+# sa_peri <- read_sheet(sheet_id, sheet = "05a-scans") 
+
+# surface area and perimeter
+sa_peri <- read_sheet(sheet_id, sheet = "05a-scans_test") 
+
+# branching order (still need to clean up)
 bra_ord <- read_sheet(sheet_id, sheet = "05b-branching_order", na = "NA") 
 
+# toughness (still need to clean up)
 toughness <- read_sheet(sheet_id, sheet = "06-toughness", na = "NA") 
 
-volume <- read_sheet(sheet_id, sheet = "07-volume", na = "NA") 
-volume_test <- read_sheet(sheet_id, sheet = "07a-volume", na = "NA") 
+# volume <- read_sheet(sheet_id, sheet = "07-volume", na = "NA") 
+# volume
+volume <- read_sheet(sheet_id, sheet = "07a-volume", na = "NA") 
 
 
 # 3.  getting FvFm data ---------------------------------------------------
@@ -94,11 +107,12 @@ fvfm_raw <- path %>%
 coarse_traits <- read_csv(here::here("data", "algae-traits_literature-search_2022-02-28.csv"))
 
 # intermediate data frame for trait by species matrix
-ct_prep <- metadata_subsamples %>% 
-  select(specimen_ID, sp_code) %>% 
+ct_prep <- metadata_sub %>% 
+  select(specimen_ID, sp_code, lifestage) %>% 
   left_join(., coarse_traits, by = "sp_code") %>% 
   select(specimen_ID, sp_code, scientific_name,
-         growth_form, pigment_type, life_habit, longevity, posture, branching_yn)
+         growth_form, pigment_type, life_habit, longevity, posture, branching_yn, lifestage) %>% 
+  unique()
 
 #### * b. benthics ####
 benthic_cleaning_fxn <- function(df) {
@@ -373,11 +387,6 @@ se <- function(x,...){
   sd(x, na.rm = TRUE)/sqrt(length(na.omit(x)))
 }
 
-
-
-
-
-
 # 6. trait cleaning/summarizing -------------------------------------------
 
 # This section puts traits into a format that can be used in `cati` and ordinate.
@@ -385,34 +394,35 @@ se <- function(x,...){
 #### * a. Fv/Fm ####
 
 # calculate mean fvfm per individual
-fvfm_summary <- fvfm_raw %>% 
-  # only use FvFm, drop the NAs, change the column name
-  select(specimen_ID, subsample_ID, '1:Fv/Fm') %>% 
-  drop_na(specimen_ID) %>%
-  rename('fvfm_meas' = '1:Fv/Fm') %>% 
-  # make sure that fvfm_meas is numeric
-  mutate(fvfm_meas = as.numeric(fvfm_meas)) %>%
-  # calculate mean, variance, standard deviation
-  group_by(specimen_ID) %>% 
-  mutate(mean = mean(fvfm_meas, na.rm = TRUE),
-         var = var(fvfm_meas, na.rm = TRUE),
-         sd = sd(fvfm_meas, na.rm = TRUE)) %>% 
-  
-  # join with metadata: spp codes + specimen_ID
-  left_join(., metadata, by = "specimen_ID") %>% 
-  # fill in "subsamples" with specimen ID when there is none
-  mutate(subsample_ID = case_when(
-    !is.na((subsample_ID)) ~ subsample_ID,
-    TRUE ~ specimen_ID
-  )) %>% 
-  ungroup() %>% 
-  # select columns of interest
-  select(specimen_ID, subsample_ID, mean, var, sd, date_collected, site, sp_code) %>% 
-  # join with coarse_traits
-  left_join(., coarse_traits, by = "sp_code") %>% 
-  unique()
+# fvfm_summary <- fvfm_raw %>% 
+#   # only use FvFm, drop the NAs, change the column name
+#   select(specimen_ID, subsample_ID, '1:Fv/Fm') %>% 
+#   drop_na(specimen_ID) %>%
+#   rename('fvfm_meas' = '1:Fv/Fm') %>% 
+#   # make sure that fvfm_meas is numeric
+#   mutate(fvfm_meas = as.numeric(fvfm_meas)) %>%
+#   # calculate mean, variance, standard deviation
+#   group_by(specimen_ID) %>% 
+#   mutate(mean = mean(fvfm_meas, na.rm = TRUE),
+#          var = var(fvfm_meas, na.rm = TRUE),
+#          sd = sd(fvfm_meas, na.rm = TRUE)) %>% 
+#   
+#   # join with metadata: spp codes + specimen_ID
+#   left_join(., metadata, by = "specimen_ID") %>% 
+#   # fill in "subsamples" with specimen ID when there is none
+#   mutate(subsample_ID = case_when(
+#     !is.na((subsample_ID)) ~ subsample_ID,
+#     TRUE ~ specimen_ID
+#   )) %>% 
+#   ungroup() %>% 
+#   # select columns of interest
+#   select(specimen_ID, subsample_ID, mean, var, sd, date_collected, site, sp_code) %>% 
+#   # join with coarse_traits
+#   left_join(., coarse_traits, by = "sp_code") %>% 
+#   unique()
 
-fvfm_test <- fvfm_raw %>% 
+# fvfm for each subsample
+fvfm_sub <- fvfm_raw %>% 
   # fill in '1:Fv/Fm' with 1:Y(III) when there is none
   # only an issue with 20220405-MOHK samples
   mutate('1:Fv/Fm' = case_when(
@@ -434,7 +444,8 @@ fvfm_test <- fvfm_raw %>%
   drop_na(subsample_ID) %>% 
   select(-specimen_ID)
 
-fvfm_ind_test <- fvfm_raw %>% 
+# fvfm for each individual
+fvfm_ind <- fvfm_raw %>% 
   # fill in '1:Fv/Fm' with 1:Y(III) when there is none
   # only an issue with 20220405-MOHK samples
   mutate('1:Fv/Fm' = case_when(
@@ -454,224 +465,221 @@ fvfm_ind_test <- fvfm_raw %>%
   ungroup() 
 
 # intermediate data frame to create the trait by species matrix
-fvfm_prep <- fvfm_summary %>% 
-  select(specimen_ID, subsample_ID, site, mean) %>% 
-  rename("fvfm" = mean)
-
+# fvfm_prep <- fvfm_summary %>% 
+#   select(specimen_ID, subsample_ID, site, mean) %>% 
+#   rename("fvfm" = mean)
 
 # as a note: samples from 20210623 don't have FvFm, and one sample from IVEE doesn't either
 
 #### * b. thickness ####
 
-# some problems with the subsampling - used the metadata_subsamples df
-
 # calculate mean thickness per individual
-thickness_summary <- thickness %>% 
-  pivot_longer(cols = thickness_01:thickness_10, names_to = "measurement_n", values_to = "thickness_mm") %>% 
-  group_by(specimen_ID) %>% 
-  summarize(mean = mean(thickness_mm, na.rm = TRUE),
-            var = var(thickness_mm, na.rm = TRUE),
-            sd = sd(thickness_mm, na.rm = TRUE)) %>% 
-  # join with metadata_subsamples: spp codes + specimen_ID
-  left_join(., metadata_subsamples, by = "specimen_ID") %>% 
-  # select columns of interest
-  select(specimen_ID, mean, var, sd, date_collected, site, sp_code) %>% 
-  # join with coarse_traits
-  left_join(., coarse_traits, by = "sp_code") %>% 
-  unique()
+# thickness_summary <- thickness %>% 
+#   pivot_longer(cols = thickness_01:thickness_10, names_to = "measurement_n", values_to = "thickness_mm") %>% 
+#   group_by(specimen_ID) %>% 
+#   summarize(mean = mean(thickness_mm, na.rm = TRUE),
+#             var = var(thickness_mm, na.rm = TRUE),
+#             sd = sd(thickness_mm, na.rm = TRUE)) %>% 
+#   # join with metadata_subsamples: spp codes + specimen_ID
+#   left_join(., metadata_subsamples, by = "specimen_ID") %>% 
+#   # select columns of interest
+#   select(specimen_ID, mean, var, sd, date_collected, site, sp_code) %>% 
+#   # join with coarse_traits
+#   left_join(., coarse_traits, by = "sp_code") %>% 
+#   unique()
 
-thickness_test_df <- thickness_test %>% 
+thickness_sub <- thickness %>% 
   pivot_longer(cols = thickness_01:thickness_10, names_to = "measurement_n", values_to = "thickness_mm") %>% 
   group_by(subsample_ID) %>% 
   summarize(thickness_mm_mean = mean(thickness_mm, na.rm = TRUE),
             thickness_mm_se = se(thickness_mm))
 
-thickness_ind_test_df <- thickness_test %>% 
+thickness_ind <- thickness %>% 
   pivot_longer(cols = thickness_01:thickness_10, names_to = "measurement_n", values_to = "thickness_mm") %>% 
   group_by(specimen_ID) %>% 
   summarize(thickness_mm_mean = mean(thickness_mm, na.rm = TRUE),
             thickness_mm_se = se(thickness_mm))
 
 # intermediate data frame to create the trait by species matrix
-thickness_prep <- thickness_summary %>% 
-  select(specimen_ID, mean) %>% 
-  rename("thickness_mm" = mean)
+# thickness_prep <- thickness_summary %>% 
+#   select(specimen_ID, mean) %>% 
+#   rename("thickness_mm" = mean)
 
 #### * c. weights ####
 
-weight_summary <- weight %>% 
-  filter(type == "thallus") %>% 
-  # join with metadata: spp codes + specimen_ID
-  left_join(., metadata_subsamples, by = "specimen_ID") %>% 
-  drop_na(sp_code, weight_dry_mg) %>% 
-  # join with coarse_traits
-  left_join(., coarse_traits, by = "sp_code") %>% 
-  # thallus dry matter content: dry mass/fresh mass
-  mutate(tdmc = weight_dry_g/weight_wet_g)
+# weight_summary <- weight %>% 
+#   filter(type == "thallus") %>% 
+#   # join with metadata: spp codes + specimen_ID
+#   left_join(., metadata_subsamples, by = "specimen_ID") %>% 
+#   drop_na(sp_code, weight_dry_mg) %>% 
+#   # join with coarse_traits
+#   left_join(., coarse_traits, by = "sp_code") %>% 
+#   # thallus dry matter content: dry mass/fresh mass
+#   mutate(tdmc = weight_dry_g/weight_wet_g)
 
-weight_test_df <- weight_test %>% 
-  select(specimen_ID, subsample_ID, weight_wet_mg, weight_wet_g, weight_dry_mg, weight_dry_g) %>% 
+weight_sub <- weight %>%
+  select(specimen_ID, subsample_ID, weight_wet_mg, weight_wet_g, weight_dry_mg, weight_dry_g) %>%
   # calculate dry matter content
-  mutate(dmc = weight_dry_mg/weight_wet_mg) %>% 
+  mutate(dmc = weight_dry_mg/weight_wet_mg) %>%
   # take out specimen_ID column
   select(-specimen_ID)
 
-weight_ind_test_df <- weight_test %>% 
+weight_ind <- weight %>% 
   group_by(specimen_ID) %>% 
   summarize(total_wet = sum(weight_wet_mg, na.rm = TRUE),
             total_dry = sum(weight_dry_mg, na.rm = TRUE)) %>% 
   ungroup()
 
-
 # intermediate data frame to create the trait by species matrix
-weight_prep <- weight_summary %>%
-  select(specimen_ID, weight_wet_g, weight_dry_g, tdmc)
+# weight_prep <- weight_summary %>%
+#   select(specimen_ID, weight_wet_g, weight_dry_g, tdmc)
 
 #### * d. volume ####
 
-volume_summary <- volume %>% 
-  filter(type == "thallus") %>% 
-  # join with metadata: spp codes + specimen_ID
-  left_join(., metadata_subsamples, by = "specimen_ID") %>% 
-  drop_na(sp_code) %>% 
-  # join with coarse_traits
-  left_join(., coarse_traits, by = "sp_code")
+# volume_summary <- volume %>% 
+#   filter(type == "thallus") %>% 
+#   # join with metadata: spp codes + specimen_ID
+#   left_join(., metadata_subsamples, by = "specimen_ID") %>% 
+#   drop_na(sp_code) %>% 
+#   # join with coarse_traits
+#   left_join(., coarse_traits, by = "sp_code")
 
-volume_test_df <- volume_test %>% 
+volume_sub <- volume %>%
   select(subsample_ID, volume_total_mL)
 
-volume_ind_test_df <- volume_test %>% 
+volume_ind <- volume %>% 
   group_by(specimen_ID) %>% 
   summarize(total_volume = sum(volume_total_mL, na.rm = TRUE))
 
 # intermediate data frame to create the trait by species matrix
 # note: not dependent on `volume_summary`
-volume_prep <- volume %>% 
-  select(specimen_ID, volume_total_mL) %>% 
-  rename("volume_mL" = volume_total_mL) %>% 
-  group_by(specimen_ID) %>% 
-  summarize(volume_mL = sum(volume_mL))
+# volume_prep <- volume %>% 
+#   select(specimen_ID, volume_total_mL) %>% 
+#   rename("volume_mL" = volume_total_mL) %>% 
+#   group_by(specimen_ID) %>% 
+#   summarize(volume_mL = sum(volume_mL))
 
 #### * e. SA, perimeter ####
 
-sa_peri_summary <- sa_peri %>% 
-  # drop all observations that haven't been processed
-  drop_na(results_file) %>% 
-  select(specimen_ID, area_total, peri_total) %>% 
-  group_by(specimen_ID) %>% 
-  summarize(area_total = sum(area_total),
-            peri_total = sum(peri_total)) %>% 
-  drop_na(area_total) %>% 
-  # calculate SA:P
-  mutate(sap_ratio = area_total/peri_total) %>% 
-  # join with metadata_subsamples: spp code + specimen_ID
-  left_join(., metadata_subsamples, by = "specimen_ID") %>% 
-  # select columns of interest
-  select(specimen_ID, area_total, peri_total, sap_ratio, date_collected, site, sp_code) %>% 
-  # join with coarse_traits
-  left_join(., coarse_traits, by = "sp_code") 
+# sa_peri_summary <- sa_peri %>% 
+#   # drop all observations that haven't been processed
+#   drop_na(results_file) %>% 
+#   select(specimen_ID, area_total, peri_total) %>% 
+#   group_by(specimen_ID) %>% 
+#   summarize(area_total = sum(area_total),
+#             peri_total = sum(peri_total)) %>% 
+#   drop_na(area_total) %>% 
+#   # calculate SA:P
+#   mutate(sap_ratio = area_total/peri_total) %>% 
+#   # join with metadata_subsamples: spp code + specimen_ID
+#   left_join(., metadata_subsamples, by = "specimen_ID") %>% 
+#   # select columns of interest
+#   select(specimen_ID, area_total, peri_total, sap_ratio, date_collected, site, sp_code) %>% 
+#   # join with coarse_traits
+#   left_join(., coarse_traits, by = "sp_code") 
 
-sa_peri_test_df <- sa_peri_test %>% 
+sa_peri_sub <- sa_peri %>% 
   select(specimen_ID, subsample_ID, area_total, peri_total) %>% 
   group_by(subsample_ID) %>% 
   summarize(area_total = sum(area_total),
             peri_total = sum(peri_total)) 
 
 # intermediate data frame to create the trait by species matrix
-sa_peri_prep <- sa_peri_summary %>% 
-  select(specimen_ID, area_total, peri_total, sap_ratio) 
+# sa_peri_prep <- sa_peri_summary %>% 
+#   select(specimen_ID, area_total, peri_total, sap_ratio) 
 
 #### * f. SA:V ####
 
-ratio_savolume <- sa_peri_summary %>% 
-  select(specimen_ID, area_total) %>% 
-  full_join(., volume_summary, by = "specimen_ID") %>% 
-  # drop specimens that don't have area
-  drop_na(area_total) %>% 
-  mutate(sav_ratio = area_total/volume_total_mL) %>% 
-  drop_na(sav_ratio)
+# ratio_savolume <- sa_peri_summary %>% 
+#   select(specimen_ID, area_total) %>% 
+#   full_join(., volume_summary, by = "specimen_ID") %>% 
+#   # drop specimens that don't have area
+#   drop_na(area_total) %>% 
+#   mutate(sav_ratio = area_total/volume_total_mL) %>% 
+#   drop_na(sav_ratio)
 
 #### * g. max height and width ####
 
-hw_summary <- hw %>% 
-  # filter(type == "whole") %>% 
-  # join with metadata: spp codes + specimen_ID
-  left_join(., metadata_subsamples, by = "specimen_ID") %>% 
-  drop_na(sp_code) %>% 
-  # join with coarse_traits: spp codes + taxonomic info
-  left_join(., coarse_traits, by = "sp_code") %>% 
-  # replace NAs with -99999
-  mutate(max_height_cm = replace_na(max_height_cm, -99999),
-         max_width_cm = replace_na(max_width_cm, -99999)) %>% 
-  select(specimen_ID, max_height_cm, max_width_cm) %>% 
-  # select highest height and width values
-  group_by(specimen_ID) %>% 
-  filter(max_height_cm == max(max_height_cm),
-         max_width_cm == max(max_width_cm)) %>% 
-  filter(specimen_ID != "20210621-MOHK-001") %>% 
-  # join with metadata: spp codes + specimen_ID
-  left_join(., metadata_subsamples, by = "specimen_ID") %>% 
-  drop_na(sp_code) %>% 
-  # join with coarse_traits
-  left_join(., coarse_traits, by = "sp_code") 
+# hw_summary <- hw %>% 
+#   # filter(type == "whole") %>% 
+#   # join with metadata: spp codes + specimen_ID
+#   left_join(., metadata_subsamples, by = "specimen_ID") %>% 
+#   drop_na(sp_code) %>% 
+#   # join with coarse_traits: spp codes + taxonomic info
+#   left_join(., coarse_traits, by = "sp_code") %>% 
+#   # replace NAs with -99999
+#   mutate(max_height_cm = replace_na(max_height_cm, -99999),
+#          max_width_cm = replace_na(max_width_cm, -99999)) %>% 
+#   select(specimen_ID, max_height_cm, max_width_cm) %>% 
+#   # select highest height and width values
+#   group_by(specimen_ID) %>% 
+#   filter(max_height_cm == max(max_height_cm),
+#          max_width_cm == max(max_width_cm)) %>% 
+#   filter(specimen_ID != "20210621-MOHK-001") %>% 
+#   # join with metadata: spp codes + specimen_ID
+#   left_join(., metadata_subsamples, by = "specimen_ID") %>% 
+#   drop_na(sp_code) %>% 
+#   # join with coarse_traits
+#   left_join(., coarse_traits, by = "sp_code") 
 
-lw_test <- lw %>% 
+# thallus length and width
+lw_sub <- lw %>% 
   select(-specimen_ID)
 
 # intermediate data frame to create the trait by species matrix
-hw_prep <- hw_summary %>% 
-  select(specimen_ID, max_height_cm, max_width_cm)
+# hw_prep <- hw_summary %>% 
+#   select(specimen_ID, max_height_cm, max_width_cm)
 
 #### * h. specific thallus/blade area ####
 
 # area:dry mass
 
-sta_summary <- sa_peri_summary %>% 
-  select(specimen_ID, area_total) %>% 
-  left_join(., weight_summary, by = "specimen_ID") %>% 
-  mutate(sta_mm_g = area_total/weight_dry_g,
-         sta_mm_mg = area_total/weight_dry_mg) 
+# sta_summary <- sa_peri_summary %>% 
+#   select(specimen_ID, area_total) %>% 
+#   left_join(., weight_summary, by = "specimen_ID") %>% 
+#   mutate(sta_mm_g = area_total/weight_dry_g,
+#          sta_mm_mg = area_total/weight_dry_mg) 
 
 # intermediate data frame to create the trait by species matrix
-sta_prep <- sta_summary %>% 
-  select(specimen_ID, sta_mm_mg)
+# sta_prep <- sta_summary %>% 
+#   select(specimen_ID, sta_mm_mg)
 
 #### * i. branching order ####
 
-bra_ord_summary <- bra_ord %>% 
-  pivot_longer(cols = bo_01:bo_05, names_to = "measurement_n", values_to = "bra_ord_count") %>% 
-  # calculate mean branching order for each sample
-  group_by(specimen_ID) %>% 
-  summarize(mean = mean(bra_ord_count, na.rm = TRUE)) %>% 
-  # join with metadata_subsamples
-  left_join(., metadata_subsamples, by = "specimen_ID") %>% 
-  # join with coarse_traits
-  left_join(., coarse_traits, by = "sp_code") %>% 
-  drop_na(sp_code)
+# bra_ord_summary <- bra_ord %>% 
+#   pivot_longer(cols = bo_01:bo_05, names_to = "measurement_n", values_to = "bra_ord_count") %>% 
+#   # calculate mean branching order for each sample
+#   group_by(specimen_ID) %>% 
+#   summarize(mean = mean(bra_ord_count, na.rm = TRUE)) %>% 
+#   # join with metadata_subsamples
+#   left_join(., metadata_subsamples, by = "specimen_ID") %>% 
+#   # join with coarse_traits
+#   left_join(., coarse_traits, by = "sp_code") %>% 
+#   drop_na(sp_code)
 
 #### * j. toughness ####
 
-toughness_summary <- toughness %>% 
-  pivot_longer(cols = 2:11, names_to = "measurement_n", values_to = "toughness_kgcm2") %>% 
-  # calculate mean toughness for each sample
-  group_by(specimen_ID) %>% 
-  summarize(mean = mean(toughness_kgcm2, na.rm = TRUE)) %>% 
-  # join with metadata_subsamples
-  left_join(., metadata_subsamples, by = "specimen_ID") %>% 
-  # join with coarse_traits
-  left_join(., coarse_traits, by = "sp_code") %>% 
-  drop_na(sp_code)
+# toughness_summary <- toughness %>% 
+#   pivot_longer(cols = 2:11, names_to = "measurement_n", values_to = "toughness_kgcm2") %>% 
+#   # calculate mean toughness for each sample
+#   group_by(specimen_ID) %>% 
+#   summarize(mean = mean(toughness_kgcm2, na.rm = TRUE)) %>% 
+#   # join with metadata_subsamples
+#   left_join(., metadata_subsamples, by = "specimen_ID") %>% 
+#   # join with coarse_traits
+#   left_join(., coarse_traits, by = "sp_code") %>% 
+#   drop_na(sp_code)
 
 #### * k. trait by sample matrix ####
 
-leaf_traits <- metadata_test %>% 
+leaf_traits <- metadata %>% 
   filter(type %in% c("whole", "thallus")) %>% 
-  left_join(., fvfm_test, by = "subsample_ID") %>% 
-  left_join(., thickness_test_df, by = "subsample_ID") %>% 
-  left_join(., weight_test_df, by = "subsample_ID") %>% 
-  left_join(., volume_test_df, by = "subsample_ID") %>% 
-  left_join(., lw_test, by = "subsample_ID") %>% 
-  left_join(., sa_peri_test_df, by = "subsample_ID") %>% 
+  left_join(., fvfm_sub, by = "subsample_ID") %>% 
+  left_join(., thickness_sub, by = "subsample_ID") %>% 
+  left_join(., weight_sub, by = "subsample_ID") %>% 
+  left_join(., volume_sub, by = "subsample_ID") %>% 
+  left_join(., lw_sub, by = "subsample_ID") %>% 
+  left_join(., sa_peri_sub, by = "subsample_ID") %>% 
   # ratios
   mutate(sap_ratio = area_total/peri_total,
          sav_ratio = area_total/volume_total_mL,
@@ -688,94 +696,147 @@ av_leaf_values <- leaf_traits %>%
             sap_mean = mean(sap_ratio, na.rm = TRUE),
             sap_se = se(sap_ratio))
 
-ind_traits <- metadata_test %>% 
-  select(specimen_ID) %>% 
-  unique() %>% 
+ind_traits <- ct_prep %>% 
+  # metadata_ind %>% 
+  # select(specimen_ID) %>% 
+  # unique() %>% 
   left_join(., ind_height, by = "specimen_ID") %>% 
+  left_join(., thickness_ind, by = "specimen_ID") %>% 
   left_join(., av_leaf_values, by = "specimen_ID") %>% 
-  left_join(., fvfm_ind_test, by = "specimen_ID") %>% 
-  left_join(., weight_ind_test_df, by = "specimen_ID") %>% 
-  left_join(., volume_ind_test_df, by = "specimen_ID") %>% 
-  left_join(., metadata_ind, by = "specimen_ID") 
+  left_join(., fvfm_ind, by = "specimen_ID") %>% 
+  left_join(., weight_ind, by = "specimen_ID") %>% 
+  left_join(., volume_ind, by = "specimen_ID") %>% 
+  # left_join(., metadata, by = "specimen_ID") %>% 
+  filter(!(sp_code == "PTCA" & lifestage == "recruit"))
 
-tbs_matrix <- full_join(fvfm_prep, thickness_prep, by = "specimen_ID") %>% 
-  full_join(., weight_prep, by = "specimen_ID") %>% 
-  full_join(., volume_prep, by = "specimen_ID") %>% 
-  full_join(., sa_peri_prep, by = "specimen_ID") %>% 
-  full_join(., hw_prep, by = "specimen_ID") %>% 
-  full_join(., sta_prep, by = "specimen_ID") %>% 
-  full_join(., ct_prep, by = "specimen_ID") %>% 
-  # select(-height_class) %>% 
-  drop_na(2:13) %>% 
-  column_to_rownames("specimen_ID") %>% 
-  select(-weight_wet_g, -area_total, -peri_total)
+# tbs_matrix <- full_join(fvfm_prep, thickness_prep, by = "specimen_ID") %>% 
+#   full_join(., weight_prep, by = "specimen_ID") %>% 
+#   full_join(., volume_prep, by = "specimen_ID") %>% 
+#   full_join(., sa_peri_prep, by = "specimen_ID") %>% 
+#   full_join(., hw_prep, by = "specimen_ID") %>% 
+#   full_join(., sta_prep, by = "specimen_ID") %>% 
+#   full_join(., ct_prep, by = "specimen_ID") %>% 
+#   # select(-height_class) %>% 
+#   drop_na(2:13) %>% 
+#   column_to_rownames("specimen_ID") %>% 
+#   select(-weight_wet_g, -area_total, -peri_total)
 
 #### * l. trait by species matrix ####
 
 # trait values averaged across sites
 
-tbspp_matrix <- full_join(fvfm_prep, thickness_prep, by = "specimen_ID") %>% 
-  full_join(., weight_prep, by = "specimen_ID") %>% 
-  full_join(., volume_prep, by = "specimen_ID") %>% 
-  full_join(., sa_peri_prep, by = "specimen_ID") %>% 
-  full_join(., hw_prep, by = "specimen_ID") %>% 
-  full_join(., sta_prep, by = "specimen_ID") %>% 
-  full_join(., ct_prep, by = "specimen_ID") %>% 
+tbspp_matrix <- metadata_ind %>% 
+  select(specimen_ID) %>% 
+  unique() %>% 
+  left_join(., ind_height, by = "specimen_ID") %>% 
+  left_join(., thickness_ind, by = "specimen_ID") %>% 
+  left_join(., av_leaf_values, by = "specimen_ID") %>% 
+  left_join(., fvfm_ind, by = "specimen_ID") %>% 
+  left_join(., weight_ind, by = "specimen_ID") %>% 
+  left_join(., volume_ind, by = "specimen_ID") %>% 
+  left_join(., metadata, by = "specimen_ID") %>% 
+  filter(!(sp_code == "PTCA" & lifestage == "recruit")) %>% 
   select(specimen_ID, sp_code,
-         fvfm, thickness_mm, weight_dry_g, tdmc, volume_mL,
-         area_total, peri_total, sap_ratio, max_height_cm, max_width_cm, sta_mm_mg) %>% 
+         fvfm_mean, thickness_mm_mean, total_dry, ldmc_mean,
+         total_volume, sta_mean, sap_mean, sav_mean, maximum_height) %>% 
   # calculate mean trait value for each species
   group_by(sp_code) %>% 
-  summarize_at(vars(fvfm:sta_mm_mg), mean, na.rm = TRUE) %>% 
+  summarize_at(vars(fvfm_mean:maximum_height), mean, na.rm = TRUE) %>% 
   ungroup() %>% 
   drop_na(sp_code) %>% 
-  # join with coarse_traits 
+  # join with coarse traits
   left_join(., coarse_traits, by = "sp_code") %>% 
-  select(sp_code, 
-         fvfm, thickness_mm.x, weight_dry_g, tdmc, volume_mL,
-         area_total, peri_total, sap_ratio, max_height_cm, max_width_cm, sta_mm_mg, 
-         # categorical
-         growth_form, pigment_type, life_habit, longevity, posture, branching_yn) %>% 
-  rename(thickness_mm = thickness_mm.x) %>% 
+  select(sp_code:taxon_phylum, growth_form, pigment_type, life_habit, longevity, posture, branching_yn) %>% 
   filter(sp_code != "MAPY") %>% 
   column_to_rownames("sp_code") %>% 
   # replace NaNs with NAs
   mutate_all(na_if, "NaN")
+  
+
+# tbspp_matrix <- full_join(fvfm_prep, thickness_prep, by = "specimen_ID") %>% 
+#   full_join(., weight_prep, by = "specimen_ID") %>% 
+#   full_join(., volume_prep, by = "specimen_ID") %>% 
+#   full_join(., sa_peri_prep, by = "specimen_ID") %>% 
+#   full_join(., hw_prep, by = "specimen_ID") %>% 
+#   full_join(., sta_prep, by = "specimen_ID") %>% 
+#   full_join(., ct_prep, by = "specimen_ID") %>% 
+#   select(specimen_ID, sp_code,
+#          fvfm, thickness_mm, weight_dry_g, tdmc, volume_mL,
+#          area_total, peri_total, sap_ratio, max_height_cm, max_width_cm, sta_mm_mg) %>% 
+#   # calculate mean trait value for each species
+#   group_by(sp_code) %>% 
+#   summarize_at(vars(fvfm:sta_mm_mg), mean, na.rm = TRUE) %>% 
+#   ungroup() %>% 
+#   drop_na(sp_code) %>% 
+#   # join with coarse_traits 
+#   left_join(., coarse_traits, by = "sp_code") %>% 
+#   select(sp_code, 
+#          fvfm, thickness_mm.x, weight_dry_g, tdmc, volume_mL,
+#          area_total, peri_total, sap_ratio, max_height_cm, max_width_cm, sta_mm_mg, 
+#          # categorical
+#          growth_form, pigment_type, life_habit, longevity, posture, branching_yn) %>% 
+#   rename(thickness_mm = thickness_mm.x) %>% 
+#   filter(sp_code != "MAPY") %>% 
+#   column_to_rownames("sp_code") %>% 
+#   # replace NaNs with NAs
+#   mutate_all(na_if, "NaN")
 
 #### * m. trait by species matrix function ####
 
 specif_tbspp <- function(site_choice) {
-  df <- full_join(fvfm_prep, thickness_prep, by = "specimen_ID") %>% 
-    full_join(., weight_prep, by = "specimen_ID") %>% 
-    full_join(., volume_prep, by = "specimen_ID") %>% 
-    full_join(., sa_peri_prep, by = "specimen_ID") %>% 
-    full_join(., hw_prep, by = "specimen_ID") %>% 
-    full_join(., sta_prep, by = "specimen_ID") %>% 
-    full_join(., ct_prep, by = "specimen_ID") %>% 
+  df <- metadata_ind %>% 
+    select(specimen_ID) %>% 
+    unique() %>% 
+    left_join(., ind_height, by = "specimen_ID") %>% 
+    left_join(., thickness_ind, by = "specimen_ID") %>% 
+    left_join(., av_leaf_values, by = "specimen_ID") %>% 
+    left_join(., fvfm_ind, by = "specimen_ID") %>% 
+    left_join(., weight_ind, by = "specimen_ID") %>% 
+    left_join(., volume_ind, by = "specimen_ID") %>% 
+    left_join(., metadata, by = "specimen_ID") %>% 
+    filter(!(sp_code == "PTCA" & lifestage == "recruit")) %>% 
     filter(site == {{ site_choice }}) %>% 
-  select(specimen_ID, sp_code,
-         fvfm, thickness_mm, weight_dry_g, tdmc, volume_mL,
-         area_total, peri_total, sap_ratio, max_height_cm, max_width_cm, sta_mm_mg) %>% 
-    # calculate mean trait value for each species
-    group_by(sp_code) %>% 
-    summarize_at(vars(fvfm:sta_mm_mg), mean, na.rm = TRUE) %>% 
-    ungroup() %>% 
-    drop_na(sp_code) %>% 
-    # join with coarse_traits 
-    left_join(., coarse_traits, by = "sp_code") %>% 
-    select(sp_code, 
-           fvfm, thickness_mm.x, weight_dry_g, tdmc, volume_mL,
-           area_total, peri_total, sap_ratio, max_height_cm, max_width_cm, sta_mm_mg, 
-           # categorical
-           growth_form, pigment_type, life_habit, longevity, posture, branching_yn) %>% 
-    rename(thickness_mm = thickness_mm.x) %>% 
+    select(specimen_ID, sp_code,
+           fvfm_mean, thickness_mm_mean, total_dry, ldmc_mean,
+           total_volume, sta_mean, sap_mean, sav_mean, maximum_height) %>% 
     filter(sp_code != "MAPY") %>% 
     column_to_rownames("sp_code") %>% 
     # replace NaNs with NAs
     mutate_all(na_if, "NaN")
-  
-  return(df)
 }
+
+# specif_tbspp <- function(site_choice) {
+#   df <- full_join(fvfm_prep, thickness_prep, by = "specimen_ID") %>% 
+#     full_join(., weight_prep, by = "specimen_ID") %>% 
+#     full_join(., volume_prep, by = "specimen_ID") %>% 
+#     full_join(., sa_peri_prep, by = "specimen_ID") %>% 
+#     full_join(., hw_prep, by = "specimen_ID") %>% 
+#     full_join(., sta_prep, by = "specimen_ID") %>% 
+#     full_join(., ct_prep, by = "specimen_ID") %>% 
+#     filter(site == {{ site_choice }}) %>% 
+#   select(specimen_ID, sp_code,
+#          fvfm, thickness_mm, weight_dry_g, tdmc, volume_mL,
+#          area_total, peri_total, sap_ratio, max_height_cm, max_width_cm, sta_mm_mg) %>% 
+#     # calculate mean trait value for each species
+#     group_by(sp_code) %>% 
+#     summarize_at(vars(fvfm:sta_mm_mg), mean, na.rm = TRUE) %>% 
+#     ungroup() %>% 
+#     drop_na(sp_code) %>% 
+#     # join with coarse_traits 
+#     left_join(., coarse_traits, by = "sp_code") %>% 
+#     select(sp_code, 
+#            fvfm, thickness_mm.x, weight_dry_g, tdmc, volume_mL,
+#            area_total, peri_total, sap_ratio, max_height_cm, max_width_cm, sta_mm_mg, 
+#            # categorical
+#            growth_form, pigment_type, life_habit, longevity, posture, branching_yn) %>% 
+#     rename(thickness_mm = thickness_mm.x) %>% 
+#     filter(sp_code != "MAPY") %>% 
+#     column_to_rownames("sp_code") %>% 
+#     # replace NaNs with NAs
+#     mutate_all(na_if, "NaN")
+#   
+#   return(df)
+# }
 
 # note: double check this worked by looking at one of the summary data frames
 # and grouping by site and species code, then calculating mean (it does)
