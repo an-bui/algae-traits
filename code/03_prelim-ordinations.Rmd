@@ -42,12 +42,18 @@ text(p1, "species", col = "blue", cex = 0.9)
 # 2. PCA
 
 ```{r}
-sp_int_matrix_test <- ind_traits %>% 
-  filter(sp_code %in% algae_proposal) %>% 
-  filter(!(sp_code %in% c("CO", "Nandersoniana")))
+# sp_int_matrix <- ind_traits %>% 
+#   filter(sp_code %in% algae_proposal) %>% 
+#   filter(!(sp_code %in% c("CO"))) %>% 
+#   # weird Nienburgia?
+#   filter(!(specimen_ID == "20210721-BULL-023"))
 
-pca_mat <- sp_int_matrix_test %>% 
-  select(specimen_ID, maximum_height, sta_mean, ldmc_mean, sav_mean, sap_mean, fvfm_mean, total_volume, total_dry, thickness_mm_mean) %>% 
+pca_mat <- ind_traits %>% 
+  filter(sp_code %in% algae_proposal) %>% 
+  filter(!(sp_code %in% c("CO"))) %>% 
+  # weird Nienburgia?
+  filter(!(specimen_ID == "20210721-BULL-023")) %>% 
+  select(specimen_ID, maximum_height, sta_mean, tdmc_mean, sav_mean, sap_mean, fvfm_mean, total_volume, total_dry, thickness_mm_mean, frond_length_mean, frond_width_mean) %>% 
   column_to_rownames("specimen_ID") %>% 
   drop_na()
 ```
@@ -56,22 +62,22 @@ pca_mat <- sp_int_matrix_test %>%
 ```{r}
 # tbs matrix filtered for species in proposal
 # doesn't include Nienburgia or Corallina
-sp_int_matrix <- tbs_matrix %>% 
-  filter(sp_code %in% algae_proposal) %>% 
-  filter(!(sp_code %in% c("CO", "Nandersoniana")))
+# sp_int_matrix <- tbs_matrix %>% 
+#   filter(sp_code %in% algae_proposal) %>% 
+#   filter(!(sp_code %in% c("CO", "Nandersoniana")))
+# 
+# filtered_matrix <- tbs_matrix %>% 
+#   filter(!(sp_code %in% c("MAPY", "CO", "Nandersoniana")))
 
-filtered_matrix <- tbs_matrix %>% 
-  filter(!(sp_code %in% c("MAPY", "CO", "Nandersoniana")))
-
-matrix_choice <- pca_mat
+# matrix_choice <- pca_mat
 
 # only include numeric variables
-tbs_pca <- rda(matrix_choice[, 2:10], scale = TRUE)
+# tbs_pca <- rda(matrix_choice[, 2:10], scale = TRUE)
 tbs_pca <- rda(pca_mat, scale = TRUE)
 
 # extract proportion explained for each axis
 summary(tbs_pca)
-tbs_pca$CA
+# tbs_pca$CA
 # simple biplot (compare with ggplot output to make sure it's right)
 biplot(tbs_pca)
 
@@ -111,8 +117,8 @@ plot_PCA_12 <- ggplot() +
         legend.box = "vertical", 
         legend.margin = margin(),
         axis.title = element_text(size = 12)) +
-  labs(x = "PC1 (49.61%)",
-       y = "PC2 (25.21%)",
+  labs(x = "PC1 (48.53%)",
+       y = "PC2 (21.54%)",
        title = "Principal Components Analysis - PC1 and PC2",
        subtitle = "Species in proposal", 
        color = "Scientific name") 
@@ -133,8 +139,8 @@ plot_PCA_13 <- ggplot() +
         legend.box = "vertical", 
         legend.margin = margin(),
         axis.title = element_text(size = 12)) +
-  labs(x = "PC1 (52.65%)",
-       y = "PC3 (9.78%)",
+  labs(x = "PC1 (48.53%)",
+       y = "PC3 (11.83%)",
        title = "Principal Components Analysis - PC1 and PC3",
        subtitle = "Species in proposal", 
        color = "Scientific name") 
@@ -154,12 +160,14 @@ plot_PCA_13
 # 3. Corrplot
 
 ```{r}
-M <- sp_int_matrix[, 2:10] %>% 
-  # take out variables with NAs
-  # select(-growth_form, -pigment_type) %>% 
-  # take out UV
-  # slice(-16) %>% 
-  cor()
+# M <- sp_int_matrix %>% 
+#   select(maximum_height, thickness_mm_mean, sta_mean, ldmc_mean,
+#          sav_mean, sap_mean, fvfm_mean, total_wet, total_dry, total_volume) %>% 
+#   # take out variables with NAs
+#   # select(-growth_form, -pigment_type) %>% 
+#   # take out UV
+#   # slice(-16) %>% 
+#   cor()
 
 M <- pca_mat %>% 
   cor()

@@ -448,7 +448,7 @@ urchins_time_plot <- urchins %>%
                fun = "mean", geom = "line") +
   stat_summary(aes(col = site),
                fun.data = mean_se, geom = "errorbar", width = 0.5) +
-  labs(x = "Year", y = "Sum urchin density (number/m2)",
+  labs(x = "Year", y = "Mean urchin density (number/m2)",
        title = "Purple urchin density through time") +
   scale_y_continuous(expand = c(0, 0)) +
   coord_cartesian(ylim = c(-0.1, 15)) +
@@ -463,6 +463,7 @@ Plot with pairwise comparisons of means:
 # analysis of variance
 urchin_aov <- urchins %>% 
   filter(site %in% c("bull", "aque", "napl", "ivee", "mohk", "carp")) %>% 
+  filter(year > 2016) %>% 
   aov(na.omit(density) ~ site, data = .)
 
 # Tukey HSD
@@ -477,11 +478,12 @@ urchin_cld_df <- enframe(urchin_cld[[1]]$Letters)
 # summary data frame for plotting
 urchin_plot_summary <- urchins %>% 
   filter(site %in% c("bull", "aque", "ivee", "mohk", "napl", "carp")) %>% 
+  filter(year > 2016) %>% 
   group_by(site) %>% 
   summarize(mean = mean(density, na.rm = TRUE),
             se = se(density)) %>% 
   left_join(., urchin_cld_df, by = c("site" = "name")) %>% 
-  mutate(value = fct_relevel(value, "a", "b", "bc", "c")) %>% 
+  mutate(value = fct_relevel(value, "a", "ab", "abc", "bc", "c")) %>% 
   arrange(value) %>% 
   mutate(site = fct_relevel(site, "bull", "aque", "ivee", "mohk", "napl", "carp"))
 
@@ -489,15 +491,15 @@ urchin_plot_summary <- urchins %>%
 urchin_plot_new <- ggplot(urchin_plot_summary, aes(x = site, y = mean)) +
   geom_col(aes(fill = value)) +
   scale_fill_manual(values = c("a" = "#4e1f70", 
-                               "b" = "#814aa8",
-                               "bc" = "#a06cc4",
-                               "c" = "#cba0e8")) +
+                               "ab" = "#814aa8",
+                               "abc" = "#a06cc4",
+                               "bc" = "#cba0e8")) +
   geom_errorbar(aes(ymin = mean - se, ymax = mean + se), width = 0.5) +
-  geom_text(aes(label = value, y = mean + se + 1)) + 
+  geom_text(aes(label = value, y = mean + se + .5)) + 
   labs(x = "Site", y = "Mean urchin density (number/m2)",
        title = "Purple urchin density") +
   scale_y_continuous(expand = c(0, 0)) +
-  coord_cartesian(ylim = c(0, 28)) +
+  coord_cartesian(ylim = c(0, 12)) +
   theme_bw() +
   theme(legend.position = "none",
         axis.title = element_text(size = 14),
@@ -666,12 +668,13 @@ Plot with pairwise comparisons:
 ```{r kelp-pairwise}
 mapy <- biomass %>% 
   # filter(!(site %in% c("sctw", "scdi"))) %>% 
-  filter(site %in% c("aque", "ivee", "mohk", "napl", "carp")) %>% 
+  filter(site %in% sites_proposal) %>% 
   filter(sp_code == "MAPY") %>% 
   group_by(site, year) %>% 
-  summarize(total = sum(dry_gm2)) 
+  summarize(total = mean(dry_gm2, na.rm = TRUE)) %>% 
+  drop_na(total)
 
-mapy_aov <- aov(na.omit(mapy$total) ~ mapy$site)
+mapy_aov <- aov(total ~ site, data = mapy)
 
 mapy_tukey <- TukeyHSD(mapy_aov)
 
@@ -683,7 +686,8 @@ mapy_plot_summary <- mapy %>%
   group_by(site) %>% 
   summarize(mean = mean(total, na.rm = TRUE),
             se = se(total)) %>% 
-  left_join(., mapy_cld_df, by = c("site" = "name")) 
+  left_join(., mapy_cld_df, by = c("site" = "name")) %>% 
+  mutate(site = fct_relevel(site, "bull", "aque", "napl", "ivee", "mohk", "carp"))
 
 mapy_plot_new <- ggplot(mapy_plot_summary, aes(x = site, y = mean)) +
   geom_col() +
@@ -702,7 +706,7 @@ mapy_plot_new
 
 ```{r understory-plot}
 macrobio <- biomass %>% 
-  filter(site %in% c("aque", "ivee", "mohk", "napl", "carp")) %>% 
+  filter(site %in% c("bull", "aque", "ivee", "mohk", "napl", "carp")) %>% 
   filter(sp_code != "MAPY") %>% 
   group_by(site, year) %>% 
   summarize(total = sum(dry_gm2))
@@ -782,9 +786,9 @@ Going to make a site by species matrix for each sampling date. There are a coupl
 ### i. Richness
 
 ```{r sp-rich}
-sp_rich <- specnumber(community_matrix) %>% 
+sp_rich <- specnumber(community_matrix_transect) %>% 
   enframe() %>% 
-  left_join(., community_metadata, by = c("name" = "sample_ID")) %>% 
+  left_join(., community_metadata_transect, by = c("name" = "transect_ID")) %>% 
   rename(richness = value)
 
 sp_rich_aov <- aov(sp_rich$richness ~ sp_rich$site)
@@ -800,16 +804,16 @@ sp_rich_plot_summary <- sp_rich %>%
   summarize(mean = mean(richness, na.rm = TRUE),
             se = sd(richness)/sqrt(length(richness))) %>% 
   left_join(., sp_rich_cld_df, by = c("site" = "name")) %>% 
-  mutate(site = fct_relevel(site, "napl", "carp", "aque", "ivee", "mohk"))
+  mutate(site = fct_relevel(site, "bull", "aque", "napl", "ivee", "mohk", "carp"))
 
 sp_rich_plot_new <- ggplot(sp_rich_plot_summary, aes(x = site, y = mean)) +
   geom_col() +
   geom_errorbar(aes(ymin = mean - se, ymax = mean + se), width = 0.5) +
-  geom_text(aes(label = value, y = mean + se + 1)) + 
+  geom_text(aes(label = value, y = mean + se + 0.5)) + 
   labs(x = "Site", y = "Mean species richness",
        title = "Understory macroalgal species richness across sites") +
   scale_y_continuous(expand = c(0, 0)) +
-  coord_cartesian(ylim = c(0, 25)) +
+  coord_cartesian(ylim = c(0, 16)) +
   theme_bw()
 
 sp_rich_plot_new
@@ -899,11 +903,11 @@ anova(disper_jacc)
 TukeyHSD(disper_jacc)
 
 fit_jacc <- community_metadata %>% 
-  select(sample_ID, site, urchin_density, mean_sand, mean_daily_umol, kelp_dry) %>% 
+  select(sample_ID, site, mean_urchins, mean_sand, mean_kelp) %>% 
   mutate(across(.cols = 3:4, ~replace(., is.na(.), 0))) %>% 
   envfit(community_mds_jacc, ., perm = 999, na.rm = TRUE)
 
-fit_vect_jacc <- scores(fit, display = "vectors") %>% 
+fit_vect_jacc <- scores(fit_jacc, display = "vectors") %>% 
   as.data.frame()
 
 nmds_plot_jacc <- ggplot() +
@@ -921,7 +925,7 @@ nmds_plot_jacc <- ggplot() +
   geom_text(data = fit_vect_jacc, aes(x = NMDS1, y = NMDS2, label = rownames(fit_vect_jacc))) +
   # theme
   theme_bw() +
-  guides(colour = guide_legend(nrow = 5)) +
+  guides(colour = guide_legend(nrow = 3)) +
   theme(legend.position = "bottom", legend.box = "vertical", legend.margin = margin()) 
 
 nmds_plot_jacc
@@ -931,16 +935,16 @@ nmds_plot_jacc
 ### ii. Bray-Curtis
 
 ```{r nmds-bray}
-community_mds_bray <- metaMDS(community_matrix, distance = "bray")
+community_mds_bray <- metaMDS(community_matrix_transect, distance = "manhattan")
 
-community_dist_bray <- vegdist(community_matrix, method = "bray")
+community_dist_bray <- vegdist(community_matrix_transect, method = "manhattan")
 
 stressplot(community_mds_bray)
 
 community_mds_sites_bray <- scores(community_mds_bray, display = "sites") %>% 
   as.data.frame() %>% 
-  rownames_to_column("sample_ID") %>% 
-  left_join(., community_metadata, by = "sample_ID") 
+  rownames_to_column("transect_ID") %>% 
+  left_join(., community_metadata_transect, by = "transect_ID") 
 
 community_mds_spp_bray <- scores(community_mds_bray, display = "species") %>% 
   as.data.frame() %>% 
@@ -948,18 +952,18 @@ community_mds_spp_bray <- scores(community_mds_bray, display = "species") %>%
   left_join(., coarse_traits, by = "sp_code") %>% 
   filter(sp_code %in% algae_proposal)
 
-perm_bray <- adonis2(community_dist_bray ~ site, data = community_metadata)
+perm_bray <- adonis(community_matrix_transect ~ site, data = community_metadata_transect, method = "manhattan")
 
 perm_bray
 
-disper_bray <- betadisper(community_dist_bray, community_metadata$site)
+disper_bray <- betadisper(community_dist_bray, community_metadata_transect$site)
 
 anova(disper_bray)
 
 TukeyHSD(disper_bray)
 
-fit_bray <- community_metadata %>% 
-  select(sample_ID, site, urchin_density, mean_sand, mean_daily_umol, kelp_dry) %>% 
+fit_bray <- community_metadata_transect %>% 
+  dplyr::select(sample_ID, site, mean_urchins, mean_sand, mean_kelp) %>% 
   mutate(across(.cols = 3:4, ~replace(., is.na(.), 0))) %>% 
   envfit(community_mds_bray, ., perm = 999, na.rm = TRUE)
 
@@ -983,6 +987,50 @@ nmds_plot_bray <- ggplot() +
 nmds_plot_bray
 ```
 
+## e. rank abundance
+
+```{r}
+ra_bull <- rankabundance(x = community_matrix, y = community_metadata, factor = "site", level = c("bull"))
+
+ra_aque <- rankabundance(x = community_matrix, y = community_metadata, factor = "site", level = c("aque"))
+
+ra_napl <- rankabundance(x = community_matrix, y = community_metadata, factor = "site", level = c("napl"))
+
+ra_ivee <- rankabundance(x = community_matrix, y = community_metadata, factor = "site", level = c("ivee"))
+
+ra_mohk <- rankabundance(x = community_matrix, y = community_metadata, factor = "site", level = c("mohk"))
+
+ra_carp <- rankabundance(x = community_matrix, y = community_metadata, factor = "site", level = c("carp"))
+```
+
+## f. biomass through time
+
+```{r}
+prop_biomass %>% 
+  filter(site == "ivee") %>% 
+  filter(sp_code == "CYOS") %>% 
+  ggplot(aes(x = year, y = percent_sp_dry, col = transect)) +
+  stat_summary(aes(col = as.factor(transect)), geom = "point", fun = "mean") +
+  stat_summary(aes(col = as.factor(transect)), geom = "line", fun = "mean") +
+  stat_summary(aes(col = as.factor(transect)), geom = "errorbar", fun.data = mean_se)
+
+prop_biomass %>% 
+  filter(site %in% sites_proposal) %>% 
+  filter(sp_code == "CYOS") %>% 
+  ggplot(aes(x = year, y = percent_sp_dry)) +
+  stat_summary(aes(col = site), geom = "point", fun = "mean") +
+  stat_summary(aes(col = site), geom = "line", fun = "mean")
+
+prop_biomass %>% 
+  filter(site %in% sites_proposal) %>% 
+  filter(sp_code == "DL") %>% 
+  ggplot(aes(x = year, y = percent_sp_dry)) +
+  stat_summary(aes(col = site), geom = "point", fun = "mean") +
+  stat_summary(aes(col = site), geom = "line", fun = "mean")
+```
+
+
+
 # 8. Trait calculations
 
 ## a. proportion of traits
@@ -990,37 +1038,6 @@ nmds_plot_bray
 "Mean proportion of biomass" for each species per trait across sampling dates: matrix where row is sampling date, and columns are traits spread across, and cells are total biomass that can be "assigned" to that trait. The `prop_biomass` data frame is already set up.
 
 ### i. growth form
-
-Going to test this out with a couple of sites just to make sure the math is right.
-
-```{r prop-test, include = FALSE, eval = FALSE}
-prop_traits_test <- prop_biomass %>% 
-  filter(sample_ID %in% c("CARP_2000-09-08", "BULL_2016-07-25")) %>% 
-  select(sample_ID, site, year, sp_code, growth_form,
-         total_sp_dry, total_sp_wet, percent_sp_dry, percent_sp_wet) %>% 
-  # create a new column where total biomass for the whole survey is calculated
-  group_by(site, year) %>% 
-  mutate(total_dry = sum(total_sp_dry),
-         total_wet = sum(total_sp_wet)) %>% 
-  ungroup() %>% 
-  # calculate biomass within each growth form
-  group_by(site, year, growth_form) %>% 
-  mutate(total_gf_dry = sum(total_sp_dry),
-         total_gf_wet = sum(total_sp_wet),
-         percent_gf_dry = total_gf_dry/total_dry,
-         percent_gf_wet = total_gf_wet/total_wet) %>% 
-  ungroup() %>% 
-  # check to make sure that if you were to sum all the percents for growth forms for each sampling ID, it would add to 1
-  group_by(site, year) %>% 
-  mutate(sum_percent_dry = sum(unique(percent_gf_dry))) %>% 
-  ungroup() %>% 
-  # make the data frame wider
-  select(sample_ID, growth_form, percent_gf_dry) %>% 
-  unique() %>% 
-  pivot_wider(names_from = "growth_form", values_from = "percent_gf_dry")
-```
-
-Now that it seems ok, going to do the rest of the data set.
 
 ```{r prop-traits}
 prop_traits <- prop_biomass %>% 
@@ -1161,10 +1178,6 @@ CWM_cat <- functcomp(trait_matrix, comm_matrix,
   left_join(., community_metadata, by = "sample_ID") %>% 
   # to get the glmm to work!!!!!!
   mutate(across(.cols = everything(), .fns = ~ replace(., . == 1, 0.999)))
-
-ggplot(CWM_cat, aes(x = year, y = mean_daily_umol)) +
-  geom_point(aes(col = site)) +
-  geom_smooth(method = "lm", aes(col = site))
 ```
 
 For categorical traits, the output is the exact same as the `prop_traits` data frame up top - each cell is the proportion of the community biomass that is attributed to a specific category (for example, within `growth_morph`, at CARP in 2000, there is 92% `solitary` and 8 % `aggregated`).
@@ -1285,12 +1298,12 @@ plot(check_collinearity(model_lm_01c))
 Use `community_matrix` and `tbspp_matrix` from set up script.
 
 ```{r fixed-CWM-again}
-cwm_commat <- community_matrix %>% 
-  select(c(rownames(tbspp_matrix))) %>% 
+cwm_commat <- community_matrix_transect %>% 
+  dplyr::select(c(rownames(tbspp_matrix))) %>% 
   # take out 0 sites
   mutate(total = rowSums(across(where(is.numeric)))) %>% 
   filter(total > 0) %>% 
-  select(-total) %>% 
+  dplyr::select(-total) %>% 
   as.matrix()
 
 # making sure the rownames in the trait matrix == columns in the community matrix
@@ -1298,32 +1311,52 @@ rownames(tbspp_matrix) == colnames(cwm_commat)
 
 CWM_fixed <- functcomp(x = tbspp_matrix, a = cwm_commat, 
                   CWM.type = c("all")) %>% 
-  rownames_to_column("sample_ID") %>% 
+  rownames_to_column("transect_ID") %>% 
   rename_with(.fn = ~ paste0(., "_fixed", sep = ""), .cols = 2:28) %>% 
-  left_join(., community_metadata, by = "sample_ID")
+  left_join(., community_metadata_transect, by = "transect_ID")
+
+scaled_coef <- CWM_fixed %>% 
+  dplyr::select(transect_ID, mean_urchins, mean_sand, mean_kelp, mean_umol) %>% 
+  column_to_rownames("transect_ID") %>% 
+  stdize() %>% 
+  rownames_to_column("transect_ID")
+
+CWM_fixed <- CWM_fixed %>% 
+  left_join(., scaled_coef, by = "transect_ID")
+
+CWM_fixed_filtered <- CWM_fixed %>% 
+  drop_na(mean_umol, sta_mean_fixed) %>% 
+  unite("site_transect", site, transect, remove = FALSE)
+
 ```
 
 ### i. Thickness
 ```{r thickness}
 # plot 
-ggplot(CWM_fixed, aes(x = urchin_density, y = thickness_mm_fixed)) +
+ggplot(CWM_fixed_filtered, aes(x = z.mean_urchins, y = thickness_mm_mean_fixed)) +
   geom_point(aes(col = site)) +
   geom_smooth(aes(col = site), method = "lm") +
   theme_bw()
 
-ggplot(CWM_fixed, aes(x = thickness_mm_fixed)) +
+ggplot(CWM_fixed_filtered, aes(x = mean_urchins, y = thickness_mm_mean_fixed)) +
+  geom_point(aes(col = site)) +
+  geom_smooth(aes(col = site), method = "lm") +
+  theme_bw()
+
+ggplot(CWM_fixed_filtered, aes(x = thickness_mm_mean_fixed)) +
   geom_histogram(binwidth = 0.03)
 
-model_thickness_01a <- glmmTMB(thickness_mm_fixed ~ urchin_density + mean_sand + kelp_dry + (1|site) + (1|year),
-        data = CWM_fixed, family = Gamma(link = "logit")) 
+model_thickness_01a <- glmmTMB(thickness_mm_mean_fixed ~ z.mean_urchins + z.mean_sand + z.mean_kelp + z.mean_umol + z.mean_urchins*z.mean_kelp + z.mean_urchins*z.mean_umol + z.mean_sand*z.mean_umol + z.mean_kelp*z.mean_umol +
+                                 + (1|transect) + (1|year),
+        data = CWM_fixed_filtered, family = gaussian(link = "log"), na.action = na.pass) 
 
-model_thickness_01b <- glmmTMB(thickness_mm_fixed ~ urchin_density + mean_sand + kelp_dry + (1|year),
-        data = CWM_fixed, family = gaussian(link = "identity")) 
+dredge(model_thickness_01a) %>% 
+  gt()
 
-model_thickness_01c <- glmmTMB(thickness_mm_fixed ~ urchin_density + mean_sand + mean_daily_umol + kelp_dry + (1|site) + (1|year),
-        data = CWM_fixed, family = gaussian(link = "identity")) 
+model_thickness_01b <- glmmTMB(thickness_mm_mean_fixed ~ z.mean_umol + (1|site) + (1|year),
+        data = CWM_fixed_filtered, family = gaussian(link = "log"), na.action = na.pass)
 
-AIC(model_thickness_01a, model_thickness_01b, model_thickness_01c)
+AIC(model_thickness_01a, model_thickness_01b)
 
 # plot residuals
 model_thickness_01a_resid <- simulateResiduals(model_thickness_01a)
@@ -1332,123 +1365,129 @@ plot(model_thickness_01a_resid)
 model_thickness_01b_resid <- simulateResiduals(model_thickness_01b)
 plot(model_thickness_01b_resid)
 
-model_thickness_02_resid <- simulateResiduals(model_thickness_02)
-plot(model_thickness_02_resid)
-
 summary(model_thickness_01a)
-summary(model_thickness_02)
+summary(model_thickness_01b)
 
 # check collinearity
-check_collinearity(model_thickness_01)
-plot(check_collinearity(model_thickness_01))
+check_collinearity(model_thickness_01a)
+plot(check_collinearity(model_thickness_01a))
 ```
 
 ### ii. LDMC/TDMC
 ```{r ldmc}
-ggplot(CWM_fixed, aes(x = site, y = tdmc_fixed)) +
+ggplot(CWM_fixed_filtered, aes(x = site, y = tdmc_mean_fixed)) +
   geom_boxplot() +
   geom_jitter(alpha = 0.5)
 
-tdmc_aov <- aov(tdmc_fixed ~ site, data = CWM_fixed)
+tdmc_aov <- aov(tdmc_mean_fixed ~ site, data = CWM_fixed_filtered)
 summary(tdmc_aov)
 TukeyHSD(tdmc_aov)
 
-ggplot(CWM_fixed, aes(x = urchin_density, y = tdmc_fixed)) +
+ggplot(CWM_fixed_filtered, aes(x = mean_umol, y = tdmc_mean_fixed)) +
   geom_point(aes(col = site)) +
   geom_smooth(method = "lm")
 
-ggplot(CWM_fixed, aes(x = tdmc_fixed)) +
+ggplot(CWM_fixed, aes(x = tdmc_mean_fixed)) +
   geom_histogram(binwidth = 0.01)
 
-model_tdmc_01 <- glmmTMB(tdmc_fixed ~ urchin_density + mean_sand + kelp_dry + (1|site) + (1|year),
-        data = CWM_fixed, family = Gamma(link = "logit")) 
+model_tdmc_01a <- glmmTMB(tdmc_mean_fixed ~ z.mean_urchins + z.mean_sand + z.mean_kelp + z.mean_umol + z.mean_urchins*z.mean_kelp + z.mean_urchins*z.mean_umol + z.mean_sand*z.mean_umol + z.mean_kelp*z.mean_umol +
+                                 (1|site:transect) + (1|year),
+        data = CWM_fixed_filtered, family = gaussian(link = "identity"), na.action = na.pass) 
 
-testDispersion(model_tdmc_01)
-testResiduals(model_tdmc_01)
+plot(check_collinearity(model_tdmc_01a))
 
-model_tdmc_02 <- lmer(tdmc_fixed ~ urchin_density + mean_sand + kelp_dry + (1|site) + (1|year),
-        data = CWM_fixed)
+MuMIn::dredge(model_tdmc_01a) %>% 
+  gt()
 
-model_tdmc_03 <- lmer(tdmc_fixed ~ urchin_density + mean_sand + kelp_dry + urchin_density*mean_sand + (1|site) + (1|year),
-        data = CWM_fixed)
-
-model_tdmc_04 <- glmmTMB(tdmc_fixed ~ urchin_density + mean_sand + kelp_dry + urchin_density*mean_sand + (1|site) + (1|year),
-        data = CWM_fixed, family = gaussian(link = "identity"))
+# next best simplest model
+model_tdmc_01b <- glmmTMB(tdmc_mean_fixed ~ z.mean_urchins + z.mean_kelp + z.mean_umol + z.mean_urchins*z.mean_kelp + 
+                                 (1|site:transect) + (1|year),
+        data = CWM_fixed_filtered, family = gaussian(link = "identity"), na.action = na.pass) 
 
 # plot residuals
-model_tdmc_01_resid <- simulateResiduals(model_tdmc_01)
-plot(model_tdmc_01_resid)
+model_tdmc_01a_resid <- simulateResiduals(model_tdmc_01a)
+plot(model_tdmc_01a_resid)
 
-model_tdmc_02_resid <- simulateResiduals(model_tdmc_02)
-plot(model_tdmc_02_resid)
+model_tdmc_01b_resid <- simulateResiduals(model_tdmc_01b)
+plot(model_tdmc_01b_resid)
 
-model_tdmc_03_resid <- simulateResiduals(model_tdmc_03)
-plot(model_tdmc_03_resid)
+summary(model_tdmc_01a)
+summary(model_tdmc_01b)
 
-model_tdmc_04_resid <- simulateResiduals(model_tdmc_04)
-plot(model_tdmc_04_resid)
+AIC(model_tdmc_01a, model_tdmc_01b)
 
-summary(model_tdmc_01)
-summary(model_tdmc_02)
-summary(model_tdmc_03)
-summary(model_tdmc_04)
+predicted_fixed <- ggpredict(model_tdmc_01b, terms = ~ z.mean_urchins + (1|site:transect), type = "random")
 
-AIC(model_tdmc_01, model_tdmc_02, model_tdmc_03, model_tdmc_04)
+ggplot() +
+  geom_point(data = CWM_fixed, aes(x = z.mean_urchins, y = tdmc_mean_fixed, col = site)) +
+  geom_line(data = predicted_fixed, aes(x = x, y = predicted, col = group), size = 1) + 
+  geom_ribbon(data = predicted_fixed, aes(x = x, ymax = conf.high, ymin = conf.low, fill = group), alpha = 0.2)
+  
+model_tdmc_01a %>% 
+  tbl_regression(exponentiate = TRUE)
 ```
 
 ### iii. SA:P ratio
 ```{r sa-to-perimeter}
-ggplot(CWM_fixed, aes(x = urchin_density, y = ratio_fixed)) +
+ggplot(CWM_fixed, aes(x = urchin_density, y = sap_mean_fixed)) +
   geom_point(aes(col = site)) +
   geom_smooth(aes(col = site), method = "lm")
 
-ggplot(CWM_fixed, aes(x = ratio_fixed)) +
+ggplot(CWM_fixed, aes(x = sap_mean_fixed)) +
   geom_histogram(binwidth = 1)
 
 # full
-model_ratio_01 <- glmmTMB(ratio_fixed ~ urchin_density + mean_sand + kelp_dry + urchin_density*mean_sand + (1|site) + (1|year),
+model_ratio_01a <- glmmTMB(sap_mean_fixed ~ urchin_density + mean_sand + kelp_dry + urchin_density*mean_sand + (1|site) + (1|year),
         data = CWM_fixed, family = Gamma(link = "logit")) 
 
-model_ratio_02 <- glmmTMB(ratio_fixed ~ urchin_density + mean_sand + kelp_dry + (1|site) + (1|year),
+model_ratio_01b <- glmmTMB(sap_mean_fixed ~ urchin_density + mean_sand + kelp_dry + (1|site) + (1|year),
         data = CWM_fixed, family = Gamma(link = "logit")) 
 
 # plot residuals
-model_ratio_01_resid <- simulateResiduals(model_ratio_01)
-plot(model_ratio_01_resid)
+model_ratio_01a_resid <- simulateResiduals(model_ratio_01a)
+plot(model_ratio_01a_resid)
 
-model_ratio_02_resid <- simulateResiduals(model_ratio_02)
-plot(model_ratio_02_resid)
+model_ratio_01b_resid <- simulateResiduals(model_ratio_01b)
+plot(model_ratio_01b_resid)
 
-summary(model_ratio_01)
-summary(model_ratio_02)
+summary(model_ratio_01a)
+summary(model_ratio_01b)
 
 AIC(model_ratio_01, model_ratio_02)
 ```
 
 ### iv. FvFm
 ```{r fvfm}
-ggplot(CWM_fixed, aes(x = site, y = fvfm_fixed)) +
+ggplot(CWM_fixed_filtered, aes(x = site, y = fvfm_mean_fixed)) +
   geom_boxplot() +
   geom_jitter(alpha = 0.5)
   
-ggplot(CWM_fixed, aes(x = urchin_density, y = fvfm_fixed)) +
+ggplot(CWM_fixed_filtered, aes(x = z.mean_kelp, y = fvfm_mean_fixed)) +
   geom_point(aes(col = site)) +
   geom_smooth(aes(col = site), method = "lm")
 
-ggplot(CWM_fixed, aes(x = fvfm_fixed)) +
+ggplot(CWM_fixed_filtered, aes(x = fvfm_mean_fixed)) +
   geom_histogram(binwidth = 0.01)
 
 # full
-model_fvfm_01a <- glmmTMB(fvfm_fixed ~ urchin_density + mean_sand + kelp_dry + urchin_density*mean_sand + (1|site) + (1|year),
-        data = CWM_fixed, family = Gamma(link = "logit")) 
+model_fvfm_01a <- glmmTMB(fvfm_mean_fixed ~ z.mean_urchins + z.mean_sand + z.mean_kelp + z.mean_umol + z.mean_urchins*z.mean_kelp + z.mean_urchins*z.mean_umol + z.mean_sand*z.mean_umol + z.mean_kelp*z.mean_umol +
+                                 (1|site) + (1|year),
+        data = CWM_fixed_filtered, family = gaussian(link = "log"), na.action = na.pass) 
+
+dredge(model_fvfm_01a) %>% 
+  gt()
 
 # best model
-model_fvfm_01b <- glmmTMB(fvfm_fixed ~ urchin_density + mean_sand + kelp_dry + (1|site) + (1|year),
-        data = CWM_fixed, family = Gamma(link = "logit")) 
+model_fvfm_01b <- glmmTMB(fvfm_mean_fixed ~ z.mean_umol + (1|site) + (1|year),
+        data = CWM_fixed_filtered, family = gaussian(link = "log"), na.action = na.pass) 
 
-# no site
-model_fvfm_01c <- glmmTMB(fvfm_fixed ~ urchin_density + mean_sand + (1|site) + (1|year),
-        data = CWM_fixed, family = Gamma(link = "logit")) 
+# second best model
+model_fvfm_01c <- glmmTMB(fvfm_mean_fixed ~ z.mean_kelp + z.mean_umol + z.mean_urchins + z.mean_urchins*z.mean_kelp + (1|site) + (1|year),
+        data = CWM_fixed_filtered, family = gaussian(link = "log"), na.action = na.pass) 
+
+# potentially useful model
+model_fvfm_01d <- glmmTMB(fvfm_mean_fixed ~ z.mean_kelp + z.mean_urchins + z.mean_urchins*z.mean_kelp + (1|site) + (1|year),
+        data = CWM_fixed_filtered, family = gaussian(link = "log"), na.action = na.pass) 
 
 # plot residuals
 model_fvfm_01a_resid <- simulateResiduals(model_fvfm_01a)
@@ -1460,11 +1499,23 @@ plot(model_fvfm_01b_resid)
 model_fvfm_01c_resid <- simulateResiduals(model_fvfm_01c)
 plot(model_fvfm_01c_resid)
 
+plot(simulateResiduals(model_fvfm_01d))
+
 summary(model_fvfm_01a)
 summary(model_fvfm_01b)
 summary(model_fvfm_01c)
+summary(model_fvfm_01d)
 
-AIC(model_fvfm_01a, model_fvfm_01b, model_fvfm_01c)
+AIC(model_fvfm_01a, model_fvfm_01b, model_fvfm_01c, model_fvfm_01d)
+
+plot(check_collinearity(model_fvfm_01a))
+
+predicted_fvfm <- ggpredict(model_fvfm_01a, terms = c("z.mean_urchins", "site"), type = "random")
+
+ggplot() +
+  geom_point(data = CWM_fixed_filtered, aes(x = z.mean_urchins, y = fvfm_mean_fixed, col = site)) +
+  geom_line(data = predicted_fvfm, aes(x = x, y = predicted, col = group)) +
+  geom_ribbon(data = predicted_fvfm, aes(x = x, ymax = conf.high, ymin = conf.low, fill = group), alpha = 0.1)
 ```
 
 ### v. max height
@@ -1505,6 +1556,90 @@ summary(model_max_height_cm_01b)
 summary(model_max_height_cm_01c)
 
 AIC(model_max_height_cm_01a, model_max_height_cm_01b, model_max_height_cm_01c)
+```
+
+### vi. STA
+
+```{r}
+ggplot(CWM_fixed_filtered, aes(x = mean_urchins, y = sta_mean_fixed)) +
+  geom_point(aes(col = site)) +
+  geom_smooth(method = "lm")
+
+ggplot(CWM_fixed, aes(x = sta_mean_fixed)) +
+  geom_histogram(binwidth = 1)
+
+# full
+model_sta_mean_01a <- glmmTMB(sta_mean_fixed ~ z.mean_urchins + z.mean_sand + z.mean_kelp + z.mean_umol + z.mean_urchins*z.mean_kelp + z.mean_urchins*z.mean_umol + z.mean_sand*z.mean_umol + z.mean_kelp*z.mean_umol +
+                                 (1|site:transect) + (1|year),
+        data = CWM_fixed_filtered, family = gaussian(link = "identity"), na.action = na.pass) 
+
+model_sta_mean_01b <- lmer(sta_mean_fixed ~ z.mean_urchins + z.mean_sand + z.mean_kelp + z.mean_umol + z.mean_urchins*z.mean_kelp + z.mean_urchins*z.mean_umol + z.mean_sand*z.mean_umol + z.mean_kelp*z.mean_umol + (1|site:transect) + (1|year),
+                            data = CWM_fixed_filtered, na.action = na.pass)
+
+dredge(model_sta_mean_01a) %>% 
+  gt()
+
+model_sta_mean_01c <- glmmTMB(sta_mean_fixed ~ z.mean_urchins + z.mean_umol + z.mean_urchins*z.mean_umol +
+                                 (1|site:transect) + (1|year),
+        data = CWM_fixed_filtered, family = gaussian(link = "identity"), na.action = na.pass)
+
+# plot residuals
+model_sta_mean_01a_resid <- simulateResiduals(model_sta_mean_01a)
+plot(model_sta_mean_01a_resid)
+
+model_sta_mean_01b_resid <- simulateResiduals(model_sta_mean_01b)
+plot(model_sta_mean_01b_resid)
+
+model_sta_mean_01c_resid <- simulateResiduals(model_sta_mean_01c)
+plot(model_sta_mean_01c_resid)
+
+summary(model_sta_mean_01a)
+summary(model_sta_mean_01b)
+summary(model_sta_mean_01c)
+
+AIC(model_sta_mean_01a, model_sta_mean_01b, model_sta_mean_01c)
+
+predicted_sta <- ggpredict(model_sta_mean_01c, terms = ~ z.mean_umol + (1|site:transect), type = "fixed")
+
+ggplot() +
+  geom_point(data = CWM_fixed_filtered, aes(x = z.mean_umol, y = sta_mean_fixed, col = site)) +
+  geom_line(data = predicted_sta, aes(x = x, y = predicted, col = group)) +
+  geom_ribbon(data = predicted_sta, aes(x = x, ymax = conf.high, ymin = conf.low, fill = group), alpha = 0.05) +
+  theme_bw()
+  
+MuMIn::r.squaredGLMM(model_sta_mean_01b)
+```
+
+### vii. leathery macrophytes
+
+```{r}
+ggplot(CWM_fixed, aes(x = mean_urchins, y = growth_form_leathery_macrophyte_fixed)) +
+  geom_point(aes(col = site)) +
+  geom_smooth(method = "lm")
+
+model_lm_01a <- glmmTMB(growth_form_leathery_macrophyte_fixed ~ z.mean_urchins + z.mean_sand + z.mean_kelp + z.mean_urchins*z.mean_sand + z.mean_urchins*z.mean_kelp + z.mean_kelp*z.mean_sand + (1|site) + (1|year), 
+               data = CWM_fixed, family = beta_family(link = "logit"), na.action = na.pass)
+
+MuMIn::dredge(model_lm_01a) %>% 
+  gt()
+
+model_lm_01b <- glmmTMB(growth_form_leathery_macrophyte_fixed ~ z.mean_urchins + (1|site) + (1|year), 
+               data = CWM_fixed, family = beta_family(link = "logit"), na.action = na.pass)
+
+plot(simulateResiduals(model_lm_01a))
+plot(simulateResiduals(model_lm_01b))
+
+summary(model_lm_01a)
+summary(model_lm_01b)
+
+AIC(model_lm_01a, model_lm_01b)
+
+predicted_lm <- ggpredict(model_lm_01b, terms = c("z.mean_urchins"))
+
+ggplot() +
+  geom_point(data = CWM_fixed, aes(x = z.mean_urchins, y = growth_form_leathery_macrophyte_fixed, col = site)) +
+  geom_line(data = predicted_lm, aes(x = x, y = predicted)) +
+  geom_ribbon(data = predicted_lm, aes(x = x, ymax = conf.high, ymin = conf.low), alpha = 0.2)
 ```
 
 

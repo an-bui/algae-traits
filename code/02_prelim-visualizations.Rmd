@@ -34,7 +34,7 @@ fvfm_df <- fvfm_raw %>%
   # make sure that fvfm_meas is numeric
   mutate(fvfm_meas = as.numeric(fvfm_meas)) %>% 
   # join with metadata: spp codes + specimen_ID
-  left_join(., metadata, by = "specimen_ID") %>% 
+  left_join(., metadata_ind, by = "specimen_ID") %>% 
   # join with coarse_traits
   left_join(., coarse_traits, by = "sp_code") %>% 
   filter(sp_code %in% algae_proposal)
@@ -48,7 +48,7 @@ fvfm_df <- fvfm_ind %>%
   filter(!(sp_code %in% c("GR", "CO")))
 
 bartlett.test(fvfm_mean ~ sp_code, data = fvfm_df)
-# definitely heterogeneous variances
+# homogeneous variance
 
 # analysis of variance
 fvfm_sp_aov <- aov(fvfm_mean ~ sp_code, data = fvfm_df)
@@ -76,6 +76,7 @@ fvfm_cld_df <- enframe(fvfm_cld[[1]]$Letters) %>%
 fvfm_boxplot <- ind_traits %>% 
   left_join(., fvfm_cld_df, by = "sp_code") %>% 
   group_by(sp_code) %>% 
+  filter(sp_code %in% algae_proposal) %>% 
   ggplot(aes(x = sp_code, y = fvfm_mean, group = sp_code)) +
   geom_boxplot(aes(fill = value)) +
   geom_jitter() +
@@ -176,7 +177,7 @@ fvfm_ptca_recruit <- fvfm_ind %>%
   left_join(., metadata_ind, by = "specimen_ID") %>% 
   filter(lifestage == "recruit")
 
-bartlett.test(fvfm_mean ~ site, data = fvfm_ptca)
+bartlett.test(fvfm_mean ~ site, data = ptca_fvfm)
 # not significantly different variances
 
 summary(aov(fvfm_mean ~ site, 
@@ -187,7 +188,7 @@ fvfm_boxplot_ptca_recruit <- fvfm_ptca_recruit %>%
   geom_boxplot() +
   geom_jitter() +
   theme_bw() +
-  labs(caption = "significantly different across sites, p < 0.001")
+  labs(caption = "significantly different across sites, ANOVA: F(3) = 14.89, p < 0.001")
 fvfm_boxplot_ptca_recruit
 
 # ggsave(here::here("figures/prelim-visualizations",
@@ -214,7 +215,7 @@ fvfm_boxplot_ptca_adult <- fvfm_ptca_adult %>%
   geom_boxplot() +
   geom_jitter() +
   theme_bw() +
-  labs(caption = "t-test: t(15) = -0.08, p = 0.94")
+  labs(caption = "t-test: t(16) = -0.208, p = 0.84")
 fvfm_boxplot_ptca_adult
 
 # ggsave(here::here("figures/prelim-visualizations",
@@ -285,6 +286,7 @@ thickness_cld_df <- enframe(thickness_cld[[1]]$Letters) %>%
 ```{r}
 thickness_boxplot <- ind_traits %>% 
   left_join(., thickness_cld_df, by = "sp_code") %>% 
+  filter(sp_code %in% algae_proposal) %>% 
   # drop_na(site, mean) %>% 
   group_by(sp_code) %>% 
   ggplot(aes(x = sp_code, y = thickness_mm_mean, group = sp_code)) +
@@ -310,17 +312,20 @@ thickness_boxplot
 ## c. boxplot (BF BULL vs IVEE)
 
 ```{r}
-var.test(mean ~ site, data = thickness_summary %>% filter(sp_code == "BF"))
+bf_thickness <- thickness_ind %>% 
+  left_join(., metadata_ind, by = "specimen_ID") %>% 
+  filter(sp_code == "BF")
+  
+var.test(thickness_mm_mean ~ site, data = bf_thickness)
 # homogeneous variance, can use two-sample t-test
-t.test(mean ~ site, data = thickness_summary %>% filter(sp_code == "BF"), var.equal = TRUE)
 
-thickness_boxplot_bf <- thickness_summary %>% 
-  filter(sp_code == "BF") %>% 
-  group_by(sp_code) %>% 
-  ggplot(aes(x = site, y = mean)) +
+t.test(thickness_mm_mean ~ site, data = bf_thickness, var.equal = TRUE)
+
+thickness_boxplot_bf <- bf_thickness %>% 
+  ggplot(aes(x = site, y = thickness_mm_mean)) +
   geom_boxplot(aes(fill = site)) +
-  # geom_jitter() +
-  geom_text(aes(x = site, y = mean, label = specimen_ID)) +
+  geom_jitter() +
+  # geom_text(aes(x = site, y = thickness_mm_mean, label = specimen_ID)) +
   theme_bw() +
   labs(title = "BF thallus thickness",
        x = "Site",
@@ -340,27 +345,21 @@ thickness_boxplot_bf
 ## d. boxplot (PTCA adults vs recruits)
 
 ```{r}
-thickness_ptca <- thickness_summary %>% 
-  filter(sp_code == "PTCA") %>% 
-  filter(site %in% c("Mohawk")) %>% 
-  mutate(lifestage = case_when(
-    date_collected %in% c("20220405", "20220407") ~ "adult",
-    TRUE ~ "new_recruit"
-  )) 
+ptca_thickness <- thickness_ind %>% 
+  left_join(., metadata_ind, by = "specimen_ID") %>% 
+  filter(sp_code == "PTCA") 
 
-var.test(mean ~ lifestage, data = thickness_ptca)
-bartlett.test(mean ~ lifestage, data = thickness_ptca)
-leveneTest(mean ~ lifestage, data = thickness_ptca)
-# significantly different variances
+var.test(thickness_mm_mean ~ lifestage, data = ptca_thickness)
+bartlett.test(thickness_mm_mean ~ lifestage, data = ptca_thickness)
+leveneTest(thickness_mm_mean ~ lifestage, data = ptca_thickness)
+# not significantly different variances
 
-summary(aov(mean ~ lifestage, 
-            data = thickness_ptca %>% 
-              filter(site %in% c("Mohawk"))))
+summary(aov(thickness_mm_mean ~ lifestage, 
+            data = ptca_thickness))
 # significantly different between lifestages
 
-thickness_boxplot_ptca <- thickness_ptca %>% 
-  filter(site %in% c("Mohawk")) %>% 
-  ggplot(aes(x = lifestage, y = mean)) +
+thickness_boxplot_ptca <- ptca_thickness %>% 
+  ggplot(aes(x = lifestage, y = thickness_mm_mean)) +
   geom_boxplot(aes(fill = lifestage)) +
   scale_fill_manual(values = c("#70601d", "#b59b33")) +
   geom_jitter() +
@@ -384,13 +383,19 @@ thickness_boxplot_ptca
 ## a. analysis of variance
 
 ```{r}
-# analysis of variance
-dryw_sp_aov <- aov(weight_dry_mg ~ sp_code, data = weight_summary %>% filter(!(sp_code %in% c("BO", "CO"))))
+weight_df <- weight_ind %>% 
+  left_join(., metadata_ind, by = "specimen_ID") %>% 
+  filter(sp_code %in% algae_proposal) %>% 
+  # take out calcifying species, which do not have decalcified weight
+  filter(!(sp_code %in% c("BO", "CO")))
 
-dryw_tax_aov <- aov(weight_dry_mg ~ taxon_phylum, data = weight_summary %>% filter(!(sp_code %in% c("BO", "CO"))))
+# analysis of variance
+dryw_sp_aov <- aov(total_dry ~ sp_code, data = weight_df)
+
+# dryw_tax_aov <- aov(total ~ taxon_phylum, data = weight_summary %>% filter(!(sp_code %in% c("BO", "CO"))))
 
 summary(dryw_sp_aov)
-summary(dryw_tax_aov)
+# summary(dryw_tax_aov)
 # species significant, phylum not significant
 
 # Tukey HSD
@@ -407,9 +412,8 @@ dryw_cld_df <- enframe(dryw_cld[[1]]$Letters) %>%
 # bartlett.test(tdmc ~ sp_code, data = weight_summary %>% filter(!(sp_code %in% c("BO", "CO"))))
 
 # analysis of variance
-tdmc_sp_aov <- aov(tdmc ~ sp_code, data = weight_summary %>% filter(!(sp_code %in% c("BO", "CO"))) %>% filter(sp_code %in% algae_proposal))
-
-tdmc_tax_aov <- aov(tdmc ~ taxon_phylum, data = weight_summary %>% filter(!(sp_code %in% c("BO", "CO"))))
+tdmc_sp_aov <- aov(tdmc_mean ~ sp_code, data = ind_traits %>% filter(sp_code %in% algae_proposal) %>% filter(sp_code != "CO"))
+tdmc_tax_aov <- aov(tdmc_mean ~ pigment_type, data = ind_traits %>% filter(sp_code %in% algae_proposal) %>% filter(sp_code != "CO"))
 
 summary(tdmc_sp_aov)
 summary(tdmc_tax_aov)
@@ -430,10 +434,10 @@ tdmc_cld_df <- enframe(tdmc_cld[[1]]$Letters) %>%
 ## b. box plot
 
 ```{r}
-dryw_boxplot <- weight_summary %>% 
+dryw_boxplot <- ind_traits %>% 
   filter(sp_code != "BO") %>% 
   left_join(., dryw_cld_df, by = "sp_code") %>% 
-  ggplot(aes(x = sp_code, y = weight_dry_g)) +
+  ggplot(aes(x = sp_code, y = total_dry)) +
   geom_boxplot(aes(fill = value)) +
   geom_jitter() +
   geom_text(aes(label = value, y = 9), nudge_y = 0.01) + 
@@ -452,7 +456,7 @@ dryw_boxplot
 #        dryw_boxplot,
 #        width = 8, height = 5, dpi = 150)
 
-wetw_boxplot <- ggplot(weight_summary, aes(x = sp_code, y = weight_wet_g)) +
+wetw_boxplot <- ggplot(ind_traits, aes(x = sp_code, y = total_wet)) +
   geom_boxplot() +
   geom_jitter(alpha = 0.45) +
   facet_wrap(~ pigment_type, scales = "free_x") +
@@ -469,15 +473,16 @@ wetw_boxplot
 #        wetw_boxplot,
 #        width = 8, height = 5, dpi = 150)
 
-tdmc_boxplot <- weight_summary %>% 
-  filter(!(sp_code %in% c("BO", "CO"))) %>% 
+tdmc_boxplot <- ind_traits %>% 
+  filter(sp_code %in% algae_proposal) %>% 
+  filter(!(sp_code %in% c("CO"))) %>% 
   left_join(., tdmc_cld_df, by = "sp_code") %>% 
-  ggplot(aes(x = sp_code, y = tdmc)) +
+  ggplot(aes(x = sp_code, y = tdmc_mean)) +
   geom_boxplot(aes(fill = value)) +
   geom_jitter() +
-  geom_text(aes(label = value, y = 0.3), nudge_y = 0.01) + 
+  geom_text(aes(label = value, y = 0.275), nudge_y = 0.01) + 
   facet_wrap(~ pigment_type, scales = "free_x") +
-  scale_y_continuous(limits = c(0, 0.4)) +
+  scale_y_continuous(limits = c(0, 0.3)) +
   scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
   theme_bw() +
   labs(title = "Thallus dry matter content",
@@ -492,21 +497,21 @@ tdmc_boxplot
 #        width = 8, height = 5, dpi = 150)
 ```
 
-As a note: something needs to happen to be able to filter out the things that are true thalli (e.g. thallus on PTCA) AND things that are whole individuals that are basically thalli (e.g. BF). Maybe code those in as "thallus" and go from there?  
-
-Note: Changed that on 2021-10-25. If it's a whole individual that is a thallus, it's coded in as "thallus" in the weight data sheet.
-
 ## c. boxplot (TDMC, BF BULL vs IVEE)
 
 ```{r}
-var.test(tdmc ~ site, data = weight_summary %>% filter(sp_code == "BF"))
+bf_tdmc <- ind_traits %>% 
+  left_join(., metadata_ind, by = "specimen_ID") %>% 
+  rename("sp_code" = sp_code.x) %>% 
+  filter(sp_code == "BF")
+
+var.test(tdmc_mean ~ site, data = bf_tdmc)
 # homogeneous variance
-t.test(tdmc ~ site, data = weight_summary %>% filter(sp_code == "BF"), var.equal = TRUE)
+t.test(tdmc_mean ~ site, data = bf_tdmc, var.equal = TRUE)
 # not significantly different
 
-tdmc_boxplot_bf <- weight_summary %>% 
-  filter(sp_code == "BF") %>% 
-  ggplot(aes(x = site, y = tdmc)) +
+tdmc_boxplot_bf <- bf_tdmc %>% 
+  ggplot(aes(x = site, y = tdmc_mean)) +
   geom_boxplot(aes(fill = site)) +
   geom_jitter() +
   theme_bw() +
@@ -524,46 +529,17 @@ tdmc_boxplot_bf
 #        width = 8, height = 5, dpi = 150)
 ```
 
-## d. boxplot (dry weight, BF BULL vs IVEE)
+## d. boxplot PTCA adults vs recruits
 
+Note 20220507: fix this!!!
 ```{r}
-var.test(weight_dry_mg ~ site, data = weight_summary %>% filter(sp_code == "BF"))
-# heterogeneous variance
-t.test(weight_dry_mg ~ site, data = weight_summary %>% filter(sp_code == "BF"), var.equal = FALSE)
-# not significantly different
+ptca_tdmc <- ind_traits %>% 
+  left_join(., metadata_ind, by = "specimen_ID") %>% 
+  rename("sp_code" = sp_code.x) %>% 
+  rename("lifestage" = lifestage.x) %>% 
+  filter(sp_code == "PTCA")
 
-dryw_boxplot_bf <- weight_summary %>% 
-  filter(sp_code == "BF") %>% 
-  ggplot(aes(x = site, y = weight_dry_mg)) +
-  geom_boxplot(aes(fill = site)) +
-  geom_jitter() +
-  theme_bw() +
-  labs(title = "BF dry weight",
-       x = "Site",
-       y = "Weight (mg)",
-       caption = "t-test: t(18.33) = 1.88, p = 0.07") +
-  theme(legend.position = "none")
-
-dryw_boxplot_bf
-
-# ggsave(here::here("figures/prelim-visualizations",
-#                   paste("dryw-boxplot-bf-", todays_date, ".jpg", sep = "")),
-#        dryw_boxplot_bf,
-#        width = 8, height = 5, dpi = 150)
-```
-
-## e. boxplot PTCA adults vs recruits
-```{r}
-tdmc_ptca <- weight_summary %>% 
-  filter(sp_code == "PTCA") %>% 
-  mutate(lifestage = case_when(
-    date_collected %in% c("20220405", "20220407") ~ "adult",
-    TRUE ~ "new_recruit"
-  )) %>% 
-  # take out weird sample
-  filter(specimen_ID != "20210721-BULL-005-B")
-
-var.test(tdmc ~ lifestage, data = tdmc_ptca)
+var.test(tdmc_mean ~ lifestage, data = ptca_tdmc)
 # not significantly different variances
 t.test(tdmc ~ lifestage, data = tdmc_ptca, var.equal = TRUE)
 # signficantly different
@@ -588,7 +564,6 @@ tdmc_boxplot_ptca
 #        tdmc_boxplot_ptca,
 #        width = 8, height = 5, dpi = 150)
 ```
-
 
 
 # 4. volume
@@ -746,23 +721,22 @@ width_boxplot
 ## a. analysis of variance
 
 ```{r}
-sta_df <- sta_summary %>% 
-  drop_na(sta_mm_mg) %>% 
-  slice(-125) %>% 
+sta_df <- ind_traits %>% 
+  filter(specimen_ID != "20210721-BULL-023") %>% 
   filter(sp_code %in% algae_proposal) %>% 
-  filter(sp_code != "CO") %>% 
-  filter()
+  filter(sp_code != "CO") 
 
 # test homogeneity of variance
-bartlett.test(sta_mm_mg ~ sp_code, data = sta_df)
+bartlett.test(sta_mean ~ sp_code, data = sta_df)
+# heterogeneous variances
 
 # analysis of variance
-sta_sp_aov <- aov(sta_mm_mg ~ sp_code, data = sta_df)
+sta_sp_aov <- aov(sta_mean ~ sp_code, data = sta_df)
 
-sta_tax_aov <- aov(sta_mm_mg ~ taxon_phylum, data = sta_df)
+# sta_tax_aov <- aov(sta_mm_mg ~ taxon_phylum, data = sta_df)
 
 summary(sta_sp_aov)
-summary(sta_tax_aov)
+# summary(sta_tax_aov)
 # both significant
 
 # Tukey HSD
@@ -781,14 +755,12 @@ sta_cld_df <- enframe(sta_cld[[1]]$Letters) %>%
 thallus area:dry weight
 
 ```{r}
-sta_boxplot <- sta_summary %>% 
-  drop_na(sta_mm_mg) %>% 
-  slice(-125) %>% 
+sta_boxplot <- sta_df %>% 
   left_join(., sta_cld_df, by = "sp_code") %>% 
-  ggplot(aes(x = sp_code, y = sta_mm_mg)) +
+  ggplot(aes(x = sp_code, y = sta_mean)) +
   geom_boxplot(aes(fill = value)) +
   geom_jitter() +
-  geom_text(aes(label = value, y = max(sta_mm_mg)*1.05), nudge_y = 0.01) + 
+  geom_text(aes(label = value, y = 51), nudge_y = 0.01) + 
   facet_wrap(~ pigment_type, scales = "free_x") +
   scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
   theme_bw() +
@@ -879,6 +851,33 @@ sta_boxplot_ptca <- sta_ptca %>%
 sta_boxplot_ptca
 ```
 
+## e. boxplot (PTCA)
+
+```{r}
+ptca_sta_adults <- ind_traits %>% 
+  filter(sp_code == "PTCA") %>% 
+  left_join(., metadata_ind, by = "specimen_ID")
+
+var.test(sta_mean ~ site, data = ptca_sta_adults)
+# not significantly different variances
+
+summary(aov(sta_mean ~ site, 
+            data = ptca_sta_adults))
+# not significantly different between sites
+
+sta_boxplot_ptca <- ptca_sta_adults %>% 
+  ggplot(aes(x = site, y = sta_mean)) +
+  geom_boxplot(aes(fill = site)) +
+  # scale_fill_manual(values = c("#70601d", "#b59b33")) +
+  geom_jitter() +
+  theme_bw() +
+  labs(title = "PTCA adults",
+       y = "mm/mg",
+       caption = "analysis of variance: F(1) = 0.004, p = 0.948") +
+  theme(legend.position = "none")
+sta_boxplot_ptca
+```
+
 
 # 11. branching order
 
@@ -925,8 +924,13 @@ toughness_boxplot
 # 13. correlation between STA and TDMC
 
 ```{r}
-ggplot(sta_summary %>% filter(!(sp_code %in% c("Nandersoniana", "CO"))) %>% drop_na(tdmc), aes(x = sta_mm_mg, y = tdmc, col = sp_code)) +
-  geom_point() +
+ind_traits %>% 
+  filter(sp_code %in% algae_proposal) %>% 
+  filter(sp_code != "CO") %>% 
+  filter(specimen_ID != "20210721-BULL-023") %>% 
+  drop_na(tdmc_mean) %>% 
+  ggplot(aes(x = sta_mean, y = tdmc_mean, col = sp_code)) +
+  geom_point(aes(shape = sp_code)) +
   geom_smooth(aes(col = sp_code), method = "lm", se = FALSE) +
   geom_smooth(method = "lm", se = TRUE, col = "black") +
   theme_bw() +
@@ -935,28 +939,30 @@ ggplot(sta_summary %>% filter(!(sp_code %in% c("Nandersoniana", "CO"))) %>% drop
        y = "Thallus dry matter content (dry mg/wet mg)", 
        caption = "Linear mixed model: lme(tdmc ~ sta_mm_mg, random = ~ 1|sp_code)")
 
-sta_tdmc_lmer <- lmer(tdmc ~ sta_mm_mg + (1|sp_code), data = sta_summary %>% filter(!(sp_code %in% c("Nandersoniana", "CO"))) %>% drop_na(tdmc))
-sta_tdmc_lme <- lme(tdmc ~ sta_mm_mg, random = ~ 1|sp_code, data = sta_summary %>% filter(!(sp_code %in% c("Nandersoniana", "CO"))) %>% drop_na(tdmc))
+sta_tdmc_lmer <- lmer(tdmc_mean ~ sta_mean + (1|sp_code), data = (ind_traits %>% filter(!(sp_code %in% c("CO"))) %>% filter(sp_code %in% algae_proposal) %>% drop_na(tdmc_mean, sta_mean)))
+sta_tdmc_lme <- lme(tdmc_mean ~ sta_mean, random = ~ 1|sp_code, data = (ind_traits %>% filter(!(sp_code %in% c("CO"))) %>% filter(sp_code %in% algae_proposal) %>% drop_na(tdmc_mean, sta_mean)))
 summary(sta_tdmc_lme)
 summary(sta_tdmc_lmer)
 testResiduals(sta_tdmc_lme)
 check_model(sta_tdmc_lmer)
-
-sta_tdmc_lm <- lm(tdmc ~ sta_mm_mg, data = sta_summary %>% filter(!(sp_code %in% c("Nandersoniana", "CO"))))
-summary(sta_tdmc_lm)
-testResiduals(sta_tdmc_lm)
 ```
 
 # 14. correlation between FvFm and TDMC
 
 ```{r}
-fvfm_tdmc_lme <- lme(fvfm ~ tdmc, random = ~ 1|sp_code, data = sp_int_matrix %>% filter(!(sp_code %in% c("Nandersoniana", "CO"))) %>% drop_na(tdmc))
-fvfm_tdmc_lmer <- lmer(fvfm ~ tdmc + (1|sp_code), data = sp_int_matrix %>% filter(!(sp_code %in% c("Nandersoniana", "CO"))) %>% drop_na(tdmc))
-summary(fvfm_tdmc_lmer)
+fvfm_tdmc_lme <- lme(fvfm_mean ~ tdmc_mean, random = ~ 1|sp_code, data = ind_traits %>% 
+  filter(sp_code %in% algae_proposal) %>% 
+  filter(!(sp_code %in% c("CO"))) %>% 
+  drop_na(tdmc_mean, fvfm_mean))
+fvfm_tdmc_lmer <- lmer(fvfm_mean ~ tdmc_mean + (1|sp_code), data = ind_traits %>% 
+  filter(sp_code %in% algae_proposal) %>% 
+  filter(!(sp_code %in% c("CO"))) %>% 
+  drop_na(tdmc_mean, fvfm_mean))
+summary(fvfm_tdmc_lme)
 testResiduals(fvfm_tdmc_lmer)
 check_model(fvfm_tdmc_lmer)
 grid <- ref_grid(fvfm_tdmc_lmer, cov.keep = c("tdmc", "sp_code"))
-emm <- emmeans(grid, spec = c("tdmc"), level = 0.95) %>% 
+emm <- emmeans(grid, spec = c("tdmc_mean"), level = 0.95) %>% 
   data.frame(.)
 
 tdmc_fvfm_lm <- lm(tdmc ~ fvfm + sp_code, data = sp_int_matrix %>% filter(!(sp_code %in% c("Nandersoniana", "CO"))) %>% drop_na(tdmc))
@@ -964,12 +970,15 @@ summary(tdmc_fvfm_lm)
 testResiduals(tdmc_fvfm_lm)
 
 
-
-ggplot() +
-  geom_point(data = sp_int_matrix %>% filter(!(sp_code %in% c("Nandersoniana", "CO"))) %>% drop_na(tdmc), aes(x = tdmc, y = fvfm, col = sp_code, shape = sp_code), size = 2) +
-  geom_smooth(data = sp_int_matrix %>% filter(!(sp_code %in% c("Nandersoniana", "CO"))) %>% drop_na(tdmc), aes(x = tdmc, y = fvfm, col = sp_code), method = "lm", se = FALSE) +
-  geom_line(data = emm, aes(x = tdmc, y = emmean)) +
-  geom_ribbon(data = emm, aes(x = tdmc, y = emmean, ymin = lower.CL, ymax = upper.CL), alpha = 0.2) +
+ind_traits %>% 
+  filter(sp_code %in% algae_proposal) %>% 
+  filter(!(sp_code %in% c("CO"))) %>% 
+  drop_na(tdmc_mean, fvfm_mean) %>% 
+  ggplot() +
+  geom_point(aes(x = tdmc_mean, y = fvfm_mean, col = sp_code), size = 2) +
+  geom_smooth(aes(x = tdmc_mean, y = fvfm_mean, col = sp_code), method = "lm", se = FALSE) +
+  geom_line(data = emm, aes(x = tdmc_mean, y = emmean)) +
+  geom_ribbon(data = emm, aes(x = tdmc_mean, y = emmean, ymin = lower.CL, ymax = upper.CL), alpha = 0.2) +
   # geom_smooth(data = sp_int_matrix %>% filter(!(sp_code %in% c("Nandersoniana", "CO"))) %>% drop_na(tdmc), aes(x = tdmc, y = fvfm), method = "lm", se = TRUE, col = "black") +
   theme_bw() +
   labs(title = "Thallus dry matter content as predictor of photosynthetic efficiency",
