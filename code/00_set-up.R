@@ -29,6 +29,8 @@ library(car) # checking VIR
 library(cati) # partitioning species composition/intraspecific variation
 library(BiodiversityR) # rank abundance
 library(gtsummary)
+library(ggnewscale)
+library(factoextra)
 
 
 # 2.  getting data from google drive --------------------------------------
@@ -83,7 +85,10 @@ path <- here::here("data/fvfm", c(
   "20220407-AQUE-cleaned.csv",
   "20220421-AQUE-cleaned.csv",
   "20220428-AQUE-cleaned.csv",
-  "20220503-AQUE-cleaned.csv"))
+  "20220503-AQUE-cleaned.csv",
+  "20220719-NAPL-cleaned.csv",
+  "20220721-NAPL-cleaned.csv",
+  "20220726-BULL-cleaned.csv"))
 
 # read in all .csv files into one data frame
 fvfm_raw <- path %>% 
@@ -137,8 +142,9 @@ algae_proposal <- c("PH", "PTCA", # Pterygophora californica
                     "POLA", # Polyneura latissima 
                     "R", # Rhodymenia californica 
                     "GR", # Gelidium robustum
-                    "EGME", # Egregia menziesii
-                    "Nandersoniana" # Nienburgia andersoniana
+                    "EH", "EGME", # Egregia menziesii
+                    "Nandersoniana", # Nienburgia andersoniana
+                    "LH", "LAFA" # Laminaria farlowii
 )
 
 # date
@@ -154,6 +160,7 @@ sites <- c("bull", "aque", "ahnd", "napl", "ivee", "golb",
            "abur", "mohk", "carp", "scdi", "sctw")
 
 sites_proposal <- c("bull", "aque", "napl", "ivee", "mohk", "carp")
+sites_proposal_new <- c("aque", "napl", "ivee", "mohk", "carp")
 
 sites_full <- setNames(c("Bullito (BULL)", 
                          "Arroyo Quemado (AQUE)",
@@ -233,7 +240,7 @@ biomass <- read_csv(here::here("data", "SBC-LTER-benthics",
 
 #### * d. percent cover ####
 percov <- read_csv(here::here("data", "SBC-LTER-benthics", 
-                              "Annual_Cover_All_Years_20210108.csv")) %>% 
+                              "Annual_Cover_All_Years_20211020.csv")) %>% 
   benthic_cleaning_fxn()
 
 #### * e. prop_biomass ####
@@ -305,6 +312,7 @@ irr <- read_csv(here::here("data/SBC-LTER-benthics", "Hourly_Irrandiance_All_Yea
   # change site and sensor_location to be in lower case
   mutate(across(.cols = c(site, sensor_location), .fns = str_to_lower)) %>% 
   filter(site %in% sites_proposal) %>% 
+  filter(!(transect %in% c("MKI", "MKO"))) %>% 
   mutate(across(.cols = c(year, month, day), .fns = as.numeric)) %>% 
   filter(month %in% c(7, 8, 9, 10)) %>% 
   group_by(site, year) %>% 
@@ -323,9 +331,13 @@ urchins <- read_csv(here::here("data", "SBC-LTER-benthics",
   mutate_at(c("site"), str_to_lower) %>% 
   filter(site %in% sites_proposal) %>% 
   group_by(site, year) %>% 
-  summarize(mean_urchins = mean(density, na.rm = TRUE),
-            se_urchins = se(density),
-            sum_urchins = sum(density)) %>% 
+  # replace all -99999 values with NA
+  mutate(dry_gm2 = replace(dry_gm2, dry_gm2 < 0, NA),
+         wm_gm2 = replace(wm_gm2, wm_gm2 < 0, NA),
+         density = replace(density, density < 0, NA)) %>% 
+  summarize(mean_urchins = mean(dry_gm2, na.rm = TRUE),
+            se_urchins = se(dry_gm2),
+            sum_urchins = sum(dry_gm2)) %>% 
   # create a sample_ID for each sampling date at each site
   unite("sample_ID", site, year, remove = FALSE) %>% 
   ungroup()
@@ -340,9 +352,9 @@ urchin_transect_summary <- read_csv(here::here("data", "SBC-LTER-benthics",
   mutate_at(c("site"), str_to_lower) %>% 
   filter(site %in% sites_proposal) %>% 
   group_by(site, year, transect) %>% 
-  summarize(mean_urchins = mean(density, na.rm = TRUE),
-            se_urchins = se(density),
-            sum_urchins = sum(density)) %>% 
+  summarize(mean_urchins = mean(dry_gm2, na.rm = TRUE),
+            se_urchins = se(dry_gm2),
+            sum_urchins = sum(dry_gm2)) %>% 
   # create a sample_ID for each sampling date at each site
   # unite("sample_ID", site, year, remove = FALSE) %>% 
   unite("transect_ID", site, year, transect, remove = TRUE) %>% 
@@ -362,18 +374,16 @@ substrate <- read_csv(here::here("data/SBC-LTER-benthics", "Annual_Substrate_All
   unite("sample_ID", site, year, remove = FALSE) %>% 
   ungroup()
 
-substrate_summary <- substrate %>% 
-  select(sample_ID, mean_sand, se_sand)
-
 substrate_transect_summary <- read_csv(here::here("data/SBC-LTER-benthics", "Annual_Substrate_All_Years_20211020.csv")) %>% 
   clean_names() %>% 
   # change to lower case
   mutate_at(c("site"), str_to_lower) %>% 
   filter(site %in% sites_proposal) %>%
-  filter(substrate_type == "S") %>% 
+  filter(!(common_name %in% c("Sand", "Shell debris", "Shallow Sand"))) %>% 
   group_by(site, year, transect) %>% 
-  summarize(mean_sand = mean(percent_cover, na.rm = TRUE),
-            se_sand = se(percent_cover)) %>% 
+  summarize(mean_subs = mean(percent_cover, na.rm = TRUE),
+            se_subs = se(percent_cover),
+            max_subs = max(percent_cover)) %>% 
   # create a sample_ID for each sampling date at each site
   unite("transect_ID", site, year, transect, remove = TRUE) %>% 
   ungroup()
@@ -464,12 +474,31 @@ community_metadata_transect <- biomass %>%
   left_join(., kelp_biomass_transect_summary, by = "transect_ID") %>% 
   left_join(., irr, by = c("sample_ID"))
 
+community_metadata_transect_sub <- community_metadata_transect %>% 
+  drop_na(mean_umol)
+
+community_matrix_transect_sub <- biomass_transect %>% 
+  dplyr::select(transect_ID, sp_code, dry_gm2) %>% 
+  filter(transect_ID %in% community_metadata_transect_sub$transect_ID) %>% 
+  pivot_wider(names_from = sp_code, values_from = dry_gm2) %>% 
+  # take out surveys with 0 observations
+  rowwise() %>%
+  mutate(sum = sum(c_across(BF:R))) %>%
+  filter(sum > 0) %>% 
+  dplyr::select(-sum) %>% 
+  ungroup() %>% 
+  column_to_rownames("transect_ID") %>% 
+  mutate_all(~replace(., is.na(.), 0))
+
+community_metadata_transect_sub <- community_metadata_transect %>% 
+  filter(transect_ID %in% rownames(community_matrix_transect_sub))
+
 
 # check to make sure rows match up
 # rownames(community_matrix) == community_metadata$sample_ID
 
 # community matrix in presence-absence form
-community_presabs <- community_matrix %>% 
+community_presabs <- community_matrix_transect %>% 
   mutate(across(.cols = everything(), ~replace(., . > 0, 1)))
 
 
@@ -482,16 +511,18 @@ community_presabs <- community_matrix %>%
 
 # fvfm for each subsample
 fvfm_sub <- fvfm_raw %>% 
-  # fill in '1:Fv/Fm' with 1:Y(III) when there is none
-  # only an issue with 20220405-MOHK samples
-  mutate('1:Fv/Fm' = case_when(
-    !is.na(('1:Fv/Fm')) ~ `1:Y (II)`,
-    TRUE ~ '1:Fv/Fm'
-  )) %>% 
-  # only use FvFm, drop the NAs, change the column name
-  select(specimen_ID, subsample_ID, '1:Fv/Fm') %>% 
-  drop_na(specimen_ID) %>%
   rename('fvfm_meas' = '1:Fv/Fm') %>% 
+  # fill in '1:Fv/Fm' with 1:Y(II) when there is none
+  # only an issue with 20220405-MOHK samples
+  mutate(fvfm_meas = case_when(
+    !is.na((fvfm_meas)) ~ `1:Y (II)`,
+    TRUE ~ fvfm_meas
+  )) %>% 
+  # take out observations with "-" in the measurement
+  filter(fvfm_meas != "-") %>% 
+  # only use FvFm, drop the NAs, change the column name
+  select(specimen_ID, subsample_ID, fvfm_meas) %>% 
+  drop_na(specimen_ID) %>% 
   # make sure that fvfm_meas is numeric
   mutate(fvfm_meas = as.numeric(fvfm_meas)) %>% 
   # calculate mean, variance, standard deviation
@@ -505,16 +536,18 @@ fvfm_sub <- fvfm_raw %>%
 
 # fvfm for each individual
 fvfm_ind <- fvfm_raw %>% 
+  rename('fvfm_meas' = '1:Fv/Fm') %>% 
   # fill in '1:Fv/Fm' with 1:Y(III) when there is none
   # only an issue with 20220405-MOHK samples
-  mutate('1:Fv/Fm' = case_when(
-    !is.na(('1:Fv/Fm')) ~ `1:Y (II)`,
-    TRUE ~ '1:Fv/Fm'
+  mutate(fvfm_meas = case_when(
+    !is.na((fvfm_meas)) ~ `1:Y (II)`,
+    TRUE ~ fvfm_meas
   )) %>% 
+  # take out observations with "-" in the measurement
+  filter(fvfm_meas != "-")%>% 
   # only use FvFm, drop the NAs, change the column name
-  select(specimen_ID, subsample_ID, '1:Fv/Fm') %>% 
+  select(specimen_ID, subsample_ID, 'fvfm_meas') %>% 
   drop_na(specimen_ID) %>%
-  rename('fvfm_meas' = '1:Fv/Fm') %>% 
   # make sure that fvfm_meas is numeric
   mutate(fvfm_meas = as.numeric(fvfm_meas)) %>% 
   # calculate mean, variance, standard deviation
@@ -650,8 +683,8 @@ ind_traits <- ct_prep %>%
   left_join(., fvfm_ind, by = "specimen_ID") %>% 
   left_join(., weight_ind, by = "specimen_ID") %>% 
   left_join(., volume_ind, by = "specimen_ID") %>% 
-  # left_join(., (metadata_ind %>% select(-sp_code)), by = "specimen_ID") %>% 
-  filter(!(sp_code == "PTCA" & lifestage == "recruit"))
+  left_join(., (metadata_ind %>% select(specimen_ID, date_collected, site)), by = "specimen_ID") %>% 
+  filter(!(sp_code == "PTCA" & lifestage == "recruit")) 
 
 #### * j. trait by species matrix ####
 
@@ -732,6 +765,12 @@ specif_tbspp <- function(site_choice) {
            fvfm_mean, thickness_mm_mean, total_dry, tdmc_mean,
            total_volume, sta_mean, sap_mean, sav_mean, maximum_height) %>% 
     filter(sp_code != "MAPY") %>% 
+    filter(sp_code %in% algae_proposal) %>% 
+    # calculate mean trait value for each species
+    group_by(sp_code) %>% 
+    summarize_at(vars(fvfm_mean:maximum_height), mean, na.rm = TRUE) %>% 
+    ungroup() %>% 
+    drop_na(sp_code) %>% 
     column_to_rownames("sp_code") %>% 
     # replace NaNs with NAs
     mutate_all(na_if, "NaN")
@@ -777,19 +816,20 @@ specif_tbspp <- function(site_choice) {
 
 specif_commat <- function(site_choice, specific_tbspp) {
   
-  mat <- prop_biomass %>% 
+  mat <- biomass_transect %>% 
     # filter out sites of interest
     filter(site == {{ site_choice }}) %>% 
-    select(sample_ID, sp_code, dry_gm2) %>% 
-    pivot_wider(names_from = "sp_code", values_from = "dry_gm2") %>% 
+    dplyr::select(transect_ID, sp_code, dry_gm2) %>% 
+    pivot_wider(names_from = sp_code, values_from = dry_gm2) %>% 
+    # column_to_rownames("transect_ID") %>% 
+    mutate_all(~replace(., is.na(.), 0)) %>% 
     # take out surveys with 0 observations
     rowwise() %>% 
-    mutate(sum = sum(c_across(1:50))) %>% 
+    mutate(sum = sum(c_across(2:13))) %>% 
     ungroup() %>% 
-    filter(sum > 0) %>% # only 2: CARP_2000-09-08 and NAPL_2000-09-18
-    filter(sample_ID != "AQUE_2019-07-23") %>% 
+    filter(sum > 0) %>% 
     select(-sum) %>% 
-    column_to_rownames("sample_ID") %>% 
+    column_to_rownames("transect_ID") %>% 
     select(c(rownames(specific_tbspp))) %>% 
     # take out 0 sites
     mutate(total = rowSums(across(where(is.numeric)))) %>% 

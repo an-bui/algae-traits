@@ -43,12 +43,10 @@ fvfm_df <- fvfm_ind %>%
   left_join(., metadata_ind, by = "specimen_ID") %>% 
   # join with coarse_traits
   left_join(., coarse_traits, by = "sp_code") %>% 
-  filter(sp_code %in% algae_proposal) %>% 
-  # remove GR and CO because only 1 observation
-  filter(!(sp_code %in% c("GR", "CO")))
+  filter(sp_code %in% algae_proposal) 
 
 bartlett.test(fvfm_mean ~ sp_code, data = fvfm_df)
-# homogeneous variance
+# heterogeneous variance
 
 # analysis of variance
 fvfm_sp_aov <- aov(fvfm_mean ~ sp_code, data = fvfm_df)
@@ -260,7 +258,7 @@ bf_plot
 thickness_df <- ind_traits %>% 
   filter(sp_code %in% algae_proposal) %>% 
   # remove GR and CO because only 1 observation
-  filter(!(sp_code %in% c("GR", "CO")))
+  filter(!(sp_code %in% c("CO")))
 
 bartlett.test(thickness_mm_mean ~ sp_code, data = thickness_df)
 # definitely heterogeneous variances
@@ -350,13 +348,13 @@ ptca_thickness <- thickness_ind %>%
   filter(sp_code == "PTCA") 
 
 var.test(thickness_mm_mean ~ lifestage, data = ptca_thickness)
-bartlett.test(thickness_mm_mean ~ lifestage, data = ptca_thickness)
-leveneTest(thickness_mm_mean ~ lifestage, data = ptca_thickness)
+var.test(thickness_mm_mean ~ site, data = ptca_thickness %>% filter(lifestage == "adult"))
 # not significantly different variances
 
 summary(aov(thickness_mm_mean ~ lifestage, 
             data = ptca_thickness))
 # significantly different between lifestages
+t.test(thickness_mm_mean ~ site, data = ptca_thickness %>% filter(lifestage == "adult"), var.equal = TRUE)
 
 thickness_boxplot_ptca <- ptca_thickness %>% 
   ggplot(aes(x = lifestage, y = thickness_mm_mean)) +
@@ -533,19 +531,23 @@ tdmc_boxplot_bf
 
 Note 20220507: fix this!!!
 ```{r}
-ptca_tdmc <- ind_traits %>% 
+ptca_leaf <- av_leaf_values %>% 
   left_join(., metadata_ind, by = "specimen_ID") %>% 
-  rename("sp_code" = sp_code.x) %>% 
-  rename("lifestage" = lifestage.x) %>% 
-  filter(sp_code == "PTCA")
+  filter(sp_code == "PTCA") %>% 
+  filter(site %in% c("Arroyo Quemado", "Mohawk"))
 
-var.test(tdmc_mean ~ lifestage, data = ptca_tdmc)
+var.test(frond_length_mean ~ site, data = ptca_leaf %>% filter(lifestage == "adult"))
+var.test(frond_width_mean ~ site, data = ptca_leaf %>% filter(lifestage == "adult"))
+var.test(tdmc_mean ~ lifestage, data = ptca_leaf)
+var.test(tdmc_mean ~ site, data = ptca_leaf %>% filter(lifestage == "adult"))
 # not significantly different variances
-t.test(tdmc ~ lifestage, data = tdmc_ptca, var.equal = TRUE)
+t.test(tdmc_mean ~ lifestage, data = ptca_leaf, var.equal = TRUE)
+t.test(tdmc_mean ~ site, data = ptca_leaf, var.equal = FALSE)
+t.test(frond_width_mean ~ site, data = ptca_leaf, var.equal = TRUE)
 # signficantly different
 
-tdmc_boxplot_ptca <- tdmc_ptca %>% 
-  ggplot(aes(x = lifestage, y = tdmc)) +
+tdmc_boxplot_ptca <- ptca_leaf %>% 
+  ggplot(aes(x = lifestage, y = tdmc_mean)) +
   geom_boxplot(aes(fill = lifestage)) +
   # geom_text(aes(x = lifestage, y = tdmc, label = specimen_ID))
   geom_jitter() +
@@ -553,9 +555,8 @@ tdmc_boxplot_ptca <- tdmc_ptca %>%
   labs(title = "PTCA TDMC",
        x = "lifestage",
        y = "TDMC",
-       caption = "t-test: t(178) = 7.097, p < 0.001") +
-  theme(legend.position = "none") +
-  facet_wrap(~site)
+       caption = "t-test: t(57) = 4.008, p < 0.001") +
+  theme(legend.position = "none")
 
 tdmc_boxplot_ptca
 
@@ -570,7 +571,7 @@ tdmc_boxplot_ptca
 
 ## a. box plot
 ```{r}
-volume_boxplot <- ggplot(volume_summary, aes(x = sp_code, y = volume_total_mL)) +
+volume_boxplot <- ggplot(ind_traits, aes(x = sp_code, y = total_volume)) +
   geom_boxplot() +
   geom_jitter(alpha = 0.45) +
   facet_wrap(~ pigment_type, scales = "free_x") +
@@ -637,7 +638,9 @@ peri_boxplot
 ## a. box plot
 
 ```{r}
-ratio_saperi_boxplot <- ggplot(sa_peri_summary, aes(x = sp_code, y = ratio)) +
+ratio_saperi_boxplot <- ind_traits %>% 
+  filter(sp_code %in% algae_proposal) %>% 
+  ggplot(aes(x = sp_code, y = sap_mean)) +
   geom_boxplot() +
   geom_jitter(alpha = 0.45) +
   facet_wrap(~ pigment_type, scales = "free_x") +
@@ -659,7 +662,9 @@ ratio_saperi_boxplot
 
 ## a. box plot
 ```{r}
-ratio_savolume_boxplot <- ggplot(ratio_savolume, aes(x = sp_code, y = ratio)) +
+ratio_savolume_boxplot <- ind_traits %>% 
+  filter(sp_code %in% algae_proposal) %>% 
+  ggplot(aes(x = sp_code, y = sav_mean)) +
   geom_boxplot() +
   geom_jitter(alpha = 0.45) +
   facet_wrap(~ pigment_type, scales = "free_x") +
@@ -680,7 +685,9 @@ ratio_savolume_boxplot
 # 9. maximum height and width
 
 ```{r}
-height_boxplot <- ggplot(hw_summary, aes(x = sp_code, y = max_height_cm)) +
+height_boxplot <- ind_traits %>% 
+  filter(sp_code %in% algae_proposal) %>% 
+  ggplot(aes(x = sp_code, y = maximum_height)) +
   geom_boxplot() +
   geom_jitter(alpha = 0.45) +
   facet_wrap(~ pigment_type, scales = "free_x") +
@@ -724,7 +731,8 @@ width_boxplot
 sta_df <- ind_traits %>% 
   filter(specimen_ID != "20210721-BULL-023") %>% 
   filter(sp_code %in% algae_proposal) %>% 
-  filter(sp_code != "CO") 
+  filter(sp_code != "CO") %>% 
+  left_join(., metadata_ind, by = "specimen_ID")
 
 # test homogeneity of variance
 bartlett.test(sta_mean ~ sp_code, data = sta_df)
@@ -760,7 +768,7 @@ sta_boxplot <- sta_df %>%
   ggplot(aes(x = sp_code, y = sta_mean)) +
   geom_boxplot(aes(fill = value)) +
   geom_jitter() +
-  geom_text(aes(label = value, y = 51), nudge_y = 0.01) + 
+  geom_text(aes(label = value, y = 230), nudge_y = 0.01) + 
   facet_wrap(~ pigment_type, scales = "free_x") +
   scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
   theme_bw() +
@@ -779,9 +787,9 @@ sta_boxplot
 ## c. boxplot (BF BULL vs IVEE)
 
 ```{r}
-var.test(sta_mm_mg ~ site, data = sta_df %>% filter(sp_code == "BF"))
+var.test(sta_mean ~ site, data = sta_df %>% filter(sp_code.x == "BF"))
 # heterogeneous variances
-t.test(sta_mm_mg ~ site, data = sta_df %>% filter(sp_code == "BF"), var.equal = FALSE)
+t.test(sta_mean ~ site, data = sta_df %>% filter(sp_code.x == "BF"), var.equal = FALSE)
 # no significant difference in means
 
 sta_boxplot_bf <- sta_summary %>% 
@@ -807,22 +815,15 @@ sta_boxplot_bf
 ## d. boxplot (PTCA adults vs recruits)
 
 ```{r}
-sta_ptca <- sta_summary %>% 
-  filter(sp_code == "PTCA") %>% 
-  filter(site %in% c("Mohawk", "Arroyo Quemado")) %>% 
-  mutate(lifestage = case_when(
-    date_collected %in% c("20220405", "20220407") ~ "adult",
-    TRUE ~ "new_recruit"
-  )) 
-
-var.test(sta_mm_mg ~ lifestage, data = sta_ptca)
-bartlett.test(sta_mm_mg ~ lifestage, data = sta_ptca)
-leveneTest(sta_mm_mg ~ lifestage, data = sta_ptca)
+var.test(sta_mean ~ lifestage, data = ptca_leaf)
+bartlett.test(sta_mean ~ lifestage, data = ptca_leaf)
+leveneTest(sta_mean ~ lifestage, data = ptca_leaf)
 # significantly different variances
 
-summary(aov(sta_mm_mg ~ lifestage, 
-            data = sta_ptca %>% 
-              filter(site %in% c("Mohawk", "Arroyo Quemado"))))
+t.test(sta_mean ~ lifestage, data = ptca_leaf, var.equal = FALSE)
+
+summary(aov(sta_mean ~ lifestage + site, 
+            data = ptca_leaf))
 # significantly different between lifestages
 
 summary(aov(sta_mm_mg ~ site, 
@@ -836,9 +837,8 @@ summary(aov(sta_mm_mg ~ site,
 var.test(sta_mm_mg ~ site, data = sta_ptca %>% filter(lifestage == "adult"))
 # not for adults
 
-sta_boxplot_ptca <- sta_ptca %>% 
-  filter(site %in% c("Mohawk", "Arroyo Quemado")) %>% 
-  ggplot(aes(x = lifestage, y = sta_mm_mg)) +
+sta_boxplot_ptca <- ptca_leaf %>% 
+  ggplot(aes(x = lifestage, y = sta_mean)) +
   geom_boxplot(aes(fill = lifestage)) +
   scale_fill_manual(values = c("#70601d", "#b59b33")) +
   geom_jitter() +
@@ -861,8 +861,7 @@ ptca_sta_adults <- ind_traits %>%
 var.test(sta_mean ~ site, data = ptca_sta_adults)
 # not significantly different variances
 
-summary(aov(sta_mean ~ site, 
-            data = ptca_sta_adults))
+t.test(sta_mean ~ site, data = ptca_sta_adults, var.equal = TRUE)
 # not significantly different between sites
 
 sta_boxplot_ptca <- ptca_sta_adults %>% 
@@ -930,7 +929,7 @@ ind_traits %>%
   filter(specimen_ID != "20210721-BULL-023") %>% 
   drop_na(tdmc_mean) %>% 
   ggplot(aes(x = sta_mean, y = tdmc_mean, col = sp_code)) +
-  geom_point(aes(shape = sp_code)) +
+  geom_point() +
   geom_smooth(aes(col = sp_code), method = "lm", se = FALSE) +
   geom_smooth(method = "lm", se = TRUE, col = "black") +
   theme_bw() +
@@ -939,12 +938,32 @@ ind_traits %>%
        y = "Thallus dry matter content (dry mg/wet mg)", 
        caption = "Linear mixed model: lme(tdmc ~ sta_mm_mg, random = ~ 1|sp_code)")
 
-sta_tdmc_lmer <- lmer(tdmc_mean ~ sta_mean + (1|sp_code), data = (ind_traits %>% filter(!(sp_code %in% c("CO"))) %>% filter(sp_code %in% algae_proposal) %>% drop_na(tdmc_mean, sta_mean)))
+sta_tdmc_lmer <- lmer(tdmc_mean ~ sta_mean + (1 + sta_mean|sp_code), data = (ind_traits %>% filter(!(sp_code %in% c("CO"))) %>% filter(sp_code %in% algae_proposal) %>% drop_na(tdmc_mean, sta_mean)))
 sta_tdmc_lme <- lme(tdmc_mean ~ sta_mean, random = ~ 1|sp_code, data = (ind_traits %>% filter(!(sp_code %in% c("CO"))) %>% filter(sp_code %in% algae_proposal) %>% drop_na(tdmc_mean, sta_mean)))
 summary(sta_tdmc_lme)
 summary(sta_tdmc_lmer)
 testResiduals(sta_tdmc_lme)
 check_model(sta_tdmc_lmer)
+
+sta_tdmc_predict <- ggpredict(sta_tdmc_lmer, terms = ~ sta_mean + (1 + sta_mean|sp_code), type = "random") %>% 
+  rename("sp_code" = group)
+
+ind_traits %>% 
+  filter(sp_code %in% algae_proposal) %>% 
+  filter(sp_code != "CO") %>% 
+  filter(specimen_ID != "20210721-BULL-023") %>% 
+  drop_na(tdmc_mean) %>% 
+  ggplot(aes(x = sta_mean, y = tdmc_mean, col = sp_code)) +
+  geom_point() +
+  geom_line(data = sta_tdmc_predict, aes(x = x, y = predicted, col = sp_code), size = 1) +
+  geom_ribbon(data = sta_tdmc_predict, aes(x = x, ymax = conf.high, ymin = conf.low), alpha = 0.1) +
+  theme_bw() +
+  scale_y_continuous(limits = c(0, 0.5)) +
+  labs(title = "Thallus dry matter content predicted by specific thallus area",
+       x = "Specific thallus area (mm2/mg)",
+       y = "Thallus dry matter content (dry mg/wet mg)", 
+       caption = "Linear mixed model: lme(tdmc ~ sta_mm_mg, random = ~ 1|sp_code)")
+
 ```
 
 # 14. correlation between FvFm and TDMC
@@ -1013,6 +1032,68 @@ ggplot() +
        caption = "Linear model: lme(sta ~ fvfm, random = ~ 1|sp_code) \n
                   significant intercept (0.51, p < 0.001), non-significant slope (0, p = 0.66)")
 ```
+
+# 16. PTCA
+
+```{r}
+ptca_all <- ptca_leaf %>% 
+  left_join(., volume_ind, by = "specimen_ID") %>% 
+  left_join(., fvfm_ind, by = "specimen_ID") %>% 
+  left_join(., ind_height, by = "specimen_ID") %>% 
+  dplyr::select(lifestage, specimen_ID, sta_mean, tdmc_mean, total_volume, fvfm_mean, frond_length_mean, frond_width_mean, maximum_height) %>% 
+  rename("FvFm" = fvfm_mean,
+         "STA" = sta_mean,
+         "TDMC" = tdmc_mean,
+         "Volume" = total_volume,
+         "Frond length" = frond_length_mean,
+         "Frond width" = frond_width_mean,
+         "Maximum height" = maximum_height) %>% 
+  pivot_longer(cols = 3:9, names_to = "trait", values_to = "value") %>% 
+  mutate(expand = case_when(
+    value = TRUE ~ value*1.2
+  )) %>% 
+  group_by(trait) %>% 
+  mutate(bracket = case_when(
+    value = TRUE ~ max(value, na.rm = TRUE)*1.1
+  )) %>% 
+  ungroup()
+
+ggplot(ptca_all, aes(x = lifestage, y = value)) +
+  geom_boxplot(aes(fill = lifestage)) +
+  scale_fill_manual(values = c("#70601d", "#b59b33")) +
+    geom_blank(aes(y = expand)) +
+  geom_signif(comparisons = list(c("adult", "recruit")), 
+              map_signif_level = TRUE,
+              test = "t.test",
+              aes(y_position = bracket)) +
+  geom_jitter() +
+  theme_bw() +
+  theme(legend.position = "none",
+        panel.grid = element_blank(),
+        axis.text = element_text(size = 14),
+        axis.title = element_text(size = 16),
+        strip.text = element_text(size = 16)) +
+  facet_wrap(~trait, scales = "free_y", nrow = 2)
+
+ptca_all_mat <- ptca_leaf %>% 
+  left_join(., volume_ind, by = "specimen_ID") %>% 
+  left_join(., fvfm_ind, by = "specimen_ID") %>% 
+  left_join(., ind_height, by = "specimen_ID") %>% 
+  dplyr::select(specimen_ID, sta_mean, tdmc_mean, total_volume, fvfm_mean, frond_length_mean, frond_width_mean, maximum_height) %>% 
+  rename("FvFm" = fvfm_mean,
+         "STA" = sta_mean,
+         "TDMC" = tdmc_mean,
+         "Volume" = total_volume,
+         "Frond length" = frond_length_mean,
+         "Frond width" = frond_width_mean,
+         "Maximum height" = maximum_height) %>% 
+  column_to_rownames("specimen_ID")
+
+```
+
+
+
+
 
 
 
