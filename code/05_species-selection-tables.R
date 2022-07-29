@@ -1,6 +1,9 @@
+###### 1. overall site table ######
+
 table_df <- biomass %>% 
+  filter(year == 2021) %>% 
   select(site, scientific_name, dry_gm2, wm_gm2) %>% 
-  filter(site %in% c("napl")) %>% 
+  filter(site %in% c("aque")) %>% 
   # mutate(site = fct_relevel(site, "aque", "napl", "ivee", "mohk", "carp")) %>% 
   # filter out MAPY
   filter(scientific_name != "Macrocystis pyrifera") %>% 
@@ -28,6 +31,7 @@ table_df <- biomass %>%
   # arrange(-percent_whole_sp_dry)
 
 table_df %>% 
+  arrange(-percent_whole_sp_dry) %>% 
   gt() %>% 
   data_color(columns = 3,
              colors = scales::col_numeric(palette = gradient_palette, 
@@ -45,3 +49,53 @@ table_df %>%
              colors = scales::col_numeric(palette = gradient_palette, 
                                           domain = c(max(table_df[, 7]), 0))) %>% 
   gtsave("sp_site_table-LTE_sites-selection.png", path = here::here("tables"))
+
+###### 2. who is where? ######
+
+# main question: where can I find these species on the transects?
+transect_spp <- biomass %>% 
+  dplyr::select(-sample_ID) %>% 
+  unite("sample_ID", site, year, remove = FALSE) %>% 
+  unite("transect_ID", site, year, transect, remove = FALSE) %>% 
+  filter(sp_code %in% c(algae_proposal, "LAFA")) %>% 
+  filter(site %in% sites_proposal) %>% 
+  filter(year == 2021) %>% 
+  # shorten CC scientific name
+  mutate(scientific_name = case_when(
+    sp_code == "CC" ~ "Chondracanthus spp.",
+    TRUE ~ scientific_name
+  )) %>% 
+  mutate(sp_code = dplyr::recode(sp_code, "PH" = "PTCA")) %>% 
+  mutate(full = paste(sp_code, " (", scientific_name, ")", sep = "")) %>% 
+  select(site, transect, full, dry_gm2) %>% 
+  pivot_wider(names_from = full, values_from = dry_gm2)
+
+percov_tbl <- function(site) {
+  site_full <- pluck(sites_full, site)
+  
+  transect_spp %>% 
+    filter(site == {{ site }}) %>% 
+    select(-site) %>% 
+    gt(groupname_col = "transect") %>% 
+    tab_header(
+      title = site_full,
+    ) %>% 
+    tab_stubhead(label = "transect") %>% 
+    tab_options(
+      row_group.as_column = TRUE
+    ) %>% 
+    # center and middle align transect label
+    tab_style(
+      style = list(
+        cell_text(align = "center", v_align = "middle")
+      ),
+      locations = cells_row_groups(groups = everything())
+    ) 
+}
+
+percov_tbl("aque")
+percov_tbl("bull")
+percov_tbl("napl")
+percov_tbl("ivee")
+percov_tbl("mohk")
+
