@@ -3,7 +3,7 @@
 table_df <- biomass %>% 
   filter(year == 2021) %>% 
   select(site, scientific_name, dry_gm2, wm_gm2) %>% 
-  filter(site %in% c("aque")) %>% 
+  filter(site %in% c("napl")) %>% 
   # mutate(site = fct_relevel(site, "aque", "napl", "ivee", "mohk", "carp")) %>% 
   # filter out MAPY
   filter(scientific_name != "Macrocystis pyrifera") %>% 
