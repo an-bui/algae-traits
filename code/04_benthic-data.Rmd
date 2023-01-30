@@ -1995,6 +1995,10 @@ ggplot(fd_sum_df) +
   geom_point(aes(x = z.mean_kelp, y = fric, col = site)) +
   geom_smooth(aes(x = z.mean_kelp, y = fric), method = "lm")
 
+ggplot(fd_sum_df, aes(x = year, y = fric, col = site, fill = site)) +
+  geom_point() +
+  geom_smooth(method = "lm")
+
 # evenness
 feve_lmm <- glmmTMB(feve ~ z.mean_urchins + z.mean_subs + z.mean_kelp + z.mean_umol + z.mean_urchins*z.mean_kelp + z.mean_urchins*z.mean_umol + z.mean_subs*z.mean_umol + z.mean_kelp*z.mean_umol +
                                  + (1|transect) + (1|year),
