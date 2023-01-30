@@ -8,23 +8,45 @@ source(here::here("code", "00_set-up.R"))
 
 ###### ⊣ a. fvfm ######
 
+fvfm_df <- fvfm_raw %>% 
+  rename('fvfm_meas' = '1:Fv/Fm') %>% 
+  # fill in '1:Fv/Fm' with 1:Y(II) when there is none
+  # only an issue with 20220405-MOHK samples
+  mutate(fvfm_meas = case_when(
+    !is.na((fvfm_meas)) ~ `1:Y (II)`,
+    TRUE ~ fvfm_meas
+  )) %>% 
+  # take out observations with "-" in the measurement
+  filter(fvfm_meas != "-") %>% 
+  # make sure that fvfm_meas is numeric
+  mutate(fvfm_meas = as.numeric(fvfm_meas)) %>% 
+  # only use FvFm, drop the NAs, change the column name
+  select(specimen_ID, subsample_ID, fvfm_meas, Time, Date) %>% 
+  drop_na(specimen_ID) %>% 
+  select(-specimen_ID) %>% 
+  left_join(., metadata_sub, by = "subsample_ID") %>% 
+  select(site, sp_code, specimen_ID, subsample_ID, fvfm_meas, Time, Date) %>% 
+  drop_na() %>% 
+  mutate(Date = mdy(Date))
+
 fvfm_nonas <- leaf_traits %>% 
   drop_na(fvfm_mean, sp_code)
 
 # fit a model
 fvfm_ind_lme <- lme(log10(fvfm_mean) ~ 1, random = ~1|site/sp_code, data = ind_traits %>% drop_na(fvfm_mean))
 fvfm_sub_lme <- lme(log10(fvfm_mean) ~ 1, random = ~1|site/sp_code/specimen_ID/subsample_ID, data = fvfm_nonas)
+fvfm_sub_lme <- lme(log10(fvfm_meas) ~ 1, random = ~1|site/sp_code/specimen_ID/subsample_ID, data = fvfm_df)
 
 # variance components
 plot(varcomp(fvfm_ind_lme, scale = TRUE))
 # site: 69.4%, species: 26.2%, within individuals of same species at same site: 4.4%
 plot(varcomp(fvfm_sub_lme, scale = TRUE))
-# site: 44.6%, species: 48.8%, specimens: 3.0%, within: 3.7%
+# species: 46.3%, site: 29.3%, within subsample: 18.8%, across individuals: 3.7%, within individuals: 1.93%
 
 ###### ⊣ b. STA ######
 
 sta_ind_lme <- lme(log10(sta_mean) ~ 1, random = ~1|site/sp_code, data = ind_traits %>% drop_na(sta_mean))
-sta_sub_lme <- lme(log10(sta_mm_mg) ~ 1, random = ~1|site/sp_code/specimen_ID, data = leaf_traits %>% drop_na(sta_mm_mg))
+sta_sub_lme <- lme(log10(sta_mm_mg) ~ 1, random = ~1|site/sp_code/date_collected/specimen_ID, data = leaf_traits %>% drop_na(sta_mm_mg, sp_code))
 
 # variance components
 plot(varcomp(sta_ind_lme, scale = TRUE))
@@ -35,24 +57,48 @@ plot(varcomp(sta_sub_lme, scale = TRUE))
 
 ###### ⊣ c. TDMC ######
 
-tdmc_lme <- lme(log10(tdmc_mean) ~ 1, random = ~1|site/sp_code, data = ind_traits %>% drop_na(tdmc_mean))
+tdmc_ind_lme <- lme(log10(tdmc_mean) ~ 1, random = ~1|site/sp_code, data = ind_traits %>% drop_na(tdmc_mean))
 
-plot(varcomp(tdmc_lme, scale = TRUE))
-# 75.9% by species, 9.2% by site, 6.7% by individual, 8.2% within individual
+tdmc_sub_lme <- lme(log10(dmc) ~ 1, random = ~1|site/sp_code/specimen_ID, data = leaf_traits %>% drop_na(dmc))
+
+plot(varcomp(tdmc_ind_lme, scale = TRUE))
+# 78 by species, 8.6 by site, 13.5 within
+
+plot(varcomp(tdmc_sub_lme, scale = TRUE))
+# 75.9 by species, 9.2 by site, 6.7 by individual, 8.2 within individual
 
 ###### ⊣ d. SA:P ######
 
-sap_lme <- lme(sap_ratio ~ 1, random = ~1|site/sp_code/specimen_ID, data = ind_traits %>% drop_na(sap_ratio))
+sap_ind_lme <- lme(log10(sap_mean) ~ 1, random = ~1|site/sp_code/specimen_ID, data = ind_traits %>% drop_na(sap_mean))
+
+sap_sub_lme <- lme(log10(sap_ratio) ~ 1, random = ~1|site/sp_code/specimen_ID, data = leaf_traits %>% drop_na(sap_ratio))
 
 plot(varcomp(sap_lme, scale = TRUE))
-# 62.1% species, 34.9% within individual, 2.2% site, <1% individual
+# 93.1% species, 2.3% site, 2.9% specimen ID
+
+plot(varcomp(sap_sub_lme, scale = TRUE))
+# 82.9% species, 10% site, 2.5% individuals, 4.5% subsample
 
 ###### ⊣ e. thickness ######
 
+thickness_df <- thickness %>% 
+  pivot_longer(cols = thickness_01:thickness_10, names_to = "measurement_n", values_to = "thickness_mm") %>% 
+  left_join(., metadata_sub, by = "subsample_ID") %>% 
+  drop_na(thickness_mm) %>% 
+  select(site, sp_code, specimen_ID.x, subsample_ID, thickness_mm) %>% 
+  drop_na()
+
 thickness_lme <- lme(thickness_mm_mean ~ 1, random = ~1|site/sp_code/specimen_ID, data = ind_traits %>% drop_na(thickness_mm_mean))
+
+thickness_sub_lme <- lme(log10(thickness_mm_mean) ~ 1, random = ~1|site/sp_code/specimen_ID/subsample_ID, data = leaf_traits %>% drop_na(thickness_mm_mean))
+
+thickness_sub_lme <- lme(thickness_mm ~ 1, random = ~1|site/sp_code/specimen_ID.x/subsample_ID, data = thickness_df)
 
 plot(varcomp(thickness_lme, scale = TRUE))
 # 58.1% species, 28.4% within individual, 7.7% site, 5.8% individual
+
+plot(varcomp(thickness_sub_lme, scale = TRUE))
+# 77.5% species, 4.6% individual, 17.9% subsample
 
 ###### 2. bootstrapping variance confidence intervals ######
 
