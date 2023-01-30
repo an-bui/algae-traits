@@ -27,10 +27,11 @@ library(emmeans) # also plot model predictions
 library(performance) # checks of collinearity, amongst other things
 library(car) # checking VIR
 library(cati) # partitioning species composition/intraspecific variation
-library(BiodiversityR) # rank abundance
+# library(BiodiversityR) # rank abundance
 library(gtsummary)
 library(ggnewscale)
 library(factoextra)
+library(ggridges)
 
 
 # 2.  getting data from google drive --------------------------------------
@@ -132,6 +133,7 @@ algae_interest <- c("CYOS", # Stephanocystis osmundacea
 )
 
 # algae list in proposal
+# updated 2023-01-27 with new species
 algae_proposal <- c("PH", "PTCA", # Pterygophora californica 
                     "BF", # Cryptopleura ruprechtiana                     
                     "CYOS", # Stephanocystis osmundacea                     
@@ -144,7 +146,10 @@ algae_proposal <- c("PH", "PTCA", # Pterygophora californica
                     "GR", # Gelidium robustum
                     "EH", "EGME", # Egregia menziesii
                     "Nandersoniana", # Nienburgia andersoniana
-                    "LH", "LAFA" # Laminaria farlowii
+                    "LH", "LAFA", # Laminaria farlowii
+                    "DU", # Dictyopteris undulata
+                    "DP", # Dictyota
+                    "BO" # Bossiella orbigniana
 )
 
 # date
@@ -457,7 +462,7 @@ community_metadata <- biomass %>%
   unique() %>% 
   filter(sample_ID %in% rownames(community_matrix)) %>% 
   left_join(., urchin_summary, by = "sample_ID") %>% 
-  left_join(., substrate_summary, by = "sample_ID") %>% 
+  left_join(., substrate, by = "sample_ID") %>% 
   left_join(., kelp_biomass_summary, by = "sample_ID") %>% 
   left_join(., irr, by = c("sample_ID"))
 
