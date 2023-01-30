@@ -26,24 +26,65 @@ gower_mat <- ind_traits %>%
   filter(!(sp_code %in% c("CO"))) %>% 
   # weird Nienburgia?
   filter(!(specimen_ID == "20210721-BULL-023")) %>% 
+  # take out standard error
+  dplyr::select(!ends_with("_se")) %>% 
+  # take out irrelevant columns
   dplyr::select(-c(sp_code, scientific_name, life_habit, posture, branching_yn, lifestage, method)) %>% 
-  column_to_rownames("specimen_ID") 
+  # take out date selected and site
+  dplyr::select(-c(date_collected, site)) %>% 
+  column_to_rownames("specimen_ID") %>% 
+  # convert categorical traits into factors
+  mutate(growth_form = as_factor(growth_form),
+         pigment_type = as_factor(pigment_type),
+         longevity = as_factor(longevity))
 
-tbs_gower <- gower_mat %>% 
-  gowdis()
+# note: PCOA is based on distance matrices, so never actually sees "species"
+# add species by calculating weighted averages: from original data matrix of traits by species, average abundance and axis scores for all sites
+tbs_gower <- FD::gowdis(gower_mat)
 tbs_pcoa <- cmdscale(tbs_gower, eig = TRUE)
+ordiplot(tbs_pcoa, display = "sites", type = "text")
+
+tbs_gower_daisy <- daisy(gower_mat, metric = "gower") # same as above
+tbs_pcoa_daisy <- cmdscale(tbs_gower_daisy, eig = TRUE)
+ordiplot(tbs_pcoa_daisy, display = "species", type = "text")
+biplot.pcoa(ape::pcoa(tbs_gower_daisy))
+test_pcoa <- ape::pcoa(tbs_gower_daisy, correction = "lingoes") 
+test_pcoa
+
+df <- test_pcoa$values %>% 
+  as_tibble() %>% 
+  rownames_to_column("axes") %>% 
+  mutate(axes = as.numeric(axes)) %>% 
+  ggplot(aes(x = axes, y = Cum_br_stick)) +
+  geom_point()
+df
 # tbs_pcoa <- wcmdscale(tbs_gower, eig = TRUE)
 # tbs_pcoa <- ape::pcoa(tbs_gower, correction = "none")
-biplot(ape::pcoa(tbs_gower, correction = "none"))
+# biplot(ape::pcoa(tbs_gower, correction = "none"))
 # ordiplot(scores(tbs_pcoa, choices=c(1,2)), type="none", main="PCoA with species weighted averages")
 # tbs.wa <- wascores(tbs_pcoa$points[,1:2], tbs_matrix)
 # text(tbs.wa, rownames(tbs.wa), cex=0.7, col="red")
 # biplot.pcoa(tbs_gower, tbs_pcoa, dir.axis1 = -1)
-tbs_pcoa$species <- wascores(tbs_pcoa$points, tbs_matrix[, 2:10], expand = TRUE)
-p1 <- ordiplot(tbs_pcoa, type = "none")
+# tbs_pcoa$species <- wascores(x = tbs_pcoa$points, , expand = TRUE)
+p1 <- ordiplot(tbs_pcoa, display = "sites", type = "none")
 points1 <- points(p1, "sites", pch = 21, col = "red", bg = "yellow")
-text(p1, "species", col = "blue", cex = 0.9)
-# identify(p1, "spec")
+text(p1, "sites", col = "blue", cex = 0.9)
+# identify(p1, "sites")
+
+
+
+pcoa_spp_scores <- scores(tbs_pcoa, display = "sites") %>% 
+  as.data.frame() %>% 
+  rownames_to_column("specimen_ID") %>% 
+  left_join(., metadata_ind, by = "specimen_ID")
+
+pcoa_trait_scores <- scores(tbs_pcoa, choices = c(1,2)) %>% 
+  as.data.frame()
+ggplot(pcoa_spp_scores, aes(x = Dim1, y = Dim2, color = sp_code, shape = site)) +
+  geom_hline(yintercept = 0, color = "grey", lty = 3) +
+  geom_vline(xintercept = 0, color = "grey", lty = 3) +
+  geom_point(alpha = 0.8, size = 3) +
+  theme_bw()
 ```
 
 # 2. PCA
@@ -57,7 +98,7 @@ text(p1, "species", col = "blue", cex = 0.9)
 
 pca_mat <- ind_traits %>% 
   filter(sp_code %in% algae_proposal) %>% 
-  filter(!(sp_code %in% c("CO"))) %>% 
+  # filter(!(sp_code %in% c("CO"))) %>% 
   # weird Nienburgia?
   filter(!(specimen_ID == "20210721-BULL-023")) %>% 
   mutate(growth_form_num = case_when(
@@ -134,8 +175,8 @@ plot_PCA_12 <- ggplot() +
   geom_hline(yintercept = c(0), color = "grey70", linetype = 2) +
   geom_segment(data = PCAvect, aes(x = 0, y = 0, xend = PC1, yend = PC2), arrow = arrow(length = unit(0.2, "cm")), size = 1) +
   geom_text(data = PCAvect, aes(x = PC1, y = PC2, label = rownames(PCAvect)), size = 5, alpha = 0.8) +
-  scale_x_continuous(limits = c(-1.5, 2.3)) +
-  scale_y_continuous(limits = c(-3, 2)) +
+  # scale_x_continuous(limits = c(-1.5, 2.3)) +
+  # scale_y_continuous(limits = c(-3, 2)) +
   theme_bw() +
   guides(colour = guide_legend(ncol = 2),
          shape = guide_legend(ncol = 2)) +
@@ -146,8 +187,8 @@ plot_PCA_12 <- ggplot() +
         axis.text = element_text(size = 16),
         title = element_text(size = 20),
         legend.text = element_text(size = 12)) +
-  labs(x = "PC1 (43.68%)",
-       y = "PC2 (21.2%)",
+  labs(x = "PC1 (47.5%)",
+       y = "PC2 (18.2%)",
        title = "PC1 and PC2",
        color = "Scientific name") 
 plot_PCA_12
@@ -161,7 +202,7 @@ plot_PCA_13 <- ggplot() +
   geom_hline(yintercept = c(0), color = "grey70", linetype = 2) +
   geom_segment(data = PCAvect_13, aes(x = 0, y = 0, xend = PC1, yend = PC3), arrow = arrow(length = unit(0.2, "cm")), size = 1) +
   geom_text(data = PCAvect_13, aes(x = PC1, y = PC3, label = rownames(PCAvect)), size = 5, alpha = 0.8) +
-  scale_x_continuous(limits = c(-1.5, 2.3)) +
+  # scale_x_continuous(limits = c(-1.5, 2.3)) +
   # scale_y_continuous(limits = c(-3, 2)) +
   theme_bw() +
   guides(colour = guide_legend(ncol = 2),
@@ -173,8 +214,8 @@ plot_PCA_13 <- ggplot() +
         axis.text = element_text(size = 16),
         title = element_text(size = 20),
         legend.text = element_text(size = 12)) +
-  labs(x = "PC1 (43.68%)",
-       y = "PC3 (14.0%)",
+  labs(x = "PC1 (47.5%)",
+       y = "PC3 (13.9%)",
        title = "PC1 and PC3",
        color = "Scientific name") 
 plot_PCA_13
