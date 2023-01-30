@@ -257,8 +257,8 @@ bf_plot
 ```{r}
 thickness_df <- ind_traits %>% 
   filter(sp_code %in% algae_proposal) %>% 
-  # remove GR and CO because only 1 observation
-  filter(!(sp_code %in% c("CO")))
+  # remove POLA because only 1 observation
+  filter(!(sp_code %in% c("POLA")))
 
 bartlett.test(thickness_mm_mean ~ sp_code, data = thickness_df)
 # definitely heterogeneous variances
@@ -384,8 +384,8 @@ thickness_boxplot_ptca
 weight_df <- weight_ind %>% 
   left_join(., metadata_ind, by = "specimen_ID") %>% 
   filter(sp_code %in% algae_proposal) %>% 
-  # take out calcifying species, which do not have decalcified weight
-  filter(!(sp_code %in% c("BO", "CO")))
+  # take out POLA, only one sample
+  filter(!(sp_code %in% c("POLA")))
 
 # analysis of variance
 dryw_sp_aov <- aov(total_dry ~ sp_code, data = weight_df)
@@ -410,8 +410,8 @@ dryw_cld_df <- enframe(dryw_cld[[1]]$Letters) %>%
 # bartlett.test(tdmc ~ sp_code, data = weight_summary %>% filter(!(sp_code %in% c("BO", "CO"))))
 
 # analysis of variance
-tdmc_sp_aov <- aov(tdmc_mean ~ sp_code, data = ind_traits %>% filter(sp_code %in% algae_proposal) %>% filter(sp_code != "CO"))
-tdmc_tax_aov <- aov(tdmc_mean ~ pigment_type, data = ind_traits %>% filter(sp_code %in% algae_proposal) %>% filter(sp_code != "CO"))
+tdmc_sp_aov <- aov(tdmc_mean ~ sp_code, data = ind_traits %>% filter(sp_code %in% algae_proposal) %>% filter(sp_code != "POLA"))
+tdmc_tax_aov <- aov(tdmc_mean ~ pigment_type, data = ind_traits %>% filter(sp_code %in% algae_proposal) %>% filter(sp_code != "POLA"))
 
 summary(tdmc_sp_aov)
 summary(tdmc_tax_aov)
@@ -473,14 +473,14 @@ wetw_boxplot
 
 tdmc_boxplot <- ind_traits %>% 
   filter(sp_code %in% algae_proposal) %>% 
-  filter(!(sp_code %in% c("CO"))) %>% 
+  filter(!(sp_code %in% c("POLA"))) %>% 
   left_join(., tdmc_cld_df, by = "sp_code") %>% 
   ggplot(aes(x = sp_code, y = tdmc_mean)) +
   geom_boxplot(aes(fill = value)) +
   geom_jitter() +
-  geom_text(aes(label = value, y = 0.275), nudge_y = 0.01) + 
+  geom_text(aes(label = value, y = 0.9), nudge_y = 0.01) + 
   facet_wrap(~ pigment_type, scales = "free_x") +
-  scale_y_continuous(limits = c(0, 0.3)) +
+  scale_y_continuous(limits = c(0, 1)) +
   scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
   theme_bw() +
   labs(title = "Thallus dry matter content",
@@ -735,11 +735,11 @@ sta_df <- ind_traits %>%
   left_join(., metadata_ind, by = "specimen_ID")
 
 # test homogeneity of variance
-bartlett.test(sta_mean ~ sp_code, data = sta_df)
+bartlett.test(sta_mean ~ sp_code.x, data = sta_df)
 # heterogeneous variances
 
 # analysis of variance
-sta_sp_aov <- aov(sta_mean ~ sp_code, data = sta_df)
+sta_sp_aov <- aov(sta_mean ~ sp_code.x, data = sta_df)
 
 # sta_tax_aov <- aov(sta_mm_mg ~ taxon_phylum, data = sta_df)
 
@@ -764,8 +764,8 @@ thallus area:dry weight
 
 ```{r}
 sta_boxplot <- sta_df %>% 
-  left_join(., sta_cld_df, by = "sp_code") %>% 
-  ggplot(aes(x = sp_code, y = sta_mean)) +
+  left_join(., sta_cld_df, by = c("sp_code.x" = "sp_code")) %>% 
+  ggplot(aes(x = sp_code.x, y = sta_mean)) +
   geom_boxplot(aes(fill = value)) +
   geom_jitter() +
   geom_text(aes(label = value, y = 230), nudge_y = 0.01) + 
@@ -855,14 +855,13 @@ sta_boxplot_ptca
 
 ```{r}
 ptca_sta_adults <- ind_traits %>% 
-  filter(sp_code == "PTCA") %>% 
-  left_join(., metadata_ind, by = "specimen_ID")
+  filter(sp_code == "PTCA") 
 
-var.test(sta_mean ~ site, data = ptca_sta_adults)
+bartlett.test(sta_mean ~ site, data = ptca_sta_adults)
 # not significantly different variances
 
-t.test(sta_mean ~ site, data = ptca_sta_adults, var.equal = TRUE)
-# not significantly different between sites
+summary(aov(sta_mean ~ site, data = ptca_sta_adults, var.equal = TRUE))
+# significantly different between sites
 
 sta_boxplot_ptca <- ptca_sta_adults %>% 
   ggplot(aes(x = site, y = sta_mean)) +
