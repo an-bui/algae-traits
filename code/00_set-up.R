@@ -40,11 +40,13 @@ library(ggridges)
 sheet_id <- "1h2eHoL5kXMRwExt3hjrLavxG0pajHOvA1UfJd24pRk4"
 
 # metadata for subsamples
-metadata_sub <- read_sheet(sheet_id, sheet = "00b-metadata_sub") 
+metadata_sub <- read_sheet(sheet_id, sheet = "00b-metadata_sub") %>% 
+  mutate(date_collected = ymd(date_collected)) %>% 
+  mutate(year = year(date_collected))
 
 # metadata for individuals 
 metadata_ind <- metadata_sub %>% 
-  select(specimen_ID, date_collected, site, sp_code, lifestage) %>% 
+  select(specimen_ID, date_collected, year, site, sp_code, lifestage) %>% 
   unique()
 
 # individual maximum height
@@ -93,7 +95,8 @@ path <- here::here("data/fvfm", c(
   "20220811-AQUE-cleaned.csv",
   "20220812-AQUE-cleaned.csv",
   "20220815-MOHK-cleaned.csv",
-  "20220818-AQUE-cleaned.csv"))
+  "20220818-AQUE-cleaned.csv",
+  "20220824-CARP_MOHK-cleaned.csv"))
 
 # read in all .csv files into one data frame
 fvfm_raw <- path %>% 
@@ -624,7 +627,7 @@ sa_peri_sub <- sa_peri %>%
 
 # thallus length and width
 lw_sub <- lw %>% 
-  select(-specimen_ID)
+  select(-specimen_ID, -5)
 
 #### * g. branching order ####
 
@@ -693,7 +696,9 @@ ind_traits <- ct_prep %>%
   left_join(., weight_ind, by = "specimen_ID") %>% 
   left_join(., volume_ind, by = "specimen_ID") %>% 
   left_join(., (metadata_ind %>% select(specimen_ID, date_collected, site)), by = "specimen_ID") %>% 
-  filter(!(sp_code == "PTCA" & lifestage == "recruit")) 
+  filter(!(sp_code == "PTCA" & lifestage == "recruit")) %>% 
+  mutate(date_collected = ymd(date_collected)) %>% 
+  mutate(year = year(date_collected))
 
 #### * j. trait by species matrix ####
 

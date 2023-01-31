@@ -5,6 +5,7 @@ source(here::here("code", "00_set-up.R"))
 ###### 1. variation in trait values ######
 
 # main question: what is the source of variation in trait values?
+# following Messier et al. 2010 and Messier blog post with code: https://juliemessier.org/code/
 
 ###### ⊣ a. fvfm ######
 
@@ -27,19 +28,19 @@ fvfm_df <- fvfm_raw %>%
   left_join(., metadata_sub, by = "subsample_ID") %>% 
   select(site, sp_code, specimen_ID, subsample_ID, fvfm_meas, Time, Date) %>% 
   drop_na() %>% 
-  mutate(Date = mdy(Date))
+  mutate(Date = mdy(Date)) %>% 
+  mutate(year = year(Date))
 
 fvfm_nonas <- leaf_traits %>% 
   drop_na(fvfm_mean, sp_code)
 
 # fit a model
-fvfm_ind_lme <- lme(log10(fvfm_mean) ~ 1, random = ~1|site/sp_code, data = ind_traits %>% drop_na(fvfm_mean))
-fvfm_sub_lme <- lme(log10(fvfm_mean) ~ 1, random = ~1|site/sp_code/specimen_ID/subsample_ID, data = fvfm_nonas)
-fvfm_sub_lme <- lme(log10(fvfm_meas) ~ 1, random = ~1|site/sp_code/specimen_ID/subsample_ID, data = fvfm_df)
+fvfm_ind_lme <- lme(log10(fvfm_mean) ~ 1, random = ~1|year/site/sp_code, data = ind_traits %>% drop_na(fvfm_mean))
+fvfm_sub_lme <- lme(log10(fvfm_mean) ~ 1, random = ~1|year/site/sp_code/specimen_ID, data = fvfm_nonas)
 
 # variance components
 plot(varcomp(fvfm_ind_lme, scale = TRUE))
-# site: 69.4%, species: 26.2%, within individuals of same species at same site: 4.4%
+# species: 89.8%, within individuals: 6.9%, year: 2.9%, site: <1%
 plot(varcomp(fvfm_sub_lme, scale = TRUE))
 # species: 46.3%, site: 29.3%, within subsample: 18.8%, across individuals: 3.7%, within individuals: 1.93%
 
@@ -57,9 +58,9 @@ plot(varcomp(sta_sub_lme, scale = TRUE))
 
 ###### ⊣ c. TDMC ######
 
-tdmc_ind_lme <- lme(log10(tdmc_mean) ~ 1, random = ~1|site/sp_code, data = ind_traits %>% drop_na(tdmc_mean))
+tdmc_ind_lme <- lme(log10(tdmc_mean) ~ 1, random = ~1|year/site/sp_code, data = ind_traits %>% drop_na(tdmc_mean))
 
-tdmc_sub_lme <- lme(log10(dmc) ~ 1, random = ~1|site/sp_code/specimen_ID, data = leaf_traits %>% drop_na(dmc))
+tdmc_sub_lme <- lme(log10(dmc) ~ 1, random = ~1|year/site/sp_code/specimen_ID, data = leaf_traits %>% drop_na(dmc))
 
 plot(varcomp(tdmc_ind_lme, scale = TRUE))
 # 78 by species, 8.6 by site, 13.5 within
@@ -69,11 +70,11 @@ plot(varcomp(tdmc_sub_lme, scale = TRUE))
 
 ###### ⊣ d. SA:P ######
 
-sap_ind_lme <- lme(log10(sap_mean) ~ 1, random = ~1|site/sp_code/specimen_ID, data = ind_traits %>% drop_na(sap_mean))
+sap_ind_lme <- lme(log10(sap_mean) ~ 1, random = ~1|year/site/sp_code/specimen_ID, data = ind_traits %>% drop_na(sap_mean))
 
 sap_sub_lme <- lme(log10(sap_ratio) ~ 1, random = ~1|site/sp_code/specimen_ID, data = leaf_traits %>% drop_na(sap_ratio))
 
-plot(varcomp(sap_lme, scale = TRUE))
+plot(varcomp(sap_ind_lme, scale = TRUE))
 # 93.1% species, 2.3% site, 2.9% specimen ID
 
 plot(varcomp(sap_sub_lme, scale = TRUE))
