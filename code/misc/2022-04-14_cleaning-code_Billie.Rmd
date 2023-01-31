@@ -1,0 +1,71 @@
+---
+title: "Code for cleaning up LTER annual data for Billie"
+date: "2022-04-14"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# 0. libraries and cleaning function
+
+```{r}
+library(tidyverse) # manipulation
+library(janitor) # cleaning up column names
+library(here) # file organization
+
+benthic_cleaning_fxn <- function(df) {
+  df %>% 
+    clean_names() %>% 
+    # create a sample_ID for each sampling date at each site
+    unite("sample_ID", site, date, transect, remove = FALSE) %>% 
+    # change to lower case
+    mutate_at(c("group", "mobility", "growth_morph", "site"), str_to_lower) %>% 
+    # only include algae
+    filter(group == "algae") %>% 
+    # make sure that sp_code for Nienburgia andersoniana isn't NA
+    mutate(sp_code = case_when(
+      scientific_name == "Nienburgia andersoniana" ~ "Nandersoniana",
+      TRUE ~ as.character(as.character(sp_code))
+    ))
+}
+```
+
+# 1. Data
+
+## a. Percent cover
+
+```{r}
+percov <- read_csv(here::here("data", "SBC-LTER-benthics", 
+                              "Annual_Cover_All_Years_20210108.csv")) %>% 
+  benthic_cleaning_fxn()
+```
+
+## b. kelp fronds
+
+```{r}
+kelp_fronds <- read_csv(here::here("data", "SBC-LTER-benthics", "Annual_Kelp_All_Years_20211020.csv")) %>% 
+  clean_names() %>% 
+  # create a sample_ID for each sampling date at each treatment at each site
+  unite("sample_ID", site, date, transect, remove = FALSE) %>% 
+  # change to lower case
+  mutate_at(c("group", "mobility", "growth_morph", "site"), str_to_lower) %>% 
+  # replace all -99999 values with NA
+  mutate(fronds = replace(fronds, fronds < 0, NA),
+         hld_diam = replace(hld_diam, hld_diam < 0, NA)) %>% 
+  mutate(date = ymd(date))
+```
+
+## c. biomass
+
+```{r}
+biomass <- read_csv(here::here("data", "SBC-LTER-benthics", 
+                               "Annual_All_Species_Biomass_at_transect_20210108.csv")) %>% 
+  benthic_cleaning_fxn() %>% 
+  # replace all -99999 values with 0
+  mutate(dry_gm2 = replace(dry_gm2, dry_gm2 < 0, NA),
+         wm_gm2 = replace(wm_gm2, wm_gm2 < 0, NA),
+         density = replace(density, density < 0, NA)) %>% 
+  mutate(date = ymd(date))
+```
+
