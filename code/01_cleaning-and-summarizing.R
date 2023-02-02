@@ -33,12 +33,16 @@ fvfm_df <- fvfm_raw %>%
   filter(year == 2022)
 
 fvfm_nonas <- leaf_traits %>% 
-  drop_na(fvfm_mean, sp_code) %>% 
-  filter(year == 2022)
+  drop_na(fvfm_mean, sp_code) 
 
 # fit a model
-fvfm_ind_lme <- lme(log10(fvfm_mean) ~ 1, random = ~1|site/sp_code, data = ind_traits %>% drop_na(fvfm_mean))
+fvfm_ind_lme <- lme(log10(fvfm_mean) ~ 1, random = ~1|site, data = ind_traits %>% drop_na(fvfm_mean))
 fvfm_sub_lme <- lme(log10(fvfm_mean) ~ 1, random = ~1|site/sp_code/specimen_ID, data = fvfm_nonas)
+
+fvfm.m <- lmer(log(fvfm_mean) ~ 1 + (1|sp_code/specimen_ID) + (1|site) + (1|year), data = fvfm_nonas, na.action = na.omit)
+# variances.LMA<-c(unlist(lapply(VarCorr(m.LMA),diag)), attr(VarCorr(m.LMA),”sc”)^2)
+fvfm.variances <- c(unlist(lapply(VarCorr(fvfm.m), diag)), attr(VarCorr(fvfm.m), "sc")^2)
+var.comp.fvfm <- fvfm.variances/sum(fvfm.variances)
 
 # variance components
 plot(varcomp(fvfm_ind_lme, scale = TRUE))
