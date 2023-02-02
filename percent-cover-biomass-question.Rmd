@@ -1,0 +1,98 @@
+---
+title: "Benthic percent cover and biomass"
+author: "An Bui"
+date: "2023-02-01"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# 0. set up
+```{r message = FALSE}
+# libraries
+library(tidyverse)
+library(janitor)
+library(lubridate)
+
+# function to clean up variables for use
+benthic_cleaning_fxn <- function(df) {
+  df %>% 
+    clean_names() %>% 
+    # change to lower case
+    mutate_at(c("group", "mobility", "growth_morph", "site"), str_to_lower) %>% 
+    # # create a sample_ID for each sampling date at each site
+    unite("sample_ID", site, year, remove = FALSE) %>% 
+    # only include algae
+    filter(group == "algae") %>% 
+    # make sure that sp_code for Nienburgia andersoniana isn't NA
+    mutate(sp_code = case_when(
+      scientific_name == "Nienburgia andersoniana" ~ "Nandersoniana",
+      TRUE ~ as.character(as.character(sp_code))
+    ))
+}
+
+# percent cover data
+percov_2021 <- read_csv(here::here("data", "SBC-LTER-benthics", 
+                              "Annual_Cover_All_Years_20211020.csv")) %>% 
+  benthic_cleaning_fxn()
+
+percov_2022 <- read_csv(here::here("data", "SBC-LTER-benthics", 
+                              "Annual_Cover_All_Years_20220809.csv")) %>% 
+  benthic_cleaning_fxn() 
+
+# biomass data
+biomass_2021 <- read_csv(here::here("data", "SBC-LTER-benthics", 
+                               "Annual_All_Species_Biomass_at_transect_20211020.csv")) %>% 
+  benthic_cleaning_fxn() %>% 
+  # replace all -99999 values with NA
+  mutate(dry_gm2 = replace(dry_gm2, dry_gm2 < 0, NA),
+         wm_gm2 = replace(wm_gm2, wm_gm2 < 0, NA),
+         density = replace(density, density < 0, NA)) %>% 
+  mutate(date = ymd(date))
+
+biomass_2022 <- read_csv(here::here("data", "SBC-LTER-benthics", 
+                               "Annual_All_Species_Biomass_at_transect_20220809.csv")) %>% 
+  benthic_cleaning_fxn() %>% 
+  # replace all -99999 values with NA
+  mutate(dry_gm2 = replace(dry_gm2, dry_gm2 < 0, NA),
+         wm_gm2 = replace(wm_gm2, wm_gm2 < 0, NA),
+         density = replace(density, density < 0, NA)) %>% 
+  mutate(date = ymd(date))
+```
+
+# Taonia lennebackerae example
+
+## 2021
+```{r}
+aque_tale_percov_2021 <- percov_2021 %>% 
+  filter(site == "aque" & sp_code == "TALE" & year == 2021) %>% 
+  group_by(transect) %>% 
+  summarize(mean_percov = mean(percent_cover))
+
+aque_tale_biomass_2021 <- biomass_2021 %>% 
+  filter(site == "aque" & sp_code == "TALE" & year == 2021)
+
+aque_tale_percov_2021
+aque_tale_biomass_2021
+```
+
+## 2022
+```{r}
+aque_tale_percov_2022 <- percov_2022 %>% 
+  filter(site == "aque" & sp_code == "TALE" & year == 2022) %>% 
+  group_by(transect) %>% 
+  summarize(mean_percov = mean(percent_cover))
+
+aque_tale_biomass_2022 <- biomass_2022 %>% 
+  filter(site == "aque" & sp_code == "TALE" & year == 2022)
+
+aque_tale_percov_2022
+aque_tale_biomass_2022
+```
+
+
+
