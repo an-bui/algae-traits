@@ -115,6 +115,7 @@ algae_common <- c("PH", "PTCA", # Pterygophora californica
                   "CO", # Corallina officinalis var. chilensis 
                   "LX", # Osmundea spectabilis
                   "GS", # Gracilaria spp. 
+                  "GR", # Gelidium robustum
                   "BR", # Halymenia spp.
                   "BO", # Bossiella orbigniana 
                   "FB", # Ectocarpaceae spp. 
@@ -253,7 +254,8 @@ biomass <- read_csv(here::here("data", "SBC-LTER-benthics",
 #### * d. percent cover ####
 percov <- read_csv(here::here("data", "SBC-LTER-benthics", 
                               "Annual_Cover_All_Years_20211020.csv")) %>% 
-  benthic_cleaning_fxn()
+  benthic_cleaning_fxn() %>% 
+  mutate(percent_cover = replace(percent_cover, percent_cover < 0, NA))
 
 #### * e. prop_biomass ####
 # This is a data frame of species at each site at each transect during each sampling date
