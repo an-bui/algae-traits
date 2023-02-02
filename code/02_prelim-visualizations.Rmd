@@ -37,13 +37,15 @@ fvfm_df <- fvfm_raw %>%
   left_join(., metadata_ind, by = "specimen_ID") %>% 
   # join with coarse_traits
   left_join(., coarse_traits, by = "sp_code") %>% 
-  filter(sp_code %in% algae_proposal)
+  filter(sp_code %in% algae_proposal) %>% 
+  filter(sp_code != "POLA")
 
 fvfm_df <- fvfm_ind %>% 
   left_join(., metadata_ind, by = "specimen_ID") %>% 
   # join with coarse_traits
   left_join(., coarse_traits, by = "sp_code") %>% 
-  filter(sp_code %in% algae_proposal) 
+  filter(sp_code %in% algae_proposal)  %>% 
+  filter(sp_code != "POLA")
 
 bartlett.test(fvfm_mean ~ sp_code, data = fvfm_df)
 # heterogeneous variance
@@ -200,26 +202,33 @@ fvfm_boxplot_ptca_recruit
 ```{r}
 fvfm_ptca_adult <- fvfm_ind %>% 
   left_join(., metadata_ind, by = "specimen_ID") %>% 
-  filter(lifestage == "adult")
+  filter(lifestage == "adult") %>% 
+  filter(site != "Bullito" & year != "2021")
 
 bartlett.test(fvfm_mean ~ site, data = fvfm_ptca_adult)
 # not significantly different variances
 
-t.test(fvfm_mean ~ site, data = fvfm_ptca_adult, var.equal = TRUE)
-# no significant differences in adults
+summary(aov(fvfm_mean ~ site, data = fvfm_ptca_adult))
+# significant differences in adults
+
+TukeyHSD(aov(fvfm_mean ~ site, data = fvfm_ptca_adult))
 
 fvfm_boxplot_ptca_adult <- fvfm_ptca_adult %>% 
   ggplot(aes(x = site, y = fvfm_mean)) +
   geom_boxplot() +
   geom_jitter() +
   theme_bw() +
-  labs(caption = "t-test: t(16) = -0.208, p = 0.84")
+  facet_wrap(~year)
+  labs(caption = "ANOVA: F(2) = 3.273, p = 0.06")
 fvfm_boxplot_ptca_adult
 
-# ggsave(here::here("figures/prelim-visualizations",
-#                   paste("fvfm-boxplot-PTCA_adults-", todays_date, ".jpg", sep = "")),
-#        fvfm_boxplot_ptca_adult,
-#        width = 8, height = 5, dpi = 150)
+ggsave(here::here("figures/prelim-visualizations",
+                  paste("fvfm-boxplot-PTCA_adults-", todays_date, ".jpg", sep = "")),
+       fvfm_boxplot_ptca_adult,
+       width = 8, height = 5, dpi = 150)
+
+ggplot(fvfm_ptca_adult, aes(x = fvfm_se)) +
+  geom_histogram(binwidth = 0.002)
 ```
 
 ## f. boxplot (BF BULL vs IVEE)
