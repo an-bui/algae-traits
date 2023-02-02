@@ -3,7 +3,7 @@
 table_df <- biomass %>% 
   filter(year == 2021) %>% 
   select(site, scientific_name, dry_gm2, wm_gm2) %>% 
-  filter(site %in% c("napl")) %>% 
+  filter(site %in% c("carp")) %>% 
   # mutate(site = fct_relevel(site, "aque", "napl", "ivee", "mohk", "carp")) %>% 
   # filter out MAPY
   filter(scientific_name != "Macrocystis pyrifera") %>% 
@@ -98,4 +98,21 @@ percov_tbl("bull")
 percov_tbl("napl")
 percov_tbl("ivee")
 percov_tbl("mohk")
+
+table_df_percov <- percov %>% 
+  filter(year == 2021) %>% 
+  # select(site, scientific_name, dry_gm2, wm_gm2) %>% 
+  filter(site %in% c("carp")) %>% 
+  # mutate(site = fct_relevel(site, "aque", "napl", "ivee", "mohk", "carp")) %>% 
+  # filter out MAPY
+  filter(scientific_name != "Macrocystis pyrifera") %>% 
+  # create a new column where total biomass for the species for the whole survey is calculated
+  group_by(scientific_name) %>%
+  summarize(sp_percov = sum(percent_cover, na.rm = TRUE)) %>% 
+  mutate(total_percov = sum(sp_percov)) %>% 
+  ungroup() %>% 
+  mutate(sp_prop = round(sp_percov/total_percov, 4)) %>% 
+  mutate(sp_percent = sp_prop*100) %>% 
+  select(-sp_prop) %>% 
+  left_join(., coarse_traits, by = "scientific_name") 
 
