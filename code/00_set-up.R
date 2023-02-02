@@ -257,7 +257,13 @@ percov <- read_csv(here::here("data", "SBC-LTER-benthics",
   benthic_cleaning_fxn() %>% 
   mutate(percent_cover = replace(percent_cover, percent_cover < 0, NA))
 
-#### * e. prop_biomass ####
+
+#### * e. swath ####
+swath <- read_csv(here::here("data", "SBC-LTER-benthics", 
+                                       "Annual_Quad_Swath_All_Years_20220809.csv")) %>% 
+  benthic_cleaning_fxn() 
+
+#### * f. prop_biomass ####
 # This is a data frame of species at each site at each transect during each sampling date
 # biomass columns: total dry, total wet, percent dry, percent wet
 prop_biomass <- biomass %>% 
@@ -314,7 +320,7 @@ biomass_transect <- biomass %>%
   # join with coarse traits data frame, which includes taxonomy
   left_join(., coarse_traits, by = "sp_code") 
 
-#### * f. irradiance ####
+#### * g. irradiance ####
 
 # * f. irradiance
 # from Castorani et al. 2018: sum irradiance in a day to get total, then average across season to get average daily
@@ -335,7 +341,7 @@ irr <- read_csv(here::here("data/SBC-LTER-benthics", "Hourly_Irrandiance_All_Yea
   ungroup() %>% 
   unite("sample_ID", site, year, sep = "_")
 
-#### * g. community matrix and metadata ####
+#### * h. community matrix and metadata ####
 
 # urchin summary
 urchins <- read_csv(here::here("data", "SBC-LTER-benthics", 
