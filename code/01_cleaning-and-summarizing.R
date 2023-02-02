@@ -29,14 +29,16 @@ fvfm_df <- fvfm_raw %>%
   select(site, sp_code, specimen_ID, subsample_ID, fvfm_meas, Time, Date) %>% 
   drop_na() %>% 
   mutate(Date = mdy(Date)) %>% 
-  mutate(year = year(Date))
+  mutate(year = year(Date)) %>% 
+  filter(year == 2022)
 
 fvfm_nonas <- leaf_traits %>% 
-  drop_na(fvfm_mean, sp_code)
+  drop_na(fvfm_mean, sp_code) %>% 
+  filter(year == 2022)
 
 # fit a model
-fvfm_ind_lme <- lme(log10(fvfm_mean) ~ 1, random = ~1|year/site/sp_code, data = ind_traits %>% drop_na(fvfm_mean))
-fvfm_sub_lme <- lme(log10(fvfm_mean) ~ 1, random = ~1|year/site/sp_code/specimen_ID, data = fvfm_nonas)
+fvfm_ind_lme <- lme(log10(fvfm_mean) ~ 1, random = ~1|site/sp_code, data = ind_traits %>% drop_na(fvfm_mean))
+fvfm_sub_lme <- lme(log10(fvfm_mean) ~ 1, random = ~1|site/sp_code/specimen_ID, data = fvfm_nonas)
 
 # variance components
 plot(varcomp(fvfm_ind_lme, scale = TRUE))
@@ -46,8 +48,8 @@ plot(varcomp(fvfm_sub_lme, scale = TRUE))
 
 ###### ⊣ b. STA ######
 
-sta_ind_lme <- lme(log10(sta_mean) ~ 1, random = ~1|site/sp_code, data = ind_traits %>% drop_na(sta_mean))
-sta_sub_lme <- lme(log10(sta_mm_mg) ~ 1, random = ~1|site/sp_code/date_collected/specimen_ID, data = leaf_traits %>% drop_na(sta_mm_mg, sp_code))
+sta_ind_lme <- lme(log10(sta_mean) ~ 1, random = ~1|site/sp_code, data = ind_traits %>% drop_na(sta_mean) %>% filter(year == 2022))
+sta_sub_lme <- lme(log10(sta_mm_mg) ~ 1, random = ~1|site/sp_code/specimen_ID, data = leaf_traits %>% drop_na(sta_mm_mg, sp_code) %>% filter(year == 2022))
 
 # variance components
 plot(varcomp(sta_ind_lme, scale = TRUE))
@@ -58,9 +60,9 @@ plot(varcomp(sta_sub_lme, scale = TRUE))
 
 ###### ⊣ c. TDMC ######
 
-tdmc_ind_lme <- lme(log10(tdmc_mean) ~ 1, random = ~1|year/site/sp_code, data = ind_traits %>% drop_na(tdmc_mean))
+tdmc_ind_lme <- lme(log10(tdmc_mean) ~ 1, random = ~1|site/sp_code, data = ind_traits %>% drop_na(tdmc_mean) %>% filter(year == 2022))
 
-tdmc_sub_lme <- lme(log10(dmc) ~ 1, random = ~1|year/site/sp_code/specimen_ID, data = leaf_traits %>% drop_na(dmc))
+tdmc_sub_lme <- lme(log10(dmc) ~ 1, random = ~1|site/sp_code/specimen_ID, data = leaf_traits %>% drop_na(dmc, sp_code) %>% filter(year == 2022))
 
 plot(varcomp(tdmc_ind_lme, scale = TRUE))
 # 78 by species, 8.6 by site, 13.5 within
@@ -86,12 +88,13 @@ thickness_df <- thickness %>%
   pivot_longer(cols = thickness_01:thickness_10, names_to = "measurement_n", values_to = "thickness_mm") %>% 
   left_join(., metadata_sub, by = "subsample_ID") %>% 
   drop_na(thickness_mm) %>% 
+  filter(type == "thallus") %>% 
   select(site, sp_code, specimen_ID.x, subsample_ID, thickness_mm) %>% 
   drop_na()
 
 thickness_lme <- lme(thickness_mm_mean ~ 1, random = ~1|site/sp_code/specimen_ID, data = ind_traits %>% drop_na(thickness_mm_mean))
 
-thickness_sub_lme <- lme(log10(thickness_mm_mean) ~ 1, random = ~1|site/sp_code/specimen_ID/subsample_ID, data = leaf_traits %>% drop_na(thickness_mm_mean))
+# thickness_sub_lme <- lme(log10(thickness_mm_mean) ~ 1, random = ~1|site/sp_code/specimen_ID/subsample_ID, data = leaf_traits %>% drop_na(thickness_mm_mean))
 
 thickness_sub_lme <- lme(thickness_mm ~ 1, random = ~1|site/sp_code/specimen_ID.x/subsample_ID, data = thickness_df)
 
@@ -134,16 +137,18 @@ varPlot <- varSpecies <- varWithin <- numeric()
 # turn leaf traits into a matrix
 ind_traits_mat <- ind_traits %>% 
   column_to_rownames("specimen_ID") %>% 
-  select(site, sp_code, fvfm_mean, sta_mean)
+  filter(year == 2022) %>% 
+  select(site, sp_code, fvfm_mean, sta_mean) 
 
 # for each iteration
 for (i in 1:nreps){
   # resample
   data.aux <- ind_traits_mat[sample(1:nrow(ind_traits_mat), nrow(ind_traits_mat), replace = T), ] 
   # take the log
-  logstaAux <- log(data.aux$sta_mean)
+  logfvfmAux <- log(data.aux$fvfm_mean)
   # model with random effects structure
-  varcomp.aux <- ape::varcomp(lme(log10(sta_mean) ~ 1, random = ~1|site/sp_code, data = ind_traits %>% drop_na(sta_mean)))
+  varcomp.aux <- ape::varcomp(lme(logfvfmAux ~1 , random = ~1 | site/sp_code, 
+                                  data = data.aux, na.action = na.omit), scale = 1)
   # site component
   varPlot[i] <- varcomp.aux["site"]
   # species component
@@ -151,6 +156,9 @@ for (i in 1:nreps){
   # within individual component
   varWithin[i] <- varcomp.aux["Within"]
 }
+
+varcomp(fvfm_ind_lme, scale = TRUE)
+
 quantile(varSpecies, probs=c(0.025, 0.975))
 
 
