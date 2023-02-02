@@ -115,6 +115,7 @@ algae_common <- c("PH", "PTCA", # Pterygophora californica
                   "CO", # Corallina officinalis var. chilensis 
                   "LX", # Osmundea spectabilis
                   "GS", # Gracilaria spp. 
+                  "GR", # Gelidium robustum
                   "BR", # Halymenia spp.
                   "BO", # Bossiella orbigniana 
                   "FB", # Ectocarpaceae spp. 
@@ -262,13 +263,20 @@ biomass_2022 <- read_csv(here::here("data", "SBC-LTER-benthics",
 #### * d. percent cover ####
 percov <- read_csv(here::here("data", "SBC-LTER-benthics", 
                               "Annual_Cover_All_Years_20211020.csv")) %>% 
-  benthic_cleaning_fxn()
+  benthic_cleaning_fxn() %>% 
+  mutate(percent_cover = replace(percent_cover, percent_cover < 0, NA))
+
+
+#### * e. swath ####
+swath <- read_csv(here::here("data", "SBC-LTER-benthics", 
+                                       "Annual_Quad_Swath_All_Years_20220809.csv")) %>% 
+  benthic_cleaning_fxn() 
 
 percov_2022 <- read_csv(here::here("data", "SBC-LTER-benthics", 
                               "Annual_Cover_All_Years_20220809.csv")) %>% 
   benthic_cleaning_fxn() 
 
-#### * e. prop_biomass ####
+#### * f. prop_biomass ####
 # This is a data frame of species at each site at each transect during each sampling date
 # biomass columns: total dry, total wet, percent dry, percent wet
 prop_biomass <- biomass %>% 
@@ -325,7 +333,7 @@ biomass_transect <- biomass %>%
   # join with coarse traits data frame, which includes taxonomy
   left_join(., coarse_traits, by = "sp_code") 
 
-#### * f. irradiance ####
+#### * g. irradiance ####
 
 # * f. irradiance
 # from Castorani et al. 2018: sum irradiance in a day to get total, then average across season to get average daily
@@ -346,7 +354,7 @@ irr <- read_csv(here::here("data/SBC-LTER-benthics", "Hourly_Irrandiance_All_Yea
   ungroup() %>% 
   unite("sample_ID", site, year, sep = "_")
 
-#### * g. community matrix and metadata ####
+#### * h. community matrix and metadata ####
 
 # urchin summary
 urchins <- read_csv(here::here("data", "SBC-LTER-benthics", 
