@@ -13,66 +13,87 @@ sheet_write_csv <- function(df) {
 }
 
 ############################################################-
-# 2. getting data from google drive -------------------------
+# 2. data from google sheet ---------------------------------
 ############################################################-
 
 # google sheets package
 library(googlesheets4) 
 
-# gets the file id from google drive
+# file id from url
 sheet_id <- "1h2eHoL5kXMRwExt3hjrLavxG0pajHOvA1UfJd24pRk4"
 
-# metadata for subsamples
+# ⊣ a. metadata for subsamples ------------------------------
+
+# will ask for authentication here
 metadata_sub_sheet <- read_sheet(sheet_id, sheet = "00b-metadata_sub") %>% 
   mutate(date_collected = ymd(date_collected)) %>% 
   mutate(year = year(date_collected))
+
 # last updated: 2023-02-02
 sheet_write_csv(metadata_sub_sheet)
 
-# metadata for individuals 
+# ⊣ b. metadata for individuals -----------------------------
+
 metadata_ind_sheet <- metadata_sub_sheet %>% 
   select(specimen_ID, date_collected, year, site, sp_code, lifestage) %>% 
   unique()
+
 # last updated: 2023-02-02
 sheet_write_csv(metadata_ind_sheet)
 
-# individual maximum height
+# ⊣ c. max height -------------------------------------------
+
 ind_height_sheet <- read_sheet(sheet_id, sheet = "02a-ind_height", na = "NA") 
+
 # last updated: 2023-02-02
 sheet_write_csv(ind_height_sheet)
 
-# thallus length and width
+# ⊣ d. thallus length and width -----------------------------
+
 lw_sheet <- read_sheet(sheet_id, sheet = "02b-lw", na = "NA") 
+
 # last updated: 2023-02-02
 sheet_write_csv(lw_sheet)
 
-# thallus thickness
+# ⊣ e. thallus thickness ------------------------------------
+
 thickness_sheet <- read_sheet(sheet_id, sheet = "03-thickness", na = "NA")
+
 # last updated: 2023-02-02
 sheet_write_csv(thickness_sheet)
 
-# wet and dry weight
+# ⊣ f. wet and dry weight -----------------------------------
+
 weight_sheet <- read_sheet(sheet_id, sheet = "04-weight", na = "NA")
+
 # last updated: 2023-02-02
 sheet_write_csv(weight_sheet)
 
-# surface area and perimeter
+# ⊣ g. surface area and perimeter ---------------------------
+
 sa_peri_sheet <- read_sheet(sheet_id, sheet = "05a-scans") 
+
 # last updated: 2023-02-02
 sheet_write_csv(sa_peri_sheet)
 
-# branching order (still need to clean up)
+# ⊣ h. branching order (still need to clean up) -------------
+
 bra_ord_sheet <- read_sheet(sheet_id, sheet = "05b-branching_order", na = "NA") 
+
 # last updated: 2023-02-02
 sheet_write_csv(bra_ord_sheet)
 
-# toughness (still need to clean up)
+# ⊣ i. toughness (still need to clean up) -------------------
+
 toughness_sheet <- read_sheet(sheet_id, sheet = "06-toughness", na = "NA") 
+
 # last updated: 2023-02-02
 sheet_write_csv(toughness_sheet)
 
-# volume
+# ⊣ j. volume -----------------------------------------------
+
 volume_sheet <- read_sheet(sheet_id, sheet = "07-volume", na = "NA") 
+
 # last updated: 2023-02-02
 sheet_write_csv(volume_sheet)
 
