@@ -1,13 +1,14 @@
-# SBC LTER understory algal functional traits
+# SBC LTER macroalgal functional traits
 
-## last updated 2022-01-31
+**README last updated 2023-02-02**  
 
-### File structure
+## File structure
 
-#### code
-
-⊣ `00a_libraries.R`: run this first!  
-⊣ `00b_google-sheets.R`: run this if any trait data has been entered on google sheet (last update: 2023-02-02)  
+### code
+- `00a_libraries.R`: all libraries. Set up scripts `00c_trait-data.R` and `00d_benthic-data.R` source this script.
+- `00b_google-sheets.R`: run this if any trait data has been entered on google sheet (last update: 2023-02-02)  
+- `00c_trait-data.R`: loading in all trait data  
+- `00d_benthic-data.R`: loading in all benthic data and some preliminary cleaning  
 
 - `00_set-up.R`: set up code, which includes libraries, data, aesthetics  
 - `01_cleaning-and-summarizing.R`: basic cleaning, sources `00_set-up.R`  
