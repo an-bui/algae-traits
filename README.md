@@ -6,6 +6,9 @@
 
 #### code
 
+⊣ `00a_libraries.R`: run this first!  
+⊣ `00b_google-sheets.R`: run this if any trait data has been entered on google sheet (last update: 2023-02-02)  
+
 - `00_set-up.R`: set up code, which includes libraries, data, aesthetics  
 - `01_cleaning-and-summarizing.R`: basic cleaning, sources `00_set-up.R`  
 - `02_prelim-visualizations.Rmd`: boxplots, basically  
