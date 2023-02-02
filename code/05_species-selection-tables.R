@@ -1,9 +1,9 @@
 ###### 1. overall site table ######
 
-table_df <- biomass %>% 
-  filter(year == 2021) %>% 
+table_df <- biomass_2022 %>% 
+  filter(year == 2022) %>% 
   select(site, scientific_name, dry_gm2, wm_gm2) %>% 
-  filter(site %in% c("napl")) %>% 
+  filter(site %in% c("aque")) %>% 
   # mutate(site = fct_relevel(site, "aque", "napl", "ivee", "mohk", "carp")) %>% 
   # filter out MAPY
   filter(scientific_name != "Macrocystis pyrifera") %>% 
