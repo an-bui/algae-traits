@@ -250,10 +250,23 @@ biomass <- read_csv(here::here("data", "SBC-LTER-benthics",
          density = replace(density, density < 0, NA)) %>% 
   mutate(date = ymd(date))
 
+biomass_2022 <- read_csv(here::here("data", "SBC-LTER-benthics", 
+                               "Annual_All_Species_Biomass_at_transect_20220809.csv")) %>% 
+  benthic_cleaning_fxn() %>% 
+  # replace all -99999 values with NA
+  mutate(dry_gm2 = replace(dry_gm2, dry_gm2 < 0, NA),
+         wm_gm2 = replace(wm_gm2, wm_gm2 < 0, NA),
+         density = replace(density, density < 0, NA)) %>% 
+  mutate(date = ymd(date))
+
 #### * d. percent cover ####
 percov <- read_csv(here::here("data", "SBC-LTER-benthics", 
                               "Annual_Cover_All_Years_20211020.csv")) %>% 
   benthic_cleaning_fxn()
+
+percov_2022 <- read_csv(here::here("data", "SBC-LTER-benthics", 
+                              "Annual_Cover_All_Years_20220809.csv")) %>% 
+  benthic_cleaning_fxn() 
 
 #### * e. prop_biomass ####
 # This is a data frame of species at each site at each transect during each sampling date
