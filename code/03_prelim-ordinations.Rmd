@@ -23,13 +23,14 @@ Necessary data frames are `tbs_matrix` created in the set up script.
 ```{r}
 gower_mat <- ind_traits %>% 
   filter(sp_code %in% algae_proposal) %>% 
-  filter(!(sp_code %in% c("CO"))) %>% 
+  # filter(!(sp_code %in% c("CO"))) %>% 
+  filter(!(specimen_ID %in% recruits)) %>% 
   # weird Nienburgia?
   filter(!(specimen_ID == "20210721-BULL-023")) %>% 
   # take out standard error
   dplyr::select(!ends_with("_se")) %>% 
   # take out irrelevant columns
-  dplyr::select(-c(sp_code, scientific_name, life_habit, posture, branching_yn, lifestage, method)) %>% 
+  dplyr::select(-c(sp_code, scientific_name, life_habit, posture, branching_yn, lifestage, method, year)) %>% 
   # take out date selected and site
   dplyr::select(-c(date_collected, site)) %>% 
   column_to_rownames("specimen_ID") %>% 
@@ -46,7 +47,7 @@ ordiplot(tbs_pcoa, display = "sites", type = "text")
 
 tbs_gower_daisy <- daisy(gower_mat, metric = "gower") # same as above
 tbs_pcoa_daisy <- cmdscale(tbs_gower_daisy, eig = TRUE)
-ordiplot(tbs_pcoa_daisy, display = "species", type = "text")
+ordiplot(tbs_pcoa_daisy, display = "sites", type = "text")
 biplot.pcoa(ape::pcoa(tbs_gower_daisy))
 test_pcoa <- ape::pcoa(tbs_gower_daisy, correction = "lingoes") 
 test_pcoa
@@ -99,6 +100,7 @@ ggplot(pcoa_spp_scores, aes(x = Dim1, y = Dim2, color = sp_code, shape = site)) 
 pca_mat <- ind_traits %>% 
   filter(sp_code %in% algae_proposal) %>% 
   # filter(!(sp_code %in% c("CO"))) %>% 
+  filter(!(specimen_ID %in% recruits)) %>% 
   # weird Nienburgia?
   filter(!(specimen_ID == "20210721-BULL-023")) %>% 
   mutate(growth_form_num = case_when(
@@ -173,7 +175,7 @@ plot_PCA_12 <- ggplot() +
   # scale_color_manual(values = pal) +
   geom_vline(xintercept = c(0), color = "grey70", linetype = 2) +
   geom_hline(yintercept = c(0), color = "grey70", linetype = 2) +
-  geom_segment(data = PCAvect, aes(x = 0, y = 0, xend = PC1, yend = PC2), arrow = arrow(length = unit(0.2, "cm")), size = 1) +
+  geom_segment(data = PCAvect, aes(x = 0, y = 0, xend = PC1, yend = PC2), arrow = arrow(length = unit(0.2, "cm")), linewidth = 1) +
   geom_text(data = PCAvect, aes(x = PC1, y = PC2, label = rownames(PCAvect)), size = 5, alpha = 0.8) +
   # scale_x_continuous(limits = c(-1.5, 2.3)) +
   # scale_y_continuous(limits = c(-3, 2)) +
@@ -200,7 +202,7 @@ plot_PCA_13 <- ggplot() +
   # scale_color_manual(values = pal) +
   geom_vline(xintercept = c(0), color = "grey70", linetype = 2) +
   geom_hline(yintercept = c(0), color = "grey70", linetype = 2) +
-  geom_segment(data = PCAvect_13, aes(x = 0, y = 0, xend = PC1, yend = PC3), arrow = arrow(length = unit(0.2, "cm")), size = 1) +
+  geom_segment(data = PCAvect_13, aes(x = 0, y = 0, xend = PC1, yend = PC3), arrow = arrow(length = unit(0.2, "cm")), linewidth = 1) +
   geom_text(data = PCAvect_13, aes(x = PC1, y = PC3, label = rownames(PCAvect)), size = 5, alpha = 0.8) +
   # scale_x_continuous(limits = c(-1.5, 2.3)) +
   # scale_y_continuous(limits = c(-3, 2)) +
@@ -231,7 +233,7 @@ sort(abs(loadings[,1]), decreasing = TRUE)
 sort(abs(loadings[,2]), decreasing = TRUE)
 
 # ggsave(here::here("figures/prelim-ordinations",
-#                   paste("PCA_together_cont-", todays_date, ".jpg", sep = "")),
+#                   paste("PCA_together_cont-", today(), ".jpg", sep = "")),
 #        pca_together,
 #        width = 14, height = 8, dpi = 150)
 

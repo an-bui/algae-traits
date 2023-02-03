@@ -150,8 +150,14 @@ lw_sub <- lw %>%
 # 2. trait by sample matrices -------------------------------
 ############################################################-
 
+# vector of recruit subsamples
+recruits <- metadata_sub %>% 
+  filter(lifestage == "recruit") %>% 
+  pull(specimen_ID)
+
 # intermediate data frame for trait by species matrix
 ct_prep <- metadata_sub %>% 
+  filter(!(specimen_ID %in% recruits)) %>% 
   select(specimen_ID, sp_code, lifestage) %>% 
   left_join(., coarse_traits, by = "sp_code") %>% 
   # select(-subsample_ID) %>% 
@@ -164,7 +170,7 @@ ct_prep <- metadata_sub %>%
 # leaf traits
 leaf_traits <- metadata_sub %>% 
   filter(type %in% c("whole", "thallus")) %>% 
-  # filter(lifestage != "recruit") %>% 
+  filter(!(specimen_ID %in% recruits)) %>% 
   left_join(., fvfm_sub, by = "subsample_ID") %>% 
   left_join(., thickness_sub, by = "subsample_ID") %>% 
   left_join(., weight_sub, by = "subsample_ID") %>% 
