@@ -164,6 +164,7 @@ ct_prep <- metadata_sub %>%
 # leaf traits
 leaf_traits <- metadata_sub %>% 
   filter(type %in% c("whole", "thallus")) %>% 
+  # filter(lifestage != "recruit") %>% 
   left_join(., fvfm_sub, by = "subsample_ID") %>% 
   left_join(., thickness_sub, by = "subsample_ID") %>% 
   left_join(., weight_sub, by = "subsample_ID") %>% 
