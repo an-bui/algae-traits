@@ -227,8 +227,57 @@ ggsave(here::here("figures/prelim-visualizations",
        fvfm_boxplot_ptca_adult,
        width = 8, height = 5, dpi = 150)
 
-ggplot(fvfm_ptca_adult, aes(x = fvfm_se)) +
-  geom_histogram(binwidth = 0.002)
+# boxplot for Billie - move this later
+plot <- fvfm_raw %>% 
+  rename('fvfm_meas' = '1:Fv/Fm') %>% 
+  # fill in '1:Fv/Fm' with 1:Y(II) when there is none
+  # only an issue with 20220405-MOHK samples
+  mutate(fvfm_meas = case_when(
+    !is.na((fvfm_meas)) ~ `1:Y (II)`,
+    TRUE ~ fvfm_meas
+  )) %>% 
+  # take out observations with "-" in the measurement
+  filter(fvfm_meas != "-") %>% 
+  # only use FvFm, drop the NAs, change the column name
+  select(specimen_ID, subsample_ID, fvfm_meas) %>% 
+  drop_na(specimen_ID) %>% 
+  # make sure that fvfm_meas is numeric
+  mutate(fvfm_meas = as.numeric(fvfm_meas)) %>% 
+  left_join(., metadata_sub, by = "subsample_ID") %>% 
+  filter(sp_code == "PTCA" & lifestage == "adult" & site != "Bullito") %>% 
+  # weird value, may be mistake in data entry
+  filter(fvfm_meas != 0.097) %>% 
+  ggplot(aes(x = fvfm_meas, fill = site)) +
+  geom_histogram(bins = 40, color = "black") +
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 300)) +
+  scale_x_continuous(breaks = seq(from = 0.2, to = 1, by = 0.05)) +
+  scale_fill_manual(values = cal_palette("superbloom2", n = 3, type = "discrete")) +
+  theme_bw() +
+  theme(legend.position = c(0.12, 0.85),
+        panel.grid.minor.x = element_blank()) +
+  labs(x = "FvFm measurement",
+       y = "Count",
+       fill = "Site",
+       title = "Counts of PTCA blade measurements",
+       subtitle = "~10 readings per blade, 167 blades, 22 individuals, 1664 readings total")
+plot
+
+ggsave(here::here("figures", "prelim-visualizations", paste("fvfm-boxplot-01_BB_", today(), ".jpg", sep = "")))
+  
+adult_plot <- fvfm_ind %>% 
+  left_join(., metadata_ind, by = "specimen_ID") %>% 
+  filter(lifestage == "adult" & site != "Bullito") %>% 
+  ggplot(aes(x = site, y = fvfm_mean)) +
+  geom_violin(aes(fill = site)) +
+  scale_fill_manual(values = cal_palette("superbloom2", n = 3, type = "discrete")) +
+  theme_bw() +
+  theme(legend.position = "none") +
+  labs(x = "Site",
+       y = "Mean FvFm per individual",
+       title = "Mean PTCA FvFm by individual",
+       subtitle = "~10 readings per blade, 167 blades, 22 individuals")
+adult_plot
+ggsave(here::here("figures", "prelim-visualizations", paste("fvfm-boxplot-02_BB_", today(), ".jpg", sep = "")))
 ```
 
 ## f. boxplot (BF BULL vs IVEE)
