@@ -26,6 +26,7 @@ fvfm_df <- fvfm_raw %>%
   drop_na(specimen_ID) %>% 
   select(-specimen_ID) %>% 
   left_join(., metadata_sub, by = "subsample_ID") %>% 
+  # filter(lifestage != "recruit") %>% 
   select(site, sp_code, specimen_ID, subsample_ID, fvfm_meas, Time, Date) %>% 
   drop_na() %>% 
   mutate(Date = mdy(Date)) %>% 
