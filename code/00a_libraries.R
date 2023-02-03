@@ -119,12 +119,7 @@ algae_proposal <- c("PH", "PTCA", # Pterygophora californica
                     "BO" # Bossiella orbigniana
 )
 
-# ⊣ b. system date ------------------------------------------
-
-# or rewrite scripts to use lubridate::today()
-todays_date <- Sys.Date()
-
-# ⊣ c. plot aesthetics --------------------------------------
+# ⊣ b. plot aesthetics --------------------------------------
 
 # colors
 rhodo_col <- "#781416"
