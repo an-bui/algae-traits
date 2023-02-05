@@ -157,7 +157,7 @@ recruits <- metadata_sub %>%
 
 # intermediate data frame for trait by species matrix
 ct_prep <- metadata_sub %>% 
-  filter(!(specimen_ID %in% recruits)) %>% 
+  # filter(!(specimen_ID %in% recruits)) %>% 
   select(specimen_ID, sp_code, lifestage) %>% 
   left_join(., coarse_traits, by = "sp_code") %>% 
   # select(-subsample_ID) %>% 

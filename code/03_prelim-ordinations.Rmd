@@ -100,7 +100,7 @@ ggplot(pcoa_spp_scores, aes(x = Dim1, y = Dim2, color = sp_code, shape = site)) 
 pca_mat <- ind_traits %>% 
   filter(sp_code %in% algae_proposal) %>% 
   # filter(!(sp_code %in% c("CO"))) %>% 
-  filter(!(specimen_ID %in% recruits)) %>% 
+  # filter(!(sp_code == "PTCA" & lifestage == "recruit")) %>% 
   # weird Nienburgia?
   filter(!(specimen_ID == "20210721-BULL-023")) %>% 
   mutate(growth_form_num = case_when(
@@ -117,9 +117,12 @@ pca_mat <- ind_traits %>%
     longevity == "perennial" ~ 3,
     longevity == "annual or perennial" ~ 2
   )) %>% 
-  dplyr::select(specimen_ID, maximum_height, sta_mean, tdmc_mean, sav_mean, sap_mean, fvfm_mean, total_volume, total_dry, thickness_mm_mean, frond_length_mean, frond_width_mean, growth_form_num, pigment_type_num, longevity_num) %>% 
+  # taking out max height for now
+  dplyr::select(specimen_ID, sta_mean, tdmc_mean, sav_mean, sap_mean, fvfm_mean, total_volume, total_dry, thickness_mm_mean, frond_length_mean, frond_width_mean) %>% 
   column_to_rownames("specimen_ID") %>% 
   drop_na()
+
+# , growth_form_num, pigment_type_num, longevity_num
 ```
 
 
@@ -137,7 +140,7 @@ pca_mat <- ind_traits %>%
 
 # only include numeric variables
 # tbs_pca <- rda(matrix_choice[, 2:10], scale = TRUE)
-tbs_pca <- rda(pca_mat[, 1:11], scale = TRUE)
+tbs_pca <- rda(pca_mat[, 1:10], scale = TRUE)
 
 # extract proportion explained for each axis
 summary(tbs_pca)
@@ -189,8 +192,8 @@ plot_PCA_12 <- ggplot() +
         axis.text = element_text(size = 16),
         title = element_text(size = 20),
         legend.text = element_text(size = 12)) +
-  labs(x = "PC1 (47.5%)",
-       y = "PC2 (18.2%)",
+  labs(x = "PC1 (39.6%)",
+       y = "PC2 (20.5%)",
        title = "PC1 and PC2",
        color = "Scientific name") 
 plot_PCA_12
@@ -216,8 +219,8 @@ plot_PCA_13 <- ggplot() +
         axis.text = element_text(size = 16),
         title = element_text(size = 20),
         legend.text = element_text(size = 12)) +
-  labs(x = "PC1 (47.5%)",
-       y = "PC3 (13.9%)",
+  labs(x = "PC1 (39.6%)",
+       y = "PC3 (15.1%)",
        title = "PC1 and PC3",
        color = "Scientific name") 
 plot_PCA_13

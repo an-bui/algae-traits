@@ -16,8 +16,8 @@ sheet_write_csv <- function(df) {
 # 2. data from google sheet ---------------------------------
 ############################################################-
 
-# google sheets package
-library(googlesheets4) 
+# packages
+source(here::here("code", "00a_libraries.R"))
 
 # file id from url
 sheet_id <- "1h2eHoL5kXMRwExt3hjrLavxG0pajHOvA1UfJd24pRk4"

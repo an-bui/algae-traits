@@ -6,6 +6,7 @@
 
 library(tidyverse) # general use
 library(here) # file organization
+library(googlesheets4) # pulling data from google sheets
 
 ############################################################-
 # 2. cleaning packages --------------------------------------
