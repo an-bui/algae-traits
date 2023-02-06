@@ -31,13 +31,14 @@ fvfm_df <- fvfm_raw %>%
   drop_na() %>% 
   mutate(Date = mdy(Date)) %>% 
   mutate(year = year(Date)) %>% 
-  filter(year == 2022)
+  filter(sp_code %in% c("PTCA", "CYOS"))
 
 fvfm_nonas <- leaf_traits %>% 
-  drop_na(fvfm_mean, sp_code) 
+  drop_na(fvfm_mean, sp_code) %>% 
+  filter(sp_code %in% c("PTCA", "CYOS", "BF"))
 
 # fit a model
-fvfm_ind_lme <- lme(log10(fvfm_mean) ~ 1, random = ~1|site, data = ind_traits %>% drop_na(fvfm_mean))
+fvfm_ind_lme <- lme(log10(fvfm_mean) ~ 1, random = ~1|site/sp_code, data = ind_traits %>% drop_na(fvfm_mean) %>% filter(sp_code %in% c("PTCA", "CYOS", "BF")))
 fvfm_sub_lme <- lme(log10(fvfm_mean) ~ 1, random = ~1|site/sp_code/specimen_ID, data = fvfm_nonas)
 
 fvfm.m <- lmer(log(fvfm_mean) ~ 1 + (1|sp_code/specimen_ID) + (1|site) + (1|year), data = fvfm_nonas, na.action = na.omit)
