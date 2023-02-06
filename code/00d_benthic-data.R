@@ -42,7 +42,7 @@ biomass <- read_csv(here::here("data", "SBC-LTER-benthics",
   mutate(date = ymd(date))
 
 biomass_2022 <- read_csv(here::here("data", "SBC-LTER-benthics", 
-                                    "Annual_All_Species_Biomass_at_transect_20220809.csv")) %>% 
+                                    "Annual_All_Species_Biomass_at_transect_20230201.csv")) %>% 
   benthic_cleaning_fxn() %>% 
   # replace all -99999 values with NA
   mutate(dry_gm2 = replace(dry_gm2, dry_gm2 < 0, NA),
