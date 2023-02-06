@@ -22,9 +22,10 @@ source(here::here("code", "00a_libraries.R"))
 # file id from url
 sheet_id <- "1h2eHoL5kXMRwExt3hjrLavxG0pajHOvA1UfJd24pRk4"
 
+# googlesheets4 will ask for authentication from whichever read_sheet command runs first
+
 # ⊣ a. metadata for subsamples ------------------------------
 
-# will ask for authentication here
 metadata_sub_sheet <- read_sheet(sheet_id, sheet = "00b-metadata_sub") %>% 
   mutate(date_collected = ymd(date_collected)) %>% 
   mutate(year = year(date_collected))
