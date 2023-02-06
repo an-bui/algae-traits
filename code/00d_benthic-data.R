@@ -47,7 +47,8 @@ biomass_2022 <- read_csv(here::here("data", "SBC-LTER-benthics",
   # replace all -99999 values with NA
   mutate(dry_gm2 = replace(dry_gm2, dry_gm2 < 0, NA),
          wm_gm2 = replace(wm_gm2, wm_gm2 < 0, NA),
-         density = replace(density, density < 0, NA)) %>% 
+         density = replace(density, density < 0, NA),
+         percent_cover = replace(percent_cover, percent_cover < 0, NA)) %>% 
   mutate(date = ymd(date))
 
 # ⊣ b. percent cover ----------------------------------------
