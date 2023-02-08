@@ -38,10 +38,12 @@ fvfm_nonas <- leaf_traits %>%
   filter(sp_code %in% c("PTCA", "CYOS", "BF"))
 
 # fit a model
-fvfm_ind_lme <- lme(log10(fvfm_mean) ~ 1, random = ~1|site/sp_code, data = ind_traits %>% drop_na(fvfm_mean) %>% filter(sp_code %in% c("PTCA", "CYOS", "BF")))
+fvfm_ind_lme <- lme(log10(fvfm_mean) ~ 1, random = ~1|site, data = ind_traits %>% drop_na(fvfm_mean) %>% filter(sp_code %in% c("PTCA", "CYOS", "BF")))
+fvfm_ind_lmer <- lmer(log(fvfm_mean) ~ 1 + (1|year) + (1|site) + (1|sp_code), data = ind_traits %>% drop_na(fvfm_mean), na.action = na.omit)
 fvfm_sub_lme <- lme(log10(fvfm_mean) ~ 1, random = ~1|site/sp_code/specimen_ID, data = fvfm_nonas)
 
-fvfm.m <- lmer(log(fvfm_mean) ~ 1 + (1|sp_code/specimen_ID) + (1|site) + (1|year), data = fvfm_nonas, na.action = na.omit)
+fvfm.m <- lmer(log(fvfm_mean) ~ 1 + (1|site) + (1|year) + (1|sp_code/specimen_ID), data = fvfm_nonas, na.action = na.omit)
+fvfm.m <- lmer(log(fvfm_mean) ~ 1 + (1|specimen_ID) + (1|site) + (1|year), data = fvfm_nonas, na.action = na.omit)
 # variances.LMA<-c(unlist(lapply(VarCorr(m.LMA),diag)), attr(VarCorr(m.LMA),”sc”)^2)
 fvfm.variances <- c(unlist(lapply(VarCorr(fvfm.m), diag)), attr(VarCorr(fvfm.m), "sc")^2)
 var.comp.fvfm <- fvfm.variances/sum(fvfm.variances)
@@ -143,7 +145,7 @@ varPlot <- varSpecies <- varWithin <- numeric()
 # turn leaf traits into a matrix
 ind_traits_mat <- ind_traits %>% 
   column_to_rownames("specimen_ID") %>% 
-  filter(year == 2022) %>% 
+  # filter(year == 2022) %>% 
   select(site, sp_code, fvfm_mean, sta_mean) 
 
 # for each iteration
