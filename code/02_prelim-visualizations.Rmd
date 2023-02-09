@@ -789,8 +789,9 @@ width_boxplot
 sta_df <- ind_traits %>% 
   filter(specimen_ID != "20210721-BULL-023") %>% 
   filter(sp_code %in% algae_proposal) %>% 
-  filter(sp_code != "CO") %>% 
-  left_join(., metadata_ind, by = "specimen_ID")
+  # filter(sp_code != "CO") %>% 
+  left_join(., metadata_ind, by = "specimen_ID") %>% 
+  drop_na(sta_mean)
 
 # test homogeneity of variance
 bartlett.test(sta_mean ~ sp_code.x, data = sta_df)
@@ -798,6 +799,10 @@ bartlett.test(sta_mean ~ sp_code.x, data = sta_df)
 
 # analysis of variance
 sta_sp_aov <- aov(sta_mean ~ sp_code.x, data = sta_df)
+sta_sp_lm <- lm(sta_mean ~ sp_code.x, data = sta_df, na.action = na.pass)
+sta_sp_lm.s <- emmeans(sta_sp_lm, specs = "sp_code.x")
+pairs(sta_sp_lm.s)
+multcomp::cld(sta_sp_lm.s, alpha = 0.95, Letters = LETTERS, signif.sets = TRUE)
 
 # sta_tax_aov <- aov(sta_mm_mg ~ taxon_phylum, data = sta_df)
 
