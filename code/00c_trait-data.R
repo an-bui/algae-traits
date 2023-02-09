@@ -11,7 +11,7 @@ source(here::here("code", "00a_libraries.R"))
 ############################################################-
 
 # creating a vector of file names for .csv
-path <- here::here("data", "fvfm", c(
+path <- here::here("data/fvfm", c(
   "20210630-MOHK-v2-cleaned.csv",
   "20210709-MOHK-v2-cleaned.csv",
   "20210719-IVEE-v2-cleaned.csv",
@@ -66,10 +66,10 @@ thickness <- read_csv(here::here("data", "google-sheet-traits", "thickness_sheet
 # ⊣ f. wet and dry weight -----------------------------------
 
 weight <- read_csv(here::here("data", "google-sheet-traits", "weight_sheet_2023-02-02.csv"))
-s
+
 # ⊣ g. surface area and perimeter ---------------------------
 
-sa_peri <- read_csv(here::here("data", "google-sheet-traits", "sa_peri_sheet_2023-02-05.csv"))
+sa_peri <- read_csv(here::here("data", "google-sheet-traits", "sa_peri_sheet_2023-02-09.csv"))
 
 # ⊣ h. branching order (still need to clean up) -------------
 
