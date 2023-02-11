@@ -31,6 +31,7 @@ library(cati) # partitioning species composition/intraspecific variation
 # ⊣ b. models -----------------------------------------------
 
 library(lme4) # GLMERs
+library(lmerTest) # tests for lm
 library(nlme) # non-linear mixed effect models (gives significance for terms)
 library(MuMIn) # lms
 library(glmmTMB) # GLMM
