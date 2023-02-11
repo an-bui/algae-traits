@@ -987,7 +987,7 @@ toughness_boxplot
 ```{r}
 ind_traits %>% 
   filter(sp_code %in% algae_proposal) %>% 
-  filter(sp_code != "CO") %>% 
+  filter(sp_code != "DL") %>% 
   filter(specimen_ID != "20210721-BULL-023") %>% 
   drop_na(tdmc_mean) %>% 
   ggplot(aes(x = sta_mean, y = tdmc_mean, col = sp_code)) +
@@ -1033,11 +1033,11 @@ ind_traits %>%
 ```{r}
 fvfm_tdmc_lme <- lme(fvfm_mean ~ tdmc_mean, random = ~ 1|sp_code, data = ind_traits %>% 
   filter(sp_code %in% algae_proposal) %>% 
-  filter(!(sp_code %in% c("CO"))) %>% 
+  filter(!(sp_code %in% c("DL"))) %>% 
   drop_na(tdmc_mean, fvfm_mean))
 fvfm_tdmc_lmer <- lmer(fvfm_mean ~ tdmc_mean + (1|sp_code), data = ind_traits %>% 
   filter(sp_code %in% algae_proposal) %>% 
-  filter(!(sp_code %in% c("CO"))) %>% 
+  filter(!(sp_code %in% c("DL"))) %>% 
   drop_na(tdmc_mean, fvfm_mean))
 summary(fvfm_tdmc_lme)
 testResiduals(fvfm_tdmc_lmer)
@@ -1053,7 +1053,7 @@ testResiduals(tdmc_fvfm_lm)
 
 ind_traits %>% 
   filter(sp_code %in% algae_proposal) %>% 
-  filter(!(sp_code %in% c("CO"))) %>% 
+  filter(!(sp_code %in% c("DL"))) %>% 
   drop_na(tdmc_mean, fvfm_mean) %>% 
   ggplot() +
   geom_point(aes(x = tdmc_mean, y = fvfm_mean, col = sp_code), size = 2) +
@@ -1073,15 +1073,37 @@ ind_traits %>%
 # 15. correlation between STA and FvFM
 
 ```{r}
-fvfm_sta_lme <- lme(fvfm ~ sta_mm_mg, random = ~ 1|sp_code, data = sp_int_matrix %>% filter(!(sp_code %in% c("Nandersoniana", "CO"))) %>% drop_na(sta_mm_mg))
-fvfm_sta_lmer <- lmer(fvfm ~ sta_mm_mg + (1|sp_code), data = sp_int_matrix %>% filter(!(sp_code %in% c("Nandersoniana", "CO"))) %>% drop_na(sta_mm_mg))
-summary(fvfm_sta_lme)
+fvfm_sta_df <- ind_traits %>% 
+  filter(sp_code %in% algae_proposal) %>% 
+  filter(sp_code != "DL") %>% 
+  filter(specimen_ID != "20210721-BULL-023")
+
+fvfm_sta_lme <- lme(fvfm_mean ~ sta_mean, random = ~ 1|sp_code, data = fvfm_sta_df, na.action = na.omit)
+fvfm_sta_lmer <- lmer(fvfm_mean ~ sta_mean + (1 + sta_mean|sp_code), data = fvfm_sta_df, na.action = na.omit)
+summary(fvfm_sta_lmer)
+r.squaredGLMM(fvfm_sta_lmer)
 testResiduals(fvfm_sta_lmer)
 check_model(fvfm_sta_lmer)
-predicted <- ggpredict(fvfm_sta_lmer, terms = c("sta_mm_mg", "sp_code"), type = "fixed")
-grid <- ref_grid(fvfm_sta_lmer, cov.keep = c("sta_mm_mg", "sp_code"))
-emm <- emmeans(grid, spec = c("sta_mm_mg"), level = 0.95) %>% 
+predicted <- ggpredict(fvfm_sta_lmer, terms = c("sta_mean", "sp_code"), type = "fixed")
+grid <- ref_grid(fvfm_sta_lmer, cov.keep = c("sta_mean", "sp_code"))
+emm <- emmeans(grid, spec = c("sta_mean"), level = 0.95) %>% 
   data.frame(.)
+
+
+ggplot(data = fvfm_sta_df, aes(x = sta_mean, y = fvfm_mean)) +
+  geom_point(aes(color = sp_code)) +
+  geom_smooth(aes(color = sp_code), method = "lm", se = FALSE) +
+  geom_line(data = emm, aes(x = sta_mean, y = emmean)) +
+  geom_ribbon(data = emm, aes(x = sta_mean, y = emmean,
+                              ymin = lower.CL, ymax = upper.CL),
+              alpha = 0.3) +
+  theme_bw() +
+  labs(title = "Specific thallus area as predictor of photosynthetic efficiency",
+       caption = "Linear model: lme(sta ~ fvfm, random = ~ 1|sp_code) \n
+                  significant intercept (0.51, p < 0.001), significant slope (0.001131, p = 0.04)")
+
+
+
 
 ggplot() +
   geom_point(data = sp_int_matrix %>% filter(!(sp_code %in% c("Nandersoniana", "CO"))) %>% drop_na(tdmc), aes(x = sta_mm_mg, y = fvfm, col = sp_code, shape = sp_code), size = 2) +
