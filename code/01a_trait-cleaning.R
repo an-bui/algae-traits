@@ -63,8 +63,14 @@ fvfm_ind <- fvfm_raw %>%
 
 # ⊣ b. thickness --------------------------------------------
 
+stipes_holdfasts <- metadata_sub %>% 
+  filter(type %in% c("stipe", "holdfast")) %>% 
+  pull(subsample_ID)
+
 # subsample
 thickness_sub <- thickness %>% 
+  # take out stipes and holdfasts
+  filter(!(subsample_ID %in% c(stipes_holdfasts))) %>% 
   pivot_longer(cols = thickness_01:thickness_10, names_to = "measurement_n", values_to = "thickness_mm") %>% 
   group_by(subsample_ID) %>% 
   summarize(thickness_mm_mean = mean(thickness_mm, na.rm = TRUE),
@@ -72,6 +78,8 @@ thickness_sub <- thickness %>%
 
 # individual
 thickness_ind <- thickness %>% 
+  # take out stipes and holdfasts
+  filter(!(subsample_ID %in% c(stipes_holdfasts))) %>% 
   pivot_longer(cols = thickness_01:thickness_10, names_to = "measurement_n", values_to = "thickness_mm") %>% 
   group_by(specimen_ID) %>% 
   summarize(thickness_mm_mean = mean(thickness_mm, na.rm = TRUE),
@@ -81,6 +89,8 @@ thickness_ind <- thickness %>%
 
 # subsample
 weight_sub <- weight %>%
+  # take out stipes and holdfasts
+  filter(!(subsample_ID %in% c(stipes_holdfasts))) %>% 
   select(specimen_ID, subsample_ID, weight_wet_mg, weight_wet_g, weight_dry_mg, weight_dry_g) %>%
   # calculate dry matter content
   mutate(dmc = weight_dry_mg/weight_wet_mg) %>%
@@ -107,8 +117,14 @@ volume_ind <- volume %>%
 
 # ⊣ e. surface area and perimeter ---------------------------
 
+pneumatocysts <- sa_peri %>% 
+  filter(notes_scans == "pneumatocyst") %>% 
+  pull(subsample_ID)
+
 # subsample
 sa_peri_sub <- sa_peri %>% 
+  # take out measurements for EGME pneumatocysts
+  filter(!(subsample_ID %in% pneumatocysts)) %>% 
   select(specimen_ID, subsample_ID, area_total, peri_total) %>% 
   group_by(subsample_ID) %>% 
   summarize(area_total = sum(area_total),
