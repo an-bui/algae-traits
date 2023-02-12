@@ -118,11 +118,11 @@ pca_mat <- ind_traits %>%
     longevity == "annual or perennial" ~ 2
   )) %>% 
   # taking out max height for now
-  dplyr::select(specimen_ID, maximum_height, sta_mean, tdmc_mean, sav_mean, sap_mean, fvfm_mean, thickness_mm_mean, frond_length_mean, frond_width_mean) %>% 
+  dplyr::select(specimen_ID, maximum_height, total_volume, total_dry, sta_mean, tdmc_mean, sav_mean, sap_mean, fvfm_mean, thickness_mm_mean, frond_length_mean, frond_width_mean) %>% 
   column_to_rownames("specimen_ID") %>% 
   drop_na()
 
-# , growth_form_num, pigment_type_num, longevity_num total_volume, total_dry, 
+# , growth_form_num, pigment_type_num, longevity_num 
 ```
 
 
@@ -192,8 +192,8 @@ plot_PCA_12 <- ggplot() +
         axis.text = element_text(size = 16),
         title = element_text(size = 20),
         legend.text = element_text(size = 12)) +
-  labs(x = "PC1 (43.4%)",
-       y = "PC2 (19.8%)",
+  labs(x = "PC1 (37.7%)",
+       y = "PC2 (17.0%)",
        title = "PC1 and PC2",
        color = "Scientific name") 
 plot_PCA_12
@@ -219,8 +219,8 @@ plot_PCA_13 <- ggplot() +
         axis.text = element_text(size = 16),
         title = element_text(size = 20),
         legend.text = element_text(size = 12)) +
-  labs(x = "PC1 (43.4%)",
-       y = "PC3 (13.9%)",
+  labs(x = "PC1 (37.7%)",
+       y = "PC3 (14.3%)",
        title = "PC1 and PC3",
        color = "Scientific name") 
 plot_PCA_13
