@@ -789,7 +789,7 @@ width_boxplot
 sta_df <- ind_traits %>% 
   filter(specimen_ID != "20210721-BULL-023") %>% 
   filter(sp_code %in% algae_proposal) %>% 
-  # filter(sp_code != "CO") %>% 
+  filter(sp_code != "POLA") %>% 
   left_join(., metadata_ind, by = "specimen_ID") %>% 
   drop_na(sta_mean)
 
@@ -842,7 +842,7 @@ sta_boxplot <- sta_df %>%
 sta_boxplot
 
 # ggsave(here::here("figures/prelim-visualizations",
-#                   paste("sta_boxplot-", todays_date, ".jpg", sep = "")),
+#                   paste("sta_boxplot-", today(), ".jpg", sep = "")),
 #        sta_boxplot,
 #        width = 8, height = 5, dpi = 150)
 ```
