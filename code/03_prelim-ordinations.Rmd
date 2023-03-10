@@ -16,7 +16,7 @@ source(here::here("code", "00_set-up.R"))
 
 # 0. Orientation
 
-Necessary data frames are `tbs_matrix` created in the set up script.
+Necessary data frames are `tbs_matrix` created in the set up script.   
 
 # 1. trait PCoA
 
