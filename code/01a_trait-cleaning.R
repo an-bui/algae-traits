@@ -258,5 +258,5 @@ tbspp_matrix <- metadata_ind %>%
   filter(sp_code %in% algae_proposal) %>% 
   column_to_rownames("sp_code") %>% 
   # replace NaNs with NAs
-  mutate_all(na_if, "NaN") 
+  mutate_all(na_if, "NaN")
 
