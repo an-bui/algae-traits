@@ -41,6 +41,8 @@ biomass <- read_csv(here::here("data", "SBC-LTER-benthics",
          density = replace(density, density < 0, NA)) %>% 
   mutate(date = ymd(date))
 
+saveRDS(biomass, file = here::here("benthic-data-RDS", "biomass.rds"))
+
 biomass_2022 <- read_csv(here::here("data", "SBC-LTER-benthics", 
                                     "Annual_All_Species_Biomass_at_transect_20230201.csv")) %>% 
   benthic_cleaning_fxn() %>% 
@@ -51,6 +53,8 @@ biomass_2022 <- read_csv(here::here("data", "SBC-LTER-benthics",
          percent_cover = replace(percent_cover, percent_cover < 0, NA)) %>% 
   mutate(date = ymd(date))
 
+saveRDS(biomass_2022, file = here::here("benthic-data-RDS", "biomass_2022.rds"))
+
 # ⊣ b. percent cover ----------------------------------------
 
 percov <- read_csv(here::here("data", "SBC-LTER-benthics", 
@@ -58,16 +62,21 @@ percov <- read_csv(here::here("data", "SBC-LTER-benthics",
   benthic_cleaning_fxn() %>% 
   mutate(percent_cover = replace(percent_cover, percent_cover < 0, NA))
 
+saveRDS(percov, file = here::here("benthic-data-RDS", "percov.rds"))
+
 percov_2022 <- read_csv(here::here("data", "SBC-LTER-benthics", 
                                    "Annual_Cover_All_Years_20220809.csv")) %>% 
   benthic_cleaning_fxn() 
 
+saveRDS(percov_2022, file = here::here("benthic-data-RDS", "percov_2022.rds"))
 
 # ⊣ c. swath ------------------------------------------------
 
 swath <- read_csv(here::here("data", "SBC-LTER-benthics", 
                              "Annual_Quad_Swath_All_Years_20220809.csv")) %>% 
   benthic_cleaning_fxn() 
+
+saveRDS(swath, file = here::here("benthic-data-RDS", "swath.rds"))
 
 ############################################################-
 # 3. "environmental" data -----------------------------------
@@ -93,6 +102,8 @@ irr <- read_csv(here::here("data/SBC-LTER-benthics", "Hourly_Irrandiance_All_Yea
   ungroup() %>% 
   unite("sample_ID", site, year, sep = "_")
 
+saveRDS(irr, file = here::here("benthic-data-RDS", "irr.rds"))
+
 # ⊣ b. urchins ----------------------------------------------
 
 # urchin summary
@@ -114,6 +125,8 @@ urchins <- read_csv(here::here("data", "SBC-LTER-benthics",
   unite("sample_ID", site, year, remove = FALSE) %>% 
   ungroup()
 
+saveRDS(urchins, file = here::here("benthic-data-RDS", "urchins.rds"))
+
 # ⊣ c. substrate --------------------------------------------
 
 substrate <- read_csv(here::here("data/SBC-LTER-benthics", "Annual_Substrate_All_Years_20211020.csv")) %>% 
@@ -129,7 +142,7 @@ substrate <- read_csv(here::here("data/SBC-LTER-benthics", "Annual_Substrate_All
   unite("sample_ID", site, year, remove = FALSE) %>% 
   ungroup()
 
-
+saveRDS(substrate, file = here::here("benthic-data-RDS", "substrate.rds"))
 
 
 
