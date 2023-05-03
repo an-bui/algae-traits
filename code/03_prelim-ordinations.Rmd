@@ -11,7 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r}
 # source the cleaning/summarizing script, which sources the set up
-source(here::here("code", "00_set-up.R"))
+source(here::here("code", "01a_trait-cleaning.R"))
 ```
 
 # 0. Orientation
@@ -52,13 +52,6 @@ biplot.pcoa(ape::pcoa(tbs_gower_daisy))
 test_pcoa <- ape::pcoa(tbs_gower_daisy, correction = "lingoes") 
 test_pcoa
 
-df <- test_pcoa$values %>% 
-  as_tibble() %>% 
-  rownames_to_column("axes") %>% 
-  mutate(axes = as.numeric(axes)) %>% 
-  ggplot(aes(x = axes, y = Cum_br_stick)) +
-  geom_point()
-df
 # tbs_pcoa <- wcmdscale(tbs_gower, eig = TRUE)
 # tbs_pcoa <- ape::pcoa(tbs_gower, correction = "none")
 # biplot(ape::pcoa(tbs_gower, correction = "none"))
@@ -156,13 +149,15 @@ PCAscores <- scores(tbs_pca, display = "sites", choices = c(1, 2)) %>%
   as.data.frame() %>% 
   rownames_to_column("specimen_ID") %>% 
   left_join(metadata_ind, by = "specimen_ID") %>% 
-  left_join(., coarse_traits, by = "sp_code")
+  left_join(., coarse_traits, by = "sp_code") %>% 
+  mutate(scientific_name = factor(scientific_name, levels = algae_proposal_sciname_factors))
 
 PCAscores_13 <- scores(tbs_pca, display = "sites", choices = c(1, 3)) %>% 
   as.data.frame() %>% 
   rownames_to_column("specimen_ID") %>% 
   left_join(metadata_ind, by = "specimen_ID") %>% 
-  left_join(., coarse_traits, by = "sp_code")
+  left_join(., coarse_traits, by = "sp_code") %>% 
+  mutate(scientific_name = factor(scientific_name, levels = algae_proposal_sciname_factors))
 
 # trait vectors
 PCAvect <- scores(tbs_pca, display = "species", choices = c(1, 2)) %>% 
@@ -174,20 +169,20 @@ PCAvect_13 <- scores(tbs_pca, display = "species", choices = c(1, 3)) %>%
 # plot PCA
 plot_PCA_12 <- ggplot() +
   coord_cartesian() +
-  geom_point(data = PCAscores, aes(x = PC1, y = PC2, color = scientific_name, shape = site), size = 3, alpha = 0.8) +
-  # geom_text(data = PCAscores, aes(x = PC1, y = PC2, color = scientific_name, label = specimen_ID)) +
-  # scale_color_manual(values = pal) +
   geom_vline(xintercept = c(0), color = "grey70", linetype = 2) +
   geom_hline(yintercept = c(0), color = "grey70", linetype = 2) +
+  geom_point(data = PCAscores, aes(x = PC1, y = PC2, color = scientific_name, shape = site), size = 4) +
+  # geom_text(data = PCAscores, aes(x = PC1, y = PC2, color = scientific_name, label = specimen_ID)) +
+  scale_color_manual(values = algae_colors) +
   geom_segment(data = PCAvect, aes(x = 0, y = 0, xend = PC1, yend = PC2), arrow = arrow(length = unit(0.2, "cm")), linewidth = 1) +
   geom_text(data = PCAvect, aes(x = PC1, y = PC2, label = rownames(PCAvect)), size = 5, alpha = 0.8) +
   # scale_x_continuous(limits = c(-1.75, 3.75)) +
   # scale_y_continuous(limits = c(-2, 3.25)) +
   theme_bw() +
-  guides(colour = guide_legend(ncol = 2),
-         shape = guide_legend(ncol = 2)) +
-  theme(legend.position = "bottom", 
-        legend.box = "vertical", 
+  guides(colour = guide_legend(ncol = 1),
+         shape = guide_legend(ncol = 1)) +
+  theme(legend.position = "right", 
+        # legend.box = "", 
         legend.margin = margin(),
         axis.title = element_text(size = 18),
         axis.text = element_text(size = 16),
@@ -201,11 +196,12 @@ plot_PCA_12
 
 plot_PCA_13 <- ggplot() +
   coord_cartesian() +
-  geom_point(data = PCAscores_13, aes(x = PC1, y = PC3, color = scientific_name, shape = site), size = 3, alpha = 0.8) +
-  # geom_text(data = PCAscores, aes(x = PC1, y = PC2, color = scientific_name, label = specimen_ID)) +
-  # scale_color_manual(values = pal) +
   geom_vline(xintercept = c(0), color = "grey70", linetype = 2) +
   geom_hline(yintercept = c(0), color = "grey70", linetype = 2) +
+  geom_point(data = PCAscores_13, aes(x = PC1, y = PC3, color = scientific_name, shape = site), size = 4) +
+  # geom_text(data = PCAscores, aes(x = PC1, y = PC2, color = scientific_name, label = specimen_ID)) +
+  scale_color_manual(values = algae_colors) +
+
   geom_segment(data = PCAvect_13, aes(x = 0, y = 0, xend = PC1, yend = PC3), arrow = arrow(length = unit(0.2, "cm")), linewidth = 1) +
   geom_text(data = PCAvect_13, aes(x = PC1, y = PC3, label = rownames(PCAvect)), size = 5, alpha = 0.8) +
   # scale_x_continuous(limits = c(-1.5, 2.3)) +
@@ -236,11 +232,11 @@ loadings <- scores(tbs_pca, display = 'species', scaling = 0)
 sort(abs(loadings[,1]), decreasing = TRUE)
 sort(abs(loadings[,2]), decreasing = TRUE)
 
-ggsave(here::here("figures/prelim-ordinations",
-                  paste("PCA_together_cont-", today(), ".jpg", sep = "")),
-       pca_together,
-       width = 14, height = 8, dpi = 150)
-
+# ggsave(here::here("figures/prelim-ordinations",
+#                   paste("PCA_together_cont-", today(), ".jpg", sep = "")),
+#        pca_together,
+#        width = 16, height = 8, dpi = 150)
+# 
 # ggsave(here::here("figures/prelim-ordinations",
 #                   paste("PCA_spp-all-12", today(), ".jpg", sep = "")),
 #        plot_PCA_12,
@@ -259,6 +255,8 @@ M <- pca_mat %>%
   cor()
 
 corr_traits <- corrplot(M, method = "circle", type = "lower", insig = "blank", addCoef.col = "black")
+
+corr_traits
 
 var <- get_pca_var(tbs_pca)
 corrplot(var$contrib, is.corr=FALSE)  
