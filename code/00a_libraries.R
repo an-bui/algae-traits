@@ -30,8 +30,7 @@ library(cati) # partitioning species composition/intraspecific variation
 
 # ⊣ b. models -----------------------------------------------
 
-library(lme4) # GLMERs
-library(lmerTest) # tests for lm
+library(lmerTest) # tests for lm, loads in lme4
 library(nlme) # non-linear mixed effect models (gives significance for terms)
 library(MuMIn) # lms
 library(glmmTMB) # GLMM
@@ -39,6 +38,7 @@ library(emmeans) # effect sizes
 library(DHARMa) # plotting residuals from `glmmTMB`
 library(performance) # checks of collinearity, amongst other things
 library(car) # checking VIR
+library(specr) # variance decomposition for lmer objects
 
 ############################################################-
 # 4. visualization packages ---------------------------------
@@ -59,6 +59,12 @@ library(ggridges) # ridge plots
 
 library(gt) # making tables
 library(gtsummary) # summary tables for models
+
+# ⊣ c. fonts ------------------------------------------------
+
+library(showtext)
+font_add_google("Lato", "Lato")
+showtext_auto()
 
 ############################################################-
 # 5. useful objects -----------------------------------------
@@ -119,9 +125,101 @@ algae_proposal <- c("PH", "PTCA", # Pterygophora californica
                     "DU", # Dictyopteris undulata
                     "DP", # Dictyota
                     "BO" # Bossiella orbigniana
+) 
+
+# reds
+# "BF", # Cryptopleura ruprechtiana  
+# "CC", # Chondracanthus corymbiferus 
+# "GS", # Gracilaria spp. 
+# "CO", # Corallina officinalis var. chilensis 
+# "BO" # Bossiella orbigniana
+# "POLA", # Polyneura latissima 
+# "R", # Rhodymenia californica 
+# "GR", # Gelidium robustum
+# "Nandersoniana", # Nienburgia andersoniana
+
+# browns
+# "PH", "PTCA", # Pterygophora californica 
+# "CYOS", # Stephanocystis osmundacea                     
+# "DL", # Desmarestia ligulata                   
+# "EH", "EGME", # Egregia menziesii
+# "LH", "LAFA", # Laminaria farlowii
+# "DU", # Dictyopteris undulata
+# "DP", # Dictyota
+
+
+algae_proposal_code_factors <- algae_proposal %>% 
+  as_factor() %>% 
+  fct_relevel(., "BF", "CC", "GS", "CO", "BO", "POLA", "R", "GR", "Nandersoniana",
+              "PTCA", "CYOS", "DL", "EGME", "LAFA", "DU", "DP")
+
+algae_proposal_sciname_factors <- as_factor(
+  c("Cryptopleura ruprechtiana", 
+    "Chondracanthus corymbiferus; Chondracanthus exasperatus", 
+    "Gracilaria spp.", 
+    "Corallina officinalis", 
+    "Bossiella orbigniana", 
+    "Polyneura latissima", 
+    "Rhodymenia californica", 
+    "Gelidium spp.", 
+    "Nienburgia andersoniana",
+    "Pterygophora californica", 
+    "Stephanocystis osmundacea", 
+    "Desmarestia ligulata", 
+    "Egregia menziesii", 
+    "Laminaria farlowii", 
+    "Dictyopteris undulata", 
+    "Dictyota binghamiae; Dictyota flabellata; Dictyota coriacea"
+  )
 )
 
-# ⊣ b. plot aesthetics --------------------------------------
+# algae colors
+
+# "#7A2602" "#8A310B" "#9A3D15" "#AA481F" "#BA5429" "#CA6032" "#DA6B3C" "#EA7746" "#FB8350"
+
+algae_colors <- c(
+  # reds
+  "Cryptopleura ruprechtiana" = "#C68F76", 
+  "Chondracanthus corymbiferus; Chondracanthus exasperatus" = "#F5CFBC", 
+  "Gracilaria spp." = "#985030", 
+  "Corallina officinalis" = "#D6A48D", 
+  "Bossiella orbigniana" = "#893B19", 
+  "Polyneura latissima" = "#E5B9A4", 
+  "Rhodymenia californica" = "#A86547", 
+  "Gelidium spp." = "#B77A5F", 
+  "Nienburgia andersoniana" = "#7A2602",
+  # browns
+  "Pterygophora californica" = "#7A6720", 
+  "Stephanocystis osmundacea" = "#BA9C30", 
+  "Desmarestia ligulata" = "#CFAE35", 
+  "Egregia menziesii" = "#8F7825", 
+  "Laminaria farlowii" = "#FAD241", 
+  "Dictyopteris undulata" = "#A48A2A", 
+  "Dictyota binghamiae; Dictyota flabellata; Dictyota coriacea" = "#E4C03B"
+)
+
+algae_spcode_colors <- c(
+  # reds
+  "BF" = "#C68F76", 
+  "CC" = "#F5CFBC", 
+  "GS" = "#985030", 
+  "CO" = "#D6A48D", 
+  "BO" = "#893B19", 
+  "POLA" = "#E5B9A4", 
+  "R" = "#A86547", 
+  "GR" = "#B77A5F", 
+  "Nandersoniana" = "#7A2602",
+  # browns
+  "PTCA" = "#7A6720", 
+  "CYOS" = "#BA9C30", 
+  "DL" = "#CFAE35", 
+  "EGME" = "#8F7825", 
+  "LAFA" = "#FAD241", 
+  "DU" = "#A48A2A", 
+  "DP" = "#E4C03B"
+)
+
+
 
 # colors
 rhodo_col <- "#781416"
@@ -168,5 +266,12 @@ rhodo_col <- "#781416"
     # function to calculate standard error
     se <- function(x,...){
       sd(x, na.rm = TRUE)/sqrt(length(na.omit(x)))
+    }
+    
+    # function to arrange variance decomp output from specr::icc_specs()
+    var_decomp <- function(x) {
+      icc_specs(x) %>%
+        mutate_if(is.numeric, round, 1) %>% 
+        arrange(-percent)
     }
 
