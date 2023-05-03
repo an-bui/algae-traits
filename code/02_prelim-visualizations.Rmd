@@ -21,6 +21,75 @@ knitr::opts_chunk$set(echo = TRUE)
 source(here::here("code", "01_cleaning-and-summarizing.R"))
 ```
 
+## summarizing
+
+```{r}
+count <- ind_traits %>% 
+  filter(sp_code %in% algae_proposal) %>% 
+  group_by(sp_code) %>% 
+  count() %>% 
+  rename(count = n) %>% 
+  ungroup() %>% 
+  arrange(count) %>% 
+  mutate(sp_code = fct_inorder(sp_code)) %>% 
+  mutate(left = max(count) - count) %>% 
+  pivot_longer(cols = count:left, names_to = "sample", values_to = "values") %>% 
+  mutate(label = case_when(
+    sample == "left" ~ paste(values, "/30", sep = ""),
+    sample == "count" ~ NA
+  ),
+  label = case_when(
+    sample == "left" & sp_code == "CYOS" ~ paste(label, "samples left"),
+    TRUE ~ label
+  )) %>% 
+  mutate(sample = case_when(
+    sample == "left" ~ "Left to sample", 
+    sample == "count" ~ "Already sampled"
+  ), 
+  sample = fct_relevel(sample, "Left to sample", "Already sampled"))
+
+all <- ggplot(count, aes(x = values, y = sp_code, fill = sample)) +
+  scale_fill_manual(values = c("Already sampled" = "cornflowerblue", "Left to sample" = "coral")) +
+  geom_col() +
+  geom_text(aes(label = label, x = 31), size = 8, hjust = 0) +
+  scale_x_continuous(limits = c(0, 60), breaks = c(0, 10, 20, 30), expand = c(0, 0)) +
+  # coord_cartesian(xlim = c(0, 50)) +
+  labs(y = "", x = "", fill = "") +
+  theme_classic() +
+  theme(legend.position = "bottom",
+        axis.line = element_blank(),
+        axis.ticks.y = element_blank(), 
+        axis.text = element_text(size = 20),
+        axis.title = element_text(size = 20),
+        axis.title.x = element_blank(),
+        legend.text = element_text(size = 20), 
+        legend.justification = "right",
+        plot.margin = unit(c(0, 0, 0, 0), units = "cm")) 
+
+already <- ggplot(count %>% filter(sample == "Already sampled"), aes(x = values, y = sp_code)) +
+  geom_col(fill = "cornflowerblue") +
+  geom_text(aes(label = label, x = 31), size = 8, hjust = 0) +
+  scale_x_continuous(limits = c(0, 60), breaks = c(0, 10, 20, 30), expand = c(0, 0)) +
+  # coord_cartesian(xlim = c(0, 50)) +
+  labs(y = "Species code", x = "", fill = "") +
+  theme_classic() +
+  theme(legend.position = "bottom",
+        axis.line = element_blank(),
+        axis.ticks.y = element_blank(), 
+        axis.text = element_text(size = 20),
+        axis.title = element_text(size = 20),
+        legend.text = element_text(size = 20), 
+        legend.justification = "right",
+        plot.margin = unit(c(0, 0, 0, 0), units = "cm")) 
+
+all
+already
+together <- already + all +
+  plot_layout(guides = "collect") & 
+  theme(legend.position = 'bottom')
+together
+```
+
 # 1. FvFm 
 
 ## a. analysis of variance
@@ -78,23 +147,29 @@ fvfm_boxplot <- ind_traits %>%
   group_by(sp_code) %>% 
   filter(sp_code %in% algae_proposal) %>% 
   ggplot(aes(x = sp_code, y = fvfm_mean, group = sp_code)) +
-  geom_boxplot(aes(fill = value)) +
+  geom_boxplot(aes(fill = sp_code)) +
+  scale_fill_manual(values = algae_spcode_colors) +
   geom_jitter() +
-  geom_text(aes(label = value, y = 0.83), nudge_y = 0.01) + 
+  # geom_text(aes(label = value, y = 0.83), nudge_y = 0.01) + 
   facet_wrap(~ pigment_type, scales = "free_x") +
   scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
   theme_bw() +
   labs(title = "Photosynthetic efficiency",
-       x = "Species code",
+       x = "Species",
        y = "Fv/Fm") +
-  theme(legend.position = "none")
+  theme(legend.position = "none",
+        strip.background = element_blank(),
+        strip.text = element_text(size = 20),
+        axis.text = element_text(size = 20),
+        axis.title = element_text(size = 20),
+        plot.title = element_text(size = 20))
 
 fvfm_boxplot
 
 # ggsave(here::here("figures/prelim-visualizations",
-#                   paste("fvfm-boxplot-", todays_date, ".jpg", sep = "")),
+#                   paste("fvfm-boxplot-", today(), ".jpg", sep = "")),
 #        fvfm_boxplot,
-#        width = 8, height = 5, dpi = 150)
+#        width = 8, height = 5, dpi = 200)
 ```
 
 ## c. boxplot (PTCA adults vs recruits)
@@ -629,7 +704,7 @@ tdmc_boxplot_ptca
 
 ## a. box plot
 ```{r}
-volume_boxplot <- ggplot(ind_traits, aes(x = sp_code, y = total_volume)) +
+volume_boxplot <- ggplot(ind_traits %>% filter(sp_code %in% algae_proposal), aes(x = sp_code, y = total_volume)) +
   geom_boxplot() +
   geom_jitter(alpha = 0.45) +
   facet_wrap(~ pigment_type, scales = "free_x") +
@@ -722,15 +797,17 @@ ratio_saperi_boxplot
 ```{r}
 ratio_savolume_boxplot <- ind_traits %>% 
   filter(sp_code %in% algae_proposal) %>% 
-  ggplot(aes(x = sp_code, y = sav_mean)) +
+  ggplot(aes(x = sp_code, y = sav_mean, fill = sp_code)) +
   geom_boxplot() +
+  scale_fill_manual(values = algae_spcode_colors) +
   geom_jitter(alpha = 0.45) +
   facet_wrap(~ pigment_type, scales = "free_x") +
   scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
   theme_bw() +
   labs(title = "Surface area:volume ratio",
        x = "Species code",
-       y = "mm^2/mL")
+       y = "mm^2/mL") +
+  theme(legend.position = "none")
 
 ratio_savolume_boxplot
 
@@ -827,17 +904,24 @@ thallus area:dry weight
 
 ```{r}
 sta_boxplot <- sta_df %>% 
-  left_join(., sta_cld_df, by = c("sp_code.x" = "sp_code")) %>% 
-  ggplot(aes(x = sp_code.x, y = sta_mean)) +
-  geom_boxplot(aes(fill = value)) +
+  # left_join(., sta_cld_df, by = c("sp_code.x" = "sp_code")) %>% 
+  ggplot(aes(x = sp_code.x, y = sta_mean, fill = sp_code.x)) +
+  geom_boxplot(aes(fill = sp_code.x)) +
+  scale_fill_manual(values = algae_spcode_colors) +
   geom_jitter() +
-  geom_text(aes(label = value, y = 230), nudge_y = 0.01) + 
+  # geom_text(aes(label = value, y = 230), nudge_y = 0.01) + 
   facet_wrap(~ pigment_type, scales = "free_x") +
   scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
   theme_bw() +
   labs(title = "Specific thallus area",
        x = "Species code",
-       y = "Thallus area/dry weight (mm^2/mg)")
+       y = "Thallus area/dry weight (mm^2/mg)") +
+    theme(legend.position = "none",
+        strip.background = element_blank(),
+        strip.text = element_text(size = 20),
+        axis.text = element_text(size = 20),
+        axis.title = element_text(size = 20),
+        plot.title = element_text(size = 20))
 
 sta_boxplot
 
