@@ -59,6 +59,7 @@ library(ggridges) # ridge plots
 
 library(gt) # making tables
 library(gtsummary) # summary tables for models
+library(flextable) # another making tables option
 
 # ⊣ c. fonts ------------------------------------------------
 
