@@ -33,7 +33,7 @@ benthic_cleaning_fxn <- function(df) {
 # ⊣ a. biomass ----------------------------------------------
 
 biomass <- read_csv(here::here("data", "SBC-LTER-benthics", 
-                               "Annual_All_Species_Biomass_at_transect_20211020.csv")) %>% 
+                               "Annual_All_Species_Biomass_at_transect_20230201.csv")) %>% 
   benthic_cleaning_fxn() %>% 
   # replace all -99999 values with NA
   mutate(dry_gm2 = replace(dry_gm2, dry_gm2 < 0, NA),
@@ -43,17 +43,17 @@ biomass <- read_csv(here::here("data", "SBC-LTER-benthics",
 
 saveRDS(biomass, file = here::here("benthic-data-RDS", "biomass.rds"))
 
-biomass_2022 <- read_csv(here::here("data", "SBC-LTER-benthics", 
-                                    "Annual_All_Species_Biomass_at_transect_20230201.csv")) %>% 
-  benthic_cleaning_fxn() %>% 
-  # replace all -99999 values with NA
-  mutate(dry_gm2 = replace(dry_gm2, dry_gm2 < 0, NA),
-         wm_gm2 = replace(wm_gm2, wm_gm2 < 0, NA),
-         density = replace(density, density < 0, NA),
-         percent_cover = replace(percent_cover, percent_cover < 0, NA)) %>% 
-  mutate(date = ymd(date))
-
-saveRDS(biomass_2022, file = here::here("benthic-data-RDS", "biomass_2022.rds"))
+# biomass_2022 <- read_csv(here::here("data", "SBC-LTER-benthics", 
+#                                     "Annual_All_Species_Biomass_at_transect_20230201.csv")) %>% 
+#   benthic_cleaning_fxn() %>% 
+#   # replace all -99999 values with NA
+#   mutate(dry_gm2 = replace(dry_gm2, dry_gm2 < 0, NA),
+#          wm_gm2 = replace(wm_gm2, wm_gm2 < 0, NA),
+#          density = replace(density, density < 0, NA),
+#          percent_cover = replace(percent_cover, percent_cover < 0, NA)) %>% 
+#   mutate(date = ymd(date))
+# 
+# saveRDS(biomass_2022, file = here::here("benthic-data-RDS", "biomass_2022.rds"))
 
 # ⊣ b. percent cover ----------------------------------------
 
