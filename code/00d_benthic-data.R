@@ -57,18 +57,18 @@ saveRDS(biomass, file = here::here("benthic-data-RDS", "biomass.rds"))
 
 # ⊣ b. percent cover ----------------------------------------
 
-percov <- read_csv(here::here("data", "SBC-LTER-benthics", 
-                              "Annual_Cover_All_Years_20211020.csv")) %>% 
-  benthic_cleaning_fxn() %>% 
-  mutate(percent_cover = replace(percent_cover, percent_cover < 0, NA))
-
-saveRDS(percov, file = here::here("benthic-data-RDS", "percov.rds"))
-
-percov_2022 <- read_csv(here::here("data", "SBC-LTER-benthics", 
-                                   "Annual_Cover_All_Years_20220809.csv")) %>% 
-  benthic_cleaning_fxn() 
-
-saveRDS(percov_2022, file = here::here("benthic-data-RDS", "percov_2022.rds"))
+# percov <- read_csv(here::here("data", "SBC-LTER-benthics", 
+#                               "Annual_Cover_All_Years_20211020.csv")) %>% 
+#   benthic_cleaning_fxn() %>% 
+#   mutate(percent_cover = replace(percent_cover, percent_cover < 0, NA))
+# 
+# saveRDS(percov, file = here::here("benthic-data-RDS", "percov.rds"))
+# 
+# percov_2022 <- read_csv(here::here("data", "SBC-LTER-benthics", 
+#                                    "Annual_Cover_All_Years_20220809.csv")) %>% 
+#   benthic_cleaning_fxn() 
+# 
+# saveRDS(percov_2022, file = here::here("benthic-data-RDS", "percov_2022.rds"))
 
 # ⊣ c. swath ------------------------------------------------
 
