@@ -162,6 +162,14 @@ lw_sub <- lw %>%
 #   left_join(., coarse_traits, by = "sp_code") %>% 
 #   drop_na(sp_code)
 
+# ⊣ i. chlorophyll A ----------------------------------------
+
+chlA_ind <- chlA %>% 
+  group_by(specimen_ID) %>% 
+  summarize(chlA_mean = mean(chlA_mg, na.rm = TRUE),
+            chlA_se = se(chlA_mg)) %>% 
+  ungroup()
+
 ############################################################-
 # 2. trait by sample matrices -------------------------------
 ############################################################-
@@ -224,6 +232,7 @@ ind_traits <- ct_prep %>%
   left_join(., fvfm_ind, by = "specimen_ID") %>% 
   left_join(., weight_ind, by = "specimen_ID") %>% 
   left_join(., volume_ind, by = "specimen_ID") %>% 
+  left_join(., chlA_ind, by = "specimen_ID") %>% 
   left_join(., (metadata_ind %>% select(specimen_ID, date_collected, site)), by = "specimen_ID") %>% 
   filter(!(sp_code == "PTCA" & lifestage == "recruit")) %>% 
   mutate(date_collected = ymd(date_collected)) %>% 

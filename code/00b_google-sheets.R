@@ -98,5 +98,12 @@ volume_sheet <- read_sheet(sheet_id, sheet = "07-volume", na = "NA")
 # last updated: 2023-04-06
 sheet_write_csv(volume_sheet)
 
+# ⊣ k. chlorophyll A -----------------------------------------
+
+chlA_sheet <- read_sheet(sheet_id, sheet = "08-chlA", na = "NA") 
+
+# last updated: 2023-07-21
+sheet_write_csv(chlA_sheet)
+
 
 

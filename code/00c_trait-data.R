@@ -30,7 +30,8 @@ path <- here::here("data/fvfm", c(
   "20220812-AQUE-cleaned.csv",
   "20220815-MOHK-cleaned.csv",
   "20220818-AQUE-cleaned.csv",
-  "20220824-CARP_MOHK-cleaned.csv"))
+  "20220824-CARP_MOHK-cleaned.csv",
+  "20230620-NAPL-cleaned.csv"))
 
 # read in all .csv files into one data frame
 fvfm_raw <- path %>% 
@@ -82,6 +83,10 @@ toughness <- read_csv(here::here("data", "google-sheet-traits", "toughness_sheet
 # ⊣ j. volume -----------------------------------------------
 
 volume <- read_csv(here::here("data", "google-sheet-traits", "volume_sheet_2023-04-06.csv"))
+
+# ⊣ k. chlorophyll A ----------------------------------------
+
+chlA <- read_csv(here::here("data", "google-sheet-traits", "chlA_sheet_2023-07-21.csv"))
 
 ############################################################-
 # 3. categorical traits -------------------------------------

@@ -1260,7 +1260,18 @@ ptca_all_mat <- ptca_leaf %>%
 ```
 
 
+# 17. chlorophyll A
 
+
+```{r}
+chlA_plot <- ind_traits %>% 
+  drop_na(chlA_mean) 
+
+ggplot(data = chlA_plot, aes(x = sp_code, y = chlA_mean)) +
+  geom_boxplot() +
+  geom_jitter() +
+  facet_wrap(~pigment_type, scales = "free_x")
+```
 
 
 
