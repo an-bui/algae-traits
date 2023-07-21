@@ -256,6 +256,8 @@ M <- pca_mat %>%
 
 corr_traits <- corrplot(M, method = "circle", type = "lower", insig = "blank", addCoef.col = "black")
 
+ggpairs(pca_mat)
+
 corr_traits
 
 var <- get_pca_var(tbs_pca)
@@ -441,5 +443,11 @@ plot_PCA_12_env <- ggplot() +
 plot_PCA_12_env
 
 adonis2(env_mat ~ site, data = CWM_fixed_filtered, method = "euclidean")
+```
+
+# 6. LTEs
+
+```{r}
+
 ```
 
