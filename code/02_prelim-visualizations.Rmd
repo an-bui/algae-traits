@@ -1271,6 +1271,10 @@ ggplot(data = chlA_plot, aes(x = sp_code, y = chlA_mean)) +
   geom_boxplot() +
   geom_jitter() +
   facet_wrap(~pigment_type, scales = "free_x")
+
+ggplot(data = chlA_plot, aes(x = chlA_mean, y = fvfm_mean)) +
+  geom_point(aes(color = sp_code)) +
+  facet_wrap(~pigment_type, scales = "free")
 ```
 
 
