@@ -54,6 +54,7 @@ library(ggeffects) # plot model predictions
 library(emmeans) # also plot model predictions
 library(ggnewscale) # multiple color scales on ggplot
 library(ggridges) # ridge plots
+library(GGally) # pairs plots
 
 # ⊣ b. tables -----------------------------------------------
 
