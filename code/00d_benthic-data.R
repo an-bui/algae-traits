@@ -78,6 +78,16 @@ swath <- read_csv(here::here("data", "SBC-LTER-benthics",
 
 saveRDS(swath, file = here::here("benthic-data-RDS", "swath.rds"))
 
+
+# ⊣ d. LTE --------------------------------------------------
+
+LTE <- read_csv(here::here("data", "SBC-LTER-benthics",
+                           "LTE_All_Species_Biomass_at_transect_20220208.csv")) %>% 
+  benthic_cleaning_fxn()
+
+saveRDS(LTE, file = here::here("benthic-data-RDS", "LTE.rds"))
+
+
 ############################################################-
 # 3. "environmental" data -----------------------------------
 ############################################################-
