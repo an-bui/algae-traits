@@ -46,11 +46,11 @@ fvfm_raw <- path %>%
 
 # ⊣ a. metadata for subsamples ------------------------------
 
-metadata_sub <- read_csv(here::here("data", "google-sheet-traits", "metadata_sub_sheet_2023-02-02.csv"))
+metadata_sub <- read_csv(here::here("data", "google-sheet-traits", "metadata_sub_sheet_2023-07-24.csv"))
 
 # ⊣ b. metadata for individuals -----------------------------
 
-metadata_ind <- read_csv(here::here("data", "google-sheet-traits", "metadata_ind_sheet_2023-02-02.csv"))
+metadata_ind <- read_csv(here::here("data", "google-sheet-traits", "metadata_ind_sheet_2023-07-24.csv"))
 
 # ⊣ c. max height -------------------------------------------
 
@@ -86,7 +86,7 @@ volume <- read_csv(here::here("data", "google-sheet-traits", "volume_sheet_2023-
 
 # ⊣ k. chlorophyll A ----------------------------------------
 
-chlA <- read_csv(here::here("data", "google-sheet-traits", "chlA_sheet_2023-07-21.csv"))
+chlA <- read_csv(here::here("data", "google-sheet-traits", "chlA_sheet_2023-07-23.csv"))
 
 ############################################################-
 # 3. categorical traits -------------------------------------
