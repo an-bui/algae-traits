@@ -86,7 +86,7 @@ volume <- read_csv(here::here("data", "google-sheet-traits", "volume_sheet_2023-
 
 # ⊣ k. chlorophyll A ----------------------------------------
 
-chlA <- read_csv(here::here("data", "google-sheet-traits", "chlA_sheet_2023-07-23.csv"))
+chlA <- read_csv(here::here("data", "google-sheet-traits", "chlA_sheet_2023-07-24.csv"))
 
 ############################################################-
 # 3. categorical traits -------------------------------------

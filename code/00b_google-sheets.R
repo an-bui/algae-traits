@@ -102,7 +102,7 @@ sheet_write_csv(volume_sheet)
 
 chlA_sheet <- read_sheet(sheet_id, sheet = "08-chlA", na = "NA") 
 
-# last updated: 2023-07-23
+# last updated: 2023-07-24
 sheet_write_csv(chlA_sheet)
 
 
