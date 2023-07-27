@@ -1265,18 +1265,52 @@ ptca_all_mat <- ptca_leaf %>%
 
 ```{r}
 chlA_plot <- ind_traits %>% 
-  drop_na(chlA_mean) 
+  drop_na(chlA_mean) %>% 
+  filter(!(date_collected %in% as_date(c("2023-06-27", "2023-06-20"))))
 
 ggplot(data = chlA_plot, aes(x = sp_code, y = chlA_mean)) +
-  geom_boxplot() +
-  geom_jitter() +
+  geom_boxplot(outlier.alpha = 0) +
+  geom_jitter(aes(color = as_factor(year))) +
   facet_wrap(~pigment_type, scales = "free_x")
+
+ggplot(data = chlA_plot, aes(x = as_factor(year), y = chlA_mean)) +
+  geom_boxplot(outlier.alpha = 0) +
+  geom_jitter(aes(color = as_factor(year))) +
+  facet_wrap(~sp_code, scales = "free")
 
 ggplot(data = chlA_plot, aes(x = chlA_mean, y = fvfm_mean)) +
   geom_point(aes(color = sp_code)) +
   facet_wrap(~pigment_type, scales = "free")
+
+model <- lm(fvfm_mean ~ chlA_mean*sp_code, data = chlA_plot)
+simulateResiduals(model, plot = TRUE)
+summary(model)
+plot(ggeffect(model, terms = "chlA_mean"))
+
+model <- glm(chlA_mean ~ as_factor(year)*sp_code, data = chlA_plot)
+simulateResiduals(model, plot = TRUE)
+summary(model)
 ```
 
+# 18. traits for Katrina
+
+Chondracanthus, Rhodymenia, Macrocystis, Pterygophora, and Stephanocystis
+
+```{r}
+traits_df <- ind_traits %>% 
+  filter(sp_code %in% c("CC", "R", "PTCA", "CYOS")) %>% 
+  group_by(sp_code) %>% 
+  summarize(sap_mm2_mm = mean(sap_mean, na.rm = TRUE),
+            sap_se = se(sap_mean, na.rm = TRUE),
+            # SAP sample size
+            sap_n = sum(!is.na(sap_mean)),
+            chlA_ug_mg = mean(chlA_mean, na.rm = TRUE),
+            chlA_se = se(chlA_mean, na.rm = TRUE),
+            # chlA sample size
+            chlA_n = sum(!is.na(chlA_mean)))
+
+write_csv(traits_df, file = here::here("data", "km_traits.csv"))
+```
 
 
 

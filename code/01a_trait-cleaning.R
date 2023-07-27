@@ -164,10 +164,22 @@ lw_sub <- lw %>%
 
 # ⊣ i. chlorophyll A ----------------------------------------
 
-chlA_ind <- chlA %>% 
+chlA_sub <- chlA %>% 
+  # calculating total chlA ug per mg wet weight
+  mutate(chlA_ug = 
+           # chlorophyll in DMSO
+           (2 * dmso_ug_L/1000 * (dmso_sample + dmso_diluent)/dmso_sample) +
+           # chlorophyll in MilliQ wash
+           (2 * milliq_ug_L/1000) +
+           # chlorophyll in 3:1:1 acetone:methanol:MilliQ
+           (5 * ace_met_mil_ug_L/1000 * (ace_met_mil_sample + ace_met_mil_diluent)/ace_met_mil_sample),
+         chlA_ug_mg2 = chlA_ug/wet_weight_mg
+           )
+
+chlA_ind <- chlA_sub %>% 
   group_by(specimen_ID) %>% 
-  summarize(chlA_mean = mean(chlA_mg, na.rm = TRUE),
-            chlA_se = se(chlA_mg)) %>% 
+  summarize(chlA_mean = mean(chlA_ug_mg, na.rm = TRUE),
+            chlA_se = se(chlA_ug_mg)) %>% 
   ungroup()
 
 ############################################################-
