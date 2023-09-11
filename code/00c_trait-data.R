@@ -46,11 +46,11 @@ fvfm_raw <- path %>%
 
 # ⊣ a. metadata for subsamples ------------------------------
 
-metadata_sub <- read_csv(here::here("data", "google-sheet-traits", "metadata_sub_sheet_2023-07-24.csv"))
+metadata_sub <- read_csv(here::here("data", "google-sheet-traits", "metadata_sub_sheet_2023-09-11.csv"))
 
 # ⊣ b. metadata for individuals -----------------------------
 
-metadata_ind <- read_csv(here::here("data", "google-sheet-traits", "metadata_ind_sheet_2023-07-24.csv"))
+metadata_ind <- read_csv(here::here("data", "google-sheet-traits", "metadata_ind_sheet_2023-09-11.csv"))
 
 # ⊣ c. max height -------------------------------------------
 

@@ -30,7 +30,7 @@ metadata_sub_sheet <- read_sheet(sheet_id, sheet = "00b-metadata_sub") %>%
   mutate(date_collected = ymd(date_collected)) %>% 
   mutate(year = year(date_collected))
 
-# last updated: 2023-07-24
+# last updated: 2023-09-11
 sheet_write_csv(metadata_sub_sheet)
 
 # ⊣ b. metadata for individuals -----------------------------
@@ -39,7 +39,7 @@ metadata_ind_sheet <- metadata_sub_sheet %>%
   select(specimen_ID, date_collected, year, site, sp_code, lifestage) %>% 
   unique()
 
-# last updated: 2023-07-24
+# last updated: 2023-09-11
 sheet_write_csv(metadata_ind_sheet)
 
 # ⊣ c. max height -------------------------------------------
