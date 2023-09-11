@@ -1,34 +1,34 @@
 ###### 1. overall site table ######
 
-# table_df <- biomass %>% 
-#   filter(year == 2022) %>% 
-#   select(site, scientific_name, dry_gm2, wm_gm2) %>% 
-#   filter(site %in% c("aque")) %>% 
-#   # mutate(site = fct_relevel(site, "aque", "napl", "ivee", "mohk", "carp")) %>% 
-#   # filter out MAPY
-#   filter(scientific_name != "Macrocystis pyrifera") %>% 
-#   # create a new column where total biomass across sites for the whole survey is calculated
-#   group_by(site) %>% 
-#   mutate(total_dry = sum(dry_gm2),
-#          total_wet = sum(wm_gm2)) %>% 
-#   ungroup() %>% 
-#   # create a new column where total biomass for the species for the whole survey is calculated
-#   group_by(scientific_name) %>% 
-#   reframe(total_sp_dry = sum(dry_gm2),
-#          total_sp_wet = sum(wm_gm2), 
-#          percent_sp_dry = total_sp_dry/total_dry,
-#          percent_sp_wet = total_sp_wet/total_wet) %>% 
-#   # ungroup() %>% 
-#   unique() %>% 
-#   select(scientific_name, percent_sp_dry) %>% 
-#   mutate(percent_sp_dry = round(percent_sp_dry, 4)) %>% 
-#   mutate(percent_whole_sp_dry = percent_sp_dry*100) %>% 
-#   select(-percent_sp_dry) %>% 
-#   left_join(., coarse_traits, by = "scientific_name") %>% 
-#   # filter(taxon_phylum == "Rhodophyta")
-#   select(scientific_name, sp_code, percent_whole_sp_dry) %>% 
-#   # pivot_wider(names_from = "site", values_from = "percent_whole_sp_dry") 
-#   arrange(-percent_whole_sp_dry)
+table_df <- biomass %>%
+  filter(year == 2022) %>%
+  select(site, scientific_name, dry_gm2, wm_gm2) %>%
+  filter(site %in% c("mohk")) %>%
+  # mutate(site = fct_relevel(site, "aque", "napl", "ivee", "mohk", "carp")) %>%
+  # filter out MAPY
+  filter(scientific_name != "Macrocystis pyrifera") %>%
+  # create a new column where total biomass across sites for the whole survey is calculated
+  group_by(site) %>%
+  mutate(total_dry = sum(dry_gm2),
+         total_wet = sum(wm_gm2)) %>%
+  ungroup() %>%
+  # create a new column where total biomass for the species for the whole survey is calculated
+  group_by(scientific_name) %>%
+  reframe(total_sp_dry = sum(dry_gm2),
+         total_sp_wet = sum(wm_gm2),
+         percent_sp_dry = total_sp_dry/total_dry,
+         percent_sp_wet = total_sp_wet/total_wet) %>%
+  # ungroup() %>%
+  unique() %>%
+  select(scientific_name, percent_sp_dry) %>%
+  mutate(percent_sp_dry = round(percent_sp_dry, 4)) %>%
+  mutate(percent_whole_sp_dry = percent_sp_dry*100) %>%
+  select(-percent_sp_dry) %>%
+  # left_join(., coarse_traits, by = "scientific_name") %>%
+  # filter(taxon_phylum == "Rhodophyta")
+  # select(scientific_name, sp_code, percent_whole_sp_dry) %>%
+  # pivot_wider(names_from = "site", values_from = "percent_whole_sp_dry")
+  arrange(-percent_whole_sp_dry)
 # 
 # table_df %>% 
 #   # arrange(-percent_whole_sp_dry) %>% 
@@ -57,7 +57,7 @@ transect_spp <- biomass %>%
   dplyr::select(-sample_ID) %>% 
   unite("sample_ID", site, year, remove = FALSE) %>% 
   unite("transect_ID", site, year, transect, remove = FALSE) %>% 
-  filter(sp_code %in% c(algae_proposal, "LAFA")) %>% 
+  # filter(sp_code %in% c(algae_proposal, "LAFA")) %>% 
   filter(site %in% sites_proposal) %>% 
   filter(year == 2022) %>% 
   # shorten CC scientific name
