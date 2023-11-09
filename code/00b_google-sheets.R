@@ -30,7 +30,7 @@ metadata_sub_sheet <- read_sheet(sheet_id, sheet = "00b-metadata_sub") %>%
   mutate(date_collected = ymd(date_collected)) %>% 
   mutate(year = year(date_collected))
 
-# last updated: 2023-09-11
+# last updated: 2023-11-08
 sheet_write_csv(metadata_sub_sheet)
 
 # ⊣ b. metadata for individuals -----------------------------
@@ -39,35 +39,35 @@ metadata_ind_sheet <- metadata_sub_sheet %>%
   select(specimen_ID, date_collected, year, site, sp_code, lifestage) %>% 
   unique()
 
-# last updated: 2023-09-11
+# last updated: 2023-11-08
 sheet_write_csv(metadata_ind_sheet)
 
 # ⊣ c. max height -------------------------------------------
 
 ind_height_sheet <- read_sheet(sheet_id, sheet = "02a-ind_height", na = "NA") 
 
-# last updated: 2023-02-02
+# last updated: 2023-11-08
 sheet_write_csv(ind_height_sheet)
 
 # ⊣ d. thallus length and width -----------------------------
 
 lw_sheet <- read_sheet(sheet_id, sheet = "02b-lw", na = "NA") 
 
-# last updated: 2023-02-02
+# last updated: 2023-11-08
 sheet_write_csv(lw_sheet)
 
 # ⊣ e. thallus thickness ------------------------------------
 
 thickness_sheet <- read_sheet(sheet_id, sheet = "03-thickness", na = "NA")
 
-# last updated: 2023-02-02
+# last updated: 2023-11-08
 sheet_write_csv(thickness_sheet)
 
 # ⊣ f. wet and dry weight -----------------------------------
 
 weight_sheet <- read_sheet(sheet_id, sheet = "04-weight", na = "NA")
 
-# last updated: 2023-02-02
+# last updated: 2023-11-08
 sheet_write_csv(weight_sheet)
 
 # ⊣ g. surface area and perimeter ---------------------------
@@ -95,7 +95,7 @@ sheet_write_csv(toughness_sheet)
 
 volume_sheet <- read_sheet(sheet_id, sheet = "07-volume", na = "NA") 
 
-# last updated: 2023-04-06
+# last updated: 2023-11-08
 sheet_write_csv(volume_sheet)
 
 # ⊣ k. chlorophyll A -----------------------------------------
