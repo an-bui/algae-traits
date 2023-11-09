@@ -31,7 +31,8 @@ path <- here::here("data/fvfm", c(
   "20220815-MOHK-cleaned.csv",
   "20220818-AQUE-cleaned.csv",
   "20220824-CARP_MOHK-cleaned.csv",
-  "20230620-NAPL-cleaned.csv"))
+  "20230620-NAPL-cleaned.csv",
+  "20230711-NAPL-cleaned.csv"))
 
 # read in all .csv files into one data frame
 fvfm_raw <- path %>% 
@@ -46,27 +47,27 @@ fvfm_raw <- path %>%
 
 # ⊣ a. metadata for subsamples ------------------------------
 
-metadata_sub <- read_csv(here::here("data", "google-sheet-traits", "metadata_sub_sheet_2023-09-11.csv"))
+metadata_sub <- read_csv(here::here("data", "google-sheet-traits", "metadata_sub_sheet_2023-11-08.csv"))
 
 # ⊣ b. metadata for individuals -----------------------------
 
-metadata_ind <- read_csv(here::here("data", "google-sheet-traits", "metadata_ind_sheet_2023-09-11.csv"))
+metadata_ind <- read_csv(here::here("data", "google-sheet-traits", "metadata_ind_sheet_2023-11-08.csv"))
 
 # ⊣ c. max height -------------------------------------------
 
-ind_height <- read_csv(here::here("data", "google-sheet-traits", "ind_height_sheet_2023-02-02.csv"))
+ind_height <- read_csv(here::here("data", "google-sheet-traits", "ind_height_sheet_2023-11-08.csv"))
 
 # ⊣ d. thallus length and width -----------------------------
 
-lw <- read_csv(here::here("data", "google-sheet-traits", "lw_sheet_2023-02-02.csv")) 
+lw <- read_csv(here::here("data", "google-sheet-traits", "lw_sheet_2023-11-08.csv")) 
 
 # ⊣ e. thallus thickness ------------------------------------
 
-thickness <- read_csv(here::here("data", "google-sheet-traits", "thickness_sheet_2023-02-02.csv"))
+thickness <- read_csv(here::here("data", "google-sheet-traits", "thickness_sheet_2023-11-08.csv"))
 
 # ⊣ f. wet and dry weight -----------------------------------
 
-weight <- read_csv(here::here("data", "google-sheet-traits", "weight_sheet_2023-02-02.csv"))
+weight <- read_csv(here::here("data", "google-sheet-traits", "weight_sheet_2023-11-08.csv"))
 
 # ⊣ g. surface area and perimeter ---------------------------
 
@@ -82,7 +83,7 @@ toughness <- read_csv(here::here("data", "google-sheet-traits", "toughness_sheet
 
 # ⊣ j. volume -----------------------------------------------
 
-volume <- read_csv(here::here("data", "google-sheet-traits", "volume_sheet_2023-04-06.csv"))
+volume <- read_csv(here::here("data", "google-sheet-traits", "volume_sheet_2023-11-08.csv"))
 
 # ⊣ k. chlorophyll A ----------------------------------------
 
@@ -93,4 +94,6 @@ chlA <- read_csv(here::here("data", "google-sheet-traits", "chlA_sheet_2023-07-2
 ############################################################-
 
 coarse_traits <- read_csv(here::here("data", "algae-traits_literature-search_2022-02-28.csv"))
+
+joe_traits <- read_csv(here::here("data", "fong-categorical", "Traits.csv"))
 
