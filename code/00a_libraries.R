@@ -14,6 +14,7 @@ library(googlesheets4) # pulling data from google sheets
 
 library(janitor) # cleaning names in data frames
 library(lubridate) # dealing with dates
+library(fuzzyjoin) # fuzzy matching
 
 ############################################################-
 # 3. analysis packages --------------------------------------
