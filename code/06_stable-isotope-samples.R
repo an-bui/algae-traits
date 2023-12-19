@@ -10,7 +10,7 @@ source(here::here("code", "00c_trait-data.R"))
 # 1. data ---------------------------------------------------
 ############################################################-
 
-biomass_rels <- read_csv(here("data", "Algal_Biomass_Relationships_NPP_calculation_20210113.csv")) %>% 
+biomass_rels <- read_csv(here("data", "isotopes", "Algal_Biomass_Relationships_NPP_calculation_20210113.csv")) %>% 
   clean_names() %>% 
   mutate(sp_code = case_when(
     scientific_name == "Nienburgia andersoniana" ~ "Nandersoniana",
@@ -80,17 +80,5 @@ si_samples <- metadata_sub %>%
   left_join(., si_weights, by = "sp_code") %>% 
   select(subsample_ID, sp_code, c_sample_weight_low_mg:ideal_sample_weight_high_mg)
 
-si_sample_table <- si_samples %>% 
-  flextable() %>% 
-  set_header_labels(subsample_ID = "Subsample ID",
-                    sp_code = "Species",
-                    c_sample_weight_low_mg = "low C (mg)",
-                    c_sample_weight_high_mg = "high C (mg)",
-                    n_sample_weight_low_mg = "low N (mg)",
-                    n_sample_weight_high_mg = "high N (mg)",
-                    ideal_sample_weight_low_mg = "low ideal (mg)", 
-                    ideal_sample_weight_high_mg = "high ideal (mg)") %>% 
-  width(j = "subsample_ID", width = 2, unit = "in")
-
-save_as_docx(si_sample_table, path = here("data", "isotopes", "si_run01.docx"))
+write_csv(si_samples, file = here("data", "isotopes", "si_run01.csv"))
 
