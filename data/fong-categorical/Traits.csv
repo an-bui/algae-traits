@@ -1,0 +1,106 @@
+﻿species,life_cycle,gametes,size,branching,tissue_complexity,attachment,stype,calcification,coenocyte,thickness,growth,pneumatocysts,articulated,position_to_benthos,blades,branch_shape,midrib,blade_category,tidal,bottom_type,eco_zone
+acanthophora spicifera,triphasic,oogamous,40,whorled,pseudoparenchymatous,discoid,n,n,n,4,tip,n,n,flexible,not leaflike,terete,n,none,subtidal,hard,tropical
+acetabularia acetabulum,diplobiontic,isogamous,6,whorled,unicellular,rhizoidal,n,y,y,1,tip,n,n,flexible,leaflike,flattened,n,single,subtidal,soft,temperate
+acetabularia caliculus,diplobiontic,isogamous,7,whorled,unicellular,rhizoidal,n,y,y,1,tip,n,n,flexible,leaflike,flattened,n,single,subtidal,soft,tropical/temperate
+acetabularia crenulata,diplobiontic,isogamous,10,whorled,unicellular,rhizoidal,n,y,y,1,tip,n,n,flexible,leaflike,flattened,n,single,subtidal,soft,tropical
+acetabularia major,diplobiontic,isogamous,6,whorled,unicellular,rhizoidal,n,y,y,1,tip,n,n,flexible,leaflike,flattened,n,single,subtidal,soft,subtropical
+acrosiphonia coalita,alternation of generations,isogamous,15,irregular,pseudoparenchymatous,rhizoidal,n,n,n,1,tip,n,n,flexible,not leaflike,terete,n,none,intertidal,hard,temperate
+acrosiphonia saxatilis,alternation of generations,isogamous,15,branching off main axis,pseudoparenchymatous,rhizoidal,n,n,n,1,tip,n,n,flexible,not leaflike,terete,n,none,intertidal,hard,temperate
+alaria marginata,alternation of generations,oogamous,300,unbranched,parenchymatous,hapterous,y,n,n,4,intercalary,n,n,flexible,leaflike,terete,y,few large,intertidal,hard,temperate
+amansia rhodantha,triphasic,oogamous,10,irregular,pseudoparenchymatous,discoid,n,n,n,2,tip,n,n,flexible,leaflike,flattened,n,many small,subtidal,hard,tropical
+asparagopsis taxiformis,triphasic,oogamous,20,whorled,pseudoparenchymatous,rhizoidal,n,n,n,4,tip,n,n,flexible,not leaflike,terete,n,none,subtidal,hard,tropical
+avrainvillea amadelpha,diplobiontic,oogamous,4,irregular,unicellular,rhizoidal,n,n,y,1,tip,n,n,flexible,leaflike,flattened,n,few large,subtidal,soft,tropical
+boodlea composita,alternation of generations,isogamous,30,reticulate,filamentous,rhizoidal,n,n,n,1,centripetal invagination,n,n,flexible,not leaflike,terete,n,none,subtidal,either,tropical
+bossiella orbigniana,triphasic,oogamous,30,irregular,pseudoparenchymatous,crustose,n,y,n,4,tip,n,y,upright,not leaflike,flattened,y,none,both?,hard,temperate
+botryocladia occidentalis,triphasic,oogamous,11,irregular,pseudoparenchymatous,discoid,n,n,n,4,tip,n,n,flexible,not leaflike,terete,n,none,subtidal,hard,tropical
+bryopsis plumosa,alternation of generations,anisogamous,15,branching off main axis,unicellular,rhizoidal,n,n,y,1,tip,n,n,flexible,not leaflike,flattened,n,none,intertidal,hard,tropical/temperate
+calliarthron tuberculosum,triphasic,oogamous,30,irregular,pseudoparenchymatous,crustose,n,y,n,4,tip,n,y,upright,not leaflike,flattened,n,none,intertidal,hard,temperate
+caulerpa lentillifera,diplobiontic,anisogamous,15,whorled,unicellular,rhizome,n,n,y,1,tip,n,n,flexible,not leaflike,terete,n,many small,subtidal,soft,tropical
+caulerpa racemosa,diplobiontic,anisogamous,30,branching off main axis,unicellular,rhizome,n,n,y,1,tip,n,n,flexible,not leaflike,terete,n,many small,subtidal,soft,tropical/temperate
+caulerpa taxifolia,diplobiontic,anisogamous,15,branching off main axis,unicellular,rhizome,n,n,y,1,tip,n,n,flexible,leaflike,flattened,n,many small,subtidal,soft,tropical
+ceramium virgatum,triphasic,oogamous,30,dichotomous,filamentous,discoid,n,n,n,1,tip,n,n,flexible,not leaflike,terete,n,none,intertidal,hard,temperate
+chaetomorpha aerea,alternation of generations,isogamous,30,unbranched,filamentous,rhizoidal,n,n,n,1,diffuse,n,n,flexible,not leaflike,none,n,none,intertidal,hard,temperate
+chondracanthus canaliculatus,triphasic,oogamous,25,dichotomous,filamentous,discoid,n,n,n,4,tip,n,n,flexible,not leaflike,terete,n,none,intertidal,hard,temperate
+chondracanthus exasperatus,triphasic,oogamous,50,unbranched,pseudoparenchymatous,discoid,y,n,n,4,tip,n,n,flexible,leaflike,terete,n,few large,intertidal,hard,temperate
+cladophora columbiana,alternation of generations,isogamous,5,irregular,filamentous,rhizoidal,n,n,n,1,tip,n,n,upright,not leaflike,terete,n,none,intertidal,hard,temperate
+codium fragile,diplobiontic,anisogamous,10,dichotomous,unicellular,crustose,n,n,y,1,centripetal invagination,n,n,flexible,not leaflike,terete,n,none,intertidal,hard,temperate
+codium harveyi,diplobiontic,anisogamous,30,dichotomous,unicellular,crustose,n,n,y,1,centripetal invagination,n,n,flexible,not leaflike,terete,n,none,subtidal,hard,temperate
+codium setchellii,diplobiontic,anisogamous,10,dichotomous,unicellular,crustose,n,n,y,1,centripetal invagination,n,n,flexible,not leaflike,terete,n,none,intertidal,hard,temperate
+codium tomentosum,diplobiontic,anisogamous,30,dichotomous,unicellular,crustose,n,n,y,1,centripetal invagination,n,n,flexible,not leaflike,terete,n,none,intertidal,hard,temperate
+colpomenia sinuosa,alternation of generations,anisogamous,30,unbranched,parenchymatous,rhizoidal,n,n,n,4,diffuse,n,n,upright,not leaflike,none,n,single,both,hard,circumglobal
+colpomenia tuberculata,alternation of generations,anisogamous,10,unbranched,parenchymatous,rhizoidal,n,n,n,4,diffuse,n,n,upright,not leaflike,none,n,single,intertidal,hard,temperate
+corallina chilensis,triphasic,oogamous,5,branching off main axis,pseudoparenchymatous,crustose,n,y,n,4,tip,n,y,upright,not leaflike,flattened,n,none,intertidal,hard,temperate
+corallina vancouveriensis,triphasic,oogamous,7,branching off main axis,pseudoparenchymatous,crustose,n,y,n,4,tip,n,y,upright,not leaflike,flattened,n,none,intertidal,hard,tropical/temperate
+costaria costata,alternation of generations,oogamous,200,unbranched,parenchymatous,hapterous,y,n,n,4,intercalary,n,n,flexible,leaflike,none,y,single,intertidal,hard,temperate
+cryptopluera ruprechtiana,triphasic,oogamous,40,dichotomous,pseudoparenchymatous,discoid,n,n,n,4,tip,n,n,flexible,leaflike,flattened,y,many small,both,hard,temperate
+derbesia marina,alternation of generations,anisogamous,5,unbranched,unicellular,rhizoidal,n,n,y,1,tip,n,n,flexible,not leaflike,none,n,none,subtidal,epiphytic,temperate
+desmarestia ligulata,alternation of generations,oogamous,100,irregular,pseudoparenchymatous,discoid,n,n,n,1,intercalary,n,n,flexible,leaflike,flattened,y,many small,subtidal,hard,circumglobal
+dictyopteris undulata,alternation of generations,oogamous,24,dichotomous,parenchymatous,rhizoidal,n,n,n,3,tip,n,n,flexible,leaflike,terete,y,many small,subtidal,hard,temperate
+dictyota coriacea,alternation of generations,oogamous,30,dichotomous,parenchymatous,rhizoidal,n,n,n,3,tip,n,n,flexible,leaflike,flattened,n,many small,both,hard,temperate
+durvillaea antarctica,diplobiontic,oogamous,150,unbranched,parenchymatous,discoid,y,n,n,4,tip,n,n,upright,leaflike,terete,n,single,,,
+ecklonia radiata,alternation of generations,oogamous,200,branching off main axis,parenchymatous,hapterous,y,n,n,4,intercalary,n,n,upright,leaflike,terete,n,few large,subtidal,hard,temperate
+ectocarpus siliculosus,alternation of generations,isogamous,30,irregular,filamentous,rhizoidal,n,n,n,1,diffuse,n,n,flexible,not leaflike,terete,n,none,both,hard,temperate
+egregia menziessi,alternation of generations,oogamous,1000,irregular,parenchymatous,hapterous,y,n,n,4,intercalary,y,n,flexible,leaflike,flattened,y,many small,intertidal,hard,temperate
+endocladia muricata,triphasic,oogamous,8,irregular,pseudoparenchymatous,discoid,n,n,n,4,tip,n,n,upright,not leaflike,terete,n,none,intertidal,hard,temperate
+fucus distichus,diplobiontic,oogamous,25,dichotomous,parenchymatous,discoid,n,n,n,4,tip,n,n,flexible,not leaflike,flattened,y,many small,intertidal,hard,temperate
+galaxaura rugosa,triphasic,oogamous,7,dichotomous,pseudoparenchymatous,discoid,n,y,n,4,tip,n,y,upright,not leaflike,terete,n,none,subtidal,either,tropical
+gelidium robustum,triphasic,oogamous,40,branching off main axis,pseudoparenchymatous,rhizoidal,n,n,n,4,tip,n,n,flexible,not leaflike,flattened,n,none,,,
+gracilaria longissimi,triphasic,oogamous,60,irregular,parenchymatous,discoid,n,n,n,4,tip,n,n,flexible,not leaflike,terete,n,none,both,soft,temperate
+halimeda discoidea,diplobiontic,anisogamous,12,irregular,unicellular,rhizoidal,n,y,y,1,tip,n,y,flexible,not leaflike,flattened,n,none,subtidal,either,tropical
+halimeda incrassata,diplobiontic,anisogamous,25,irregular,unicellular,rhizoidal,n,y,y,1,tip,n,y,flexible,not leaflike,flattened,n,none,subtidal,either,tropical
+halimeda opuntia,diplobiontic,anisogamous,25,irregular,unicellular,rhizoidal,n,y,y,1,tip,n,y,flexible,not leaflike,flattened,n,none,subtidal,either,tropical
+halimeda tuna,diplobiontic,anisogamous,10,irregular,unicellular,rhizoidal,n,y,y,1,tip,n,y,flexible,not leaflike,flattened,n,none,subtidal,either,tropical
+halosaccion glandiforme,triphasic,oogamous,15,unbranched,pseudoparenchymatous,discoid,n,n,n,4,tip,n,n,upright,not leaflike,none,n,none,intertidal,hard,temperate
+hedophyllum dentigerum,alternation of generations,oogamous,150,unbranched,parenchymatous,hapterous,y,n,n,4,interacalary,n,n,flexible,leaflike,none,n,single,,,
+hormosira banksii,diplobiontic,oogamous,30,dichotomous,parenchymatous,discoid,n,n,n,4,tip,n,n,flexible,not leaflike,terete,n,none,intertidal,hard,temperate
+laminaria farlowii,alternation of generations,oogamous,500,unbranched,parenchymatous,hapterous,y,n,n,4,intercalary,n,n,flexible,leaflike,terete,n,single,subtidal,hard,temperate
+laminaria sinclairii,alternation of generations,oogamous,100,unbranched,parenchymatous,hapterous,y,n,n,4,intercalary,n,n,upright,leaflike,terete,n,single,intertidal,hard,temperate
+laurencia pacifica,triphasic,oogamous,16,irregular,pseudoparenchymatous,discoid,n,n,n,4,tip,n,n,flexible,not leaflike,terete,n,none,intertidal,hard,temperate
+leathesia marina,alternation of generations,isogamous,15,unbranched,parenchymatous,discoid,n,n,n,4,intercalary,n,n,upright,not leaflike,none,n,none,intertidal,epiphytic/hard,temperate
+lessonia nigrescens,alternation of generations,oogamous,400,dichotomous,parenchymatous,discoid,y,n,n,4,intercalary,n,n,flexible,leaflike,terete,n,few large,intertidal,hard,temperate
+lithothamnion mulleri,triphasic,oogamous,4,irregular,pseudoparenchymatous,crustose,n,y,n,4,tip,n,n,prostrate,not leaflike,none,n,none,both,hard,
+lithothrix aspergillum,triphasic,oogamous,13,dichotomous,pseudoparenchymatous,crustose,n,y,n,4,tip,n,y,upright,not leaflike,terete,n,none,intertidal,hard,temperate
+lobophora rosacea,alternation of generations,oogamous,10,unbranched,parenchymatous,rhizoidal,n,n,n,4,tip,n,n,flexible,leaflike,none,n,few large,subtidal,hard,tropical
+macrocystis pyrifera,alternation of generations,oogamous,3050,unbranched,parenchymatous,hapterous,y,n,n,4,interacalary,y,n,flexible,leaflike,terete,n,many small,subtidal,hard,temperate
+mastocarpus papillatus,triphasic,oogamous,15,dichotomous,pseudoparenchymatous,discoid,n,n,n,4,tip,n,n,flexible,leaflike,flattened,n,few large,intertidal,hard,temperate
+mazzaella affinis,triphasic,oogamous,15,dichotomous,pseudoparenchymatous,discoid,y,n,n,4,tip,n,n,upright,leaflike,flattened,n,many small,intertidal,hard,temperate
+mazzaella oregona,triphasic,oogamous,30,unbranched,pseudoparenchymatous,discoid,y,n,n,4,tip,n,n,flexible,leaflike,none,n,few large,intertidal,hard,temperate
+mazzaella splendens,triphasic,oogamous,40,unbranched,pseudoparenchymatous,discoid,y,n,n,4,tip,n,n,flexible,leaflike,none,n,few large,subtidal,hard,temperate
+mesophyllum lichenoides,triphasic,oogamous,18,unbranched,pseudoparenchymatous,crustose,n,y,n,4,tip,n,n,prostrate,not leaflike,none,n,none,subtidal,epiphytic/hard,temperate
+microcladia borealis,triphasic,oogamous,20,branching off main axis,pseudoparenchymatous,discoid,n,n,n,4,tip,n,n,flexible,not leaflike,flattened,n,none,intertidal,hard,temperate
+microdictyon setchellianum,alternation of generations,isogamous,6,reticulate,filamentous,rhizoidal,n,n,n,1,centripetal invagination,n,n,flexible,not leaflike,terete,n,none,both,epiphytic/hard,tropical
+neogastroclonium subarticulatum ,triphasic,oogamous,26,irregular,pseudoparenchymatous,discoid,n,n,n,4,tip,n,n,flexible,not leaflike,terete,n,none,intertidal,hard,temperate
+neorhodomela larix,triphasic,oogamous,30,whorled,pseudoparenchymatous,discoid,n,n,n,4,tip,n,n,flexible,not leaflike,terete,n,none,intertidal,hard,temperate
+nereocystis luetkeana,alternation of generations,oogamous,4000,unbranched,parenchymatous,hapterous,y,n,n,4,intercalary,y,n,flexible,leaflike,terete,n,few large,subtidal,hard,temperate
+osmundea spectabilis,triphasic,oogamous,10,branching off main axis,pseudoparenchymatous,discoid,n,n,n,4,tip,n,n,flexible,leaflike,flattened,n,many small,both,hard,temperate
+padina boryana,alternation of generations,oogamous,13,dichotomous,parenchymatous,rhizoidal,n,y,n,3,tip,n,n,flexible,leaflike,none,n,few large,subtidal,hard,tropical
+palmaria palmata,triphasic,oogamous,50,dichotomous,pseudoparenchymatous,discoid,n,n,n,4,tip,n,n,flexible,leaflike,flattened,n,many small,both,hard,temperate
+pelvetiopsis limitata,diplobiontic,oogamous,15,dichotomous,parenchymatous,discoid,n,n,n,4,tip,n,n,flexible,not leaflike,flattened,n,none,subtidal,hard,temperate
+penicillus capitatus,alternation of generations,anisogamous,15,dichotomous,unicellular,rhizoidal,y,y,y,1,tip,n,n,upright,not leaflike,terete,n,none,subtidal,soft,tropical
+penicillus dumetosus,alternation of generations,anisogamous,20,dichotomous,unicellular,rhizoidal,y,y,y,1,tip,n,n,upright,not leaflike,terete,n,none,subtidal,soft,tropical
+petalonia fascia,alternation of generations,isogamous,30,unbranched,parenchymatous,discoid,n,n,n,4,diffuse,n,n,flexible,leaflike,none,n,few large,intertidal,hard,
+phyllospora comosa,diplobiontic,oogamous,300,irregular,parenchymatous,discoid,y,n,n,4,tip,y,n,upright,leaflike,flattened,n,many small,subtidal,hard,temperate
+pleurophycus gardneri,alternation of generations,oogamous,150,unbranched,parenchymatous,hapterous,y,n,n,4,intercalary,n,n,flexible,leaflike,none,y,single,subtidal,hard,temperate
+plocamium cartilagineum,triphasic,oogamous,30,irregular,pseudoparenchymatous,discoid,n,n,n,4,tip,n,n,flexible,not leaflike,flattened,n,none,both,"""Often on rocks burried in sand""MAC",temperate
+polysiphonia elongata,triphasic,oogamous,25,irregular,filamentous,discoid,n,n,n,4,tip,n,n,flexible,not leaflike,terete,n,none,both,epiphytic/hard,temperate
+postelsia palmaeformis,alternation of generations,oogamous,75,irregular,parenchymatous,hapterous,y,n,n,4,intercalary,n,n,upright,leaflike,terete,n,many small,intertidal,hard,temperate
+prionitis lanceolata,triphasic,oogamous,30,dichotomous,pseudoparenchymatous,discoid,y,n,n,4,tip,n,n,flexible,leaflike,flattened,n,many small,both,,temperate
+prionitis sternbergii,triphasic,oogamous,40,irregular,pseudoparenchymatous,discoid,y,n,n,4,tip,n,n,flexible,leaflike,flattened,n,many small,both,hard,temperate
+pterocladia capillacea,triphasic,oogamous,17,dichotomous,pseudoparenchymatous,rhizoidal,n,n,n,4,tip,n,n,flexible,not leaflike,flattened,n,none,both,hard,temperate
+pterygophora californica,alternation of generations,oogamous,200,irregular,parenchymatous,hapterous,y,n,n,4,intercalary,n,n,upright,leaflike,terete,n,many small,subtidal,hard,temperate
+pyropia perforata,triphasic,oogamous,30,unbranched,parenchymatous,discoid,n,n,n,1,diffuse,n,n,flexible,leaflike,none,n,single,intertidal,hard,temperate
+ralfsia pacifica,alternation of generations,anisogamous,12,unbranched,pseudoparenchymatous,crustose,n,n,n,4,intercalary,n,n,prostrate,not leaflike,none,n,none,subtidal,hard,tropical
+rhipocephalus phoenix,alternation of generations,anisogamous,12,dichotomous,unicellular,rhizoidal,y,y,y,1,tip,n,n,upright,not leaflike,flattened,n,none,subtidal,soft,tropical
+saccharina latissima,alternation of generations,oogamous,400,unbranched,parenchymatous,hapterous,y,n,n,4,intercalary,n,n,flexible,leaflike,none,n,single,subtidal,hard,temperate
+sarcodiotheca gaudichaudii,triphasic,oogamous,40,irregular,pseudoparenchymatous,discoid,n,n,n,4,tip,n,n,flexible,not leaflike,terete,n,none,both,hard,temperate
+sargassum horneri,diplobiontic,oogamous,300,branching off main axis,parenchymatous,discoid,y,n,n,4,tip,y,n,flexible,leaflike,terete,n,many small,subtidal,hard,temperate
+sargassum muticum,diplobiontic,oogamous,200,dichotomous,parenchymatous,discoid,y,n,n,4,tip,y,n,flexible,leaflike,terete,n,many small,subtidal,hard,temperate
+sargassum pacificum,diplobiontic,oogamous,30,branching off main axis,parenchymatous,discoid,y,n,n,4,tip,y,n,flexible,leaflike,terete,n,many small,subtidal,hard,tropical
+sargassum palmeri,diplobiontic,oogamous,70,branching off main axis,parenchymatous,discoid,y,n,n,4,tip,y,n,flexible,leaflike,terete,n,many small,subtidal,hard,temperate
+silvetia compressa,diplobiontic,oogamous,30,dichotomous,parenchymatous,discoid,n,n,n,4,tip,n,n,flexible,not leaflike,flattened,n,many small,intertidal,hard,temperate
+spyridia filamentosa,triphasic,oogamous,2,irregular,pseudoparenchymatous,discoid,n,n,n,4,tip,n,n,flexible,not leaflike,terete,n,none,both,soft,tropical
+stephanocystis doica,diplobiontic,oogamous,200,branching off main axis,parenchymatous,discoid,y,n,n,4,tip,y,n,upright,leaflike,terete,y,many small,both,hard,temperate
+stephanocystis osmundacea,diplobiontic,oogamous,800,branching off main axis,parenchymatous,discoid,y,n,n,4,tip,y,n,upright,leaflike,terete,y,many small,both,hard,temperate
+ulva expansa,alternation of generations,anisogamous,100,unbranched,parenchymatous,discoid,n,n,n,1,diffuse,n,n,flexible,leaflike,none,n,single,both,,
+ulva intestinalis,alternation of generations,anisogamous,30,unbranched,parenchymatous,discoid,n,n,n,2,diffuse,n,n,flexible,leaflike,none,n,single,both,both,tropical/temperate
+ulva taeniata,alternation of generations,isogamous,200,unbranched,parenchymatous,discoid,n,n,n,1,diffuse,n,n,flexible,leaflike,none,n,single,both,,tropical/temperate
