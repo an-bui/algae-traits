@@ -32,7 +32,9 @@ path <- here::here("data/fvfm", c(
   "20220818-AQUE-cleaned.csv",
   "20220824-CARP_MOHK-cleaned.csv",
   "20230620-NAPL-cleaned.csv",
-  "20230711-NAPL-cleaned.csv"))
+  "20230711-NAPL-cleaned.csv",
+  "20230725-BULL-cleaned.csv",
+  "20230731-CARP-cleaned.csv"))
 
 # read in all .csv files into one data frame
 fvfm_raw <- path %>% 
