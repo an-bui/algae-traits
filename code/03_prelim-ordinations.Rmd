@@ -188,7 +188,7 @@ plot_PCA_12 <- ggplot() +
         axis.text = element_text(size = 16),
         title = element_text(size = 20),
         legend.text = element_text(size = 12)) +
-  labs(x = "PC1 (36.6%)",
+  labs(x = "PC1 (32.1%)",
        y = "PC2 (23.0%)",
        title = "PC1 and PC2",
        color = "Scientific name") 
@@ -216,8 +216,8 @@ plot_PCA_13 <- ggplot() +
         axis.text = element_text(size = 16),
         title = element_text(size = 20),
         legend.text = element_text(size = 12)) +
-  labs(x = "PC1 (36.6%)",
-       y = "PC3 (14.1%)",
+  labs(x = "PC1 (32.1%)",
+       y = "PC3 (12.7%)",
        title = "PC1 and PC3",
        color = "Scientific name") 
 plot_PCA_13
