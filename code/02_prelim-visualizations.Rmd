@@ -904,6 +904,7 @@ thallus area:dry weight
 
 ```{r}
 sta_boxplot <- sta_df %>% 
+  filter(! specimen_ID == "20230620-NAPL-033") %>% 
   # left_join(., sta_cld_df, by = c("sp_code.x" = "sp_code")) %>% 
   ggplot(aes(x = sp_code.x, y = sta_mean, fill = sp_code.x)) +
   geom_boxplot(aes(fill = sp_code.x)) +
