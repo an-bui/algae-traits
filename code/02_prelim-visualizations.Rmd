@@ -906,10 +906,11 @@ thallus area:dry weight
 sta_boxplot <- sta_df %>% 
   filter(! specimen_ID == "20230620-NAPL-033") %>% 
   # left_join(., sta_cld_df, by = c("sp_code.x" = "sp_code")) %>% 
-  ggplot(aes(x = sp_code.x, y = sta_mean, fill = sp_code.x)) +
-  geom_boxplot(aes(fill = sp_code.x)) +
-  scale_fill_manual(values = algae_spcode_colors) +
-  geom_jitter() +
+  ggplot(aes(x = sp_code.x, y = sta_mean, group = sp_code.x)) +
+  # geom_boxplot(aes(fill = sp_code.x)) +
+  geom_point(aes(color = sp_code.x), position = position_jitter(width = 0.3, seed = 666), alpha = 0.4, shape = 21) +
+  scale_color_manual(values = algae_spcode_colors) +
+  stat_summary(geom = "pointrange", fun.data = mean_se) +
   # geom_text(aes(label = value, y = 230), nudge_y = 0.01) + 
   facet_wrap(~ pigment_type, scales = "free_x") +
   scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
@@ -917,7 +918,7 @@ sta_boxplot <- sta_df %>%
   labs(title = "Specific thallus area",
        x = "Species code",
        y = "Thallus area/dry weight (mm^2/mg)") +
-    theme(legend.position = "none",
+  theme(legend.position = "none",
         strip.background = element_blank(),
         strip.text = element_text(size = 20),
         axis.text = element_text(size = 20),
