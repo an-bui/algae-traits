@@ -67,7 +67,7 @@ sheet_write_csv(thickness_sheet)
 
 weight_sheet <- read_sheet(sheet_id, sheet = "04-weight", na = "NA")
 
-# last updated: 2023-11-08
+# last updated: 2024-01-15
 sheet_write_csv(weight_sheet)
 
 # ⊣ g. surface area and perimeter ---------------------------
