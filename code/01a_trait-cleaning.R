@@ -253,31 +253,31 @@ ind_traits <- ct_prep %>%
 # ⊣ c. trait by species matrix ------------------------------
 
 # trait values averaged across sites
-tbspp_matrix <- metadata_ind %>% 
-  select(specimen_ID) %>% 
-  unique() %>% 
-  left_join(., ind_height, by = "specimen_ID") %>% 
-  left_join(., thickness_ind, by = "specimen_ID") %>% 
-  left_join(., av_leaf_values, by = "specimen_ID") %>% 
-  left_join(., fvfm_ind, by = "specimen_ID") %>% 
-  left_join(., weight_ind, by = "specimen_ID") %>% 
-  left_join(., volume_ind, by = "specimen_ID") %>% 
-  left_join(., metadata_ind, by = "specimen_ID") %>% 
-  filter(!(sp_code == "PTCA" & lifestage == "recruit")) %>% 
-  select(specimen_ID, sp_code,
-         fvfm_mean, thickness_mm_mean, total_dry, tdmc_mean,
-         total_volume, sta_mean, sap_mean, sav_mean, maximum_height) %>% 
-  # calculate mean trait value for each species
-  group_by(sp_code) %>% 
-  summarize_at(vars(fvfm_mean:maximum_height), mean, na.rm = TRUE) %>% 
-  ungroup() %>% 
-  drop_na(sp_code) %>% 
-  # join with coarse traits
-  left_join(., coarse_traits, by = "sp_code") %>% 
-  select(sp_code:taxon_phylum, growth_form, pigment_type, life_habit, longevity, posture, branching_yn) %>% 
-  filter(sp_code != "MAPY") %>% 
-  filter(sp_code %in% algae_proposal) %>% 
-  column_to_rownames("sp_code") %>% 
-  # replace NaNs with NAs
-  mutate_all(na_if, "NaN")
+# tbspp_matrix <- metadata_ind %>% 
+#   select(specimen_ID) %>% 
+#   unique() %>% 
+#   left_join(., ind_height, by = "specimen_ID") %>% 
+#   left_join(., thickness_ind, by = "specimen_ID") %>% 
+#   left_join(., av_leaf_values, by = "specimen_ID") %>% 
+#   left_join(., fvfm_ind, by = "specimen_ID") %>% 
+#   left_join(., weight_ind, by = "specimen_ID") %>% 
+#   left_join(., volume_ind, by = "specimen_ID") %>% 
+#   left_join(., metadata_ind, by = "specimen_ID") %>% 
+#   filter(!(sp_code == "PTCA" & lifestage == "recruit")) %>% 
+#   select(specimen_ID, sp_code,
+#          fvfm_mean, thickness_mm_mean, total_dry, tdmc_mean,
+#          total_volume, sta_mean, sap_mean, sav_mean, maximum_height) %>% 
+#   # calculate mean trait value for each species
+#   group_by(sp_code) %>% 
+#   summarize_at(vars(fvfm_mean:maximum_height), mean, na.rm = TRUE) %>% 
+#   ungroup() %>% 
+#   drop_na(sp_code) %>% 
+#   # join with coarse traits
+#   left_join(., coarse_traits, by = "sp_code") %>% 
+#   select(sp_code:taxon_phylum, growth_form, pigment_type, life_habit, longevity, posture, branching_yn) %>% 
+#   filter(sp_code != "MAPY") %>% 
+#   filter(sp_code %in% algae_proposal) %>% 
+#   column_to_rownames("sp_code") %>% 
+#   # replace NaNs with NAs
+#   mutate_all(na_if, "NaN")
 
