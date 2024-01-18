@@ -74,7 +74,7 @@ sheet_write_csv(weight_sheet)
 
 sa_peri_sheet <- read_sheet(sheet_id, sheet = "05a-scans") 
 
-# last updated: 2024-01-16
+# last updated: 2024-01-17
 sheet_write_csv(sa_peri_sheet)
 
 # ⊣ h. branching order (still need to clean up) -------------
