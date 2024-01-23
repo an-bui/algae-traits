@@ -188,8 +188,8 @@ plot_PCA_12 <- ggplot() +
         axis.text = element_text(size = 16),
         title = element_text(size = 20),
         legend.text = element_text(size = 12)) +
-  labs(x = "PC1 (32.6%)",
-       y = "PC2 (21.9%)",
+  labs(x = "PC1 (32.0%)",
+       y = "PC2 (22.1%)",
        title = "PC1 and PC2",
        color = "Scientific name") 
 plot_PCA_12
@@ -216,8 +216,8 @@ plot_PCA_13 <- ggplot() +
         axis.text = element_text(size = 16),
         title = element_text(size = 20),
         legend.text = element_text(size = 12)) +
-  labs(x = "PC1 (32.6%)",
-       y = "PC3 (10.9%)",
+  labs(x = "PC1 (32.0%)",
+       y = "PC3 (11.1%)",
        title = "PC1 and PC3",
        color = "Scientific name") 
 plot_PCA_13
@@ -235,12 +235,12 @@ sort(abs(loadings[,2]), decreasing = TRUE)
 # ggsave(here::here("figures/prelim-ordinations",
 #                   paste("PCA_together_cont-", today(), ".jpg", sep = "")),
 #        pca_together,
-#        width = 16, height = 8, dpi = 150)
+#        width = 20, height = 8, dpi = 150)
 # 
 # ggsave(here::here("figures/prelim-ordinations",
 #                   paste("PCA_spp-all-12-", today(), ".jpg", sep = "")),
 #        plot_PCA_12,
-#        width = 10, height = 10, dpi = 150)
+#        width = 16, height = 8, dpi = 150)
 # 
 # ggsave(here::here("figures/prelim-ordinations",
 #                   paste("PCA_spp-all-13-", today(), ".jpg", sep = "")),
