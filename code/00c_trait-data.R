@@ -32,6 +32,8 @@ path <- here::here("data/fvfm", c(
   "20220818-AQUE-cleaned.csv",
   "20220824-CARP_MOHK-cleaned.csv",
   "20230620-NAPL-cleaned.csv",
+  "20230627-MOHK-cleaned.csv",
+  "20230627-MOHK-part2-cleaned.csv",
   "20230711-NAPL-cleaned.csv",
   "20230725-BULL-cleaned.csv",
   "20230731-CARP-cleaned.csv",
@@ -74,7 +76,7 @@ weight <- read_csv(here::here("data", "google-sheet-traits", "weight_sheet_2024-
 
 # ⊣ g. surface area and perimeter ---------------------------
 
-sa_peri <- read_csv(here::here("data", "google-sheet-traits", "sa_peri_sheet_2024-01-22.csv"))
+sa_peri <- read_csv(here::here("data", "google-sheet-traits", "sa_peri_sheet_2024-01-23.csv"))
 
 # ⊣ h. branching order (still need to clean up) -------------
 
