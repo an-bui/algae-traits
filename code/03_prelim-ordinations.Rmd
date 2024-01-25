@@ -255,13 +255,10 @@ M <- pca_mat %>%
   cor()
 
 corr_traits <- corrplot(M, method = "circle", type = "lower", insig = "blank", addCoef.col = "black")
+corr_traits
 
 ggpairs(pca_mat)
 
-corr_traits
-
-var <- get_pca_var(tbs_pca)
-corrplot(var$contrib, is.corr=FALSE)  
 ```
 
 # 4. PTCA adults vs recruits
