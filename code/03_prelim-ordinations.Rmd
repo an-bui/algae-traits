@@ -118,6 +118,7 @@ pca_mat <- ind_traits %>%
 # frond_length_mean, frond_width_mean
 ```
 
+Got a lot of help from David Zeleny's [blog post](https://www.davidzeleny.net/anadat-r/doku.php/en:pca_examples).
 
 ```{r}
 # tbs matrix filtered for species in proposal
@@ -139,8 +140,12 @@ screeplot(tbs_pca, bstick = TRUE)
 # extract proportion explained for each axis
 summary(tbs_pca)
 loadings <- scores(tbs_pca, display = 'species', scaling = 0, choices = c(1, 2, 3))
+
+# extract correlation of variables with PC1
+sort(abs(loadings[,1]), decreasing = TRUE)
+# extract correlation of variables with PC2
 sort(abs(loadings[,2]), decreasing = TRUE)
-# tbs_pca$CA
+
 # simple biplot (compare with ggplot output to make sure it's right)
 biplot(tbs_pca)
 
