@@ -110,7 +110,6 @@ pca_mat <- ind_traits %>%
     longevity == "perennial" ~ 3,
     longevity == "annual or perennial" ~ 2
   )) %>% 
-  # taking out max height for now
   dplyr::select(specimen_ID, maximum_height, total_volume, total_dry, sta_mean, tdmc_mean, sav_mean, sap_mean, fvfm_mean, thickness_mm_mean) %>% 
   column_to_rownames("specimen_ID") %>% 
   drop_na()
@@ -135,10 +134,11 @@ pca_mat <- ind_traits %>%
 # only include numeric variables
 # tbs_pca <- rda(matrix_choice[, 2:10], scale = TRUE)
 tbs_pca <- rda(pca_mat, scale = TRUE)
+screeplot(tbs_pca, bstick = TRUE)
 
 # extract proportion explained for each axis
 summary(tbs_pca)
-loadings <- scores(tbs_pca, display = 'species', scaling = 0)
+loadings <- scores(tbs_pca, display = 'species', scaling = 0, choices = c(1, 2, 3))
 sort(abs(loadings[,2]), decreasing = TRUE)
 # tbs_pca$CA
 # simple biplot (compare with ggplot output to make sure it's right)
@@ -171,7 +171,7 @@ plot_PCA_12 <- ggplot() +
   coord_cartesian() +
   geom_vline(xintercept = c(0), color = "grey70", linetype = 2) +
   geom_hline(yintercept = c(0), color = "grey70", linetype = 2) +
-  geom_point(data = PCAscores, aes(x = PC1, y = PC2, color = scientific_name, shape = site), size = 4) +
+  geom_point(data = PCAscores, aes(x = PC1, y = PC2, color = scientific_name), size = 4) +
   # geom_text(data = PCAscores, aes(x = PC1, y = PC2, color = scientific_name, label = specimen_ID)) +
   scale_color_manual(values = algae_colors) +
   geom_segment(data = PCAvect, aes(x = 0, y = 0, xend = PC1, yend = PC2), arrow = arrow(length = unit(0.2, "cm")), linewidth = 1) +
