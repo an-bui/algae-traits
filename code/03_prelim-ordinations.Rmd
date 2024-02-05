@@ -252,9 +252,28 @@ sort(abs(loadings[,2]), decreasing = TRUE)
 
 ```{r}
 M <- pca_mat %>% 
-  cor()
+  cor(method = "spearman")
 
 corr_traits <- corrplot(M, method = "circle", type = "lower", insig = "blank", addCoef.col = "black")
+
+new_corr <- ggcorr(data = pca_mat, 
+       method = c("pairwise", "spearman"), 
+       label = TRUE, 
+       label_alpha = TRUE,
+       label_round = 2,
+       high = "#3B9AB2",
+       low = "#F21A00",
+       label_size = 6,
+       legend.size = 8,
+       size = 6)
+
+new_corr
+
+ggsave(filename = here("figures", "prelim-ordinations",
+                       paste0("corrplot-traits_square_", today(), ".jpg")),
+       new_corr,
+       width = 12, height = 10, units = "cm",
+       dpi = 150)
 
 ggpairs(pca_mat)
 
