@@ -182,6 +182,26 @@ chlA_ind <- chlA_sub %>%
             chlA_se = se(chlA_ug_mg)) %>% 
   ungroup()
 
+# ⊣ j. isotopes ---------------------------------------------
+
+isotopes_sub <- isotopes %>% 
+  filter(!is.na(subsample_ID)) %>% 
+  select(!c(sample_id_run, amount_ug)) 
+
+isotopes_ind <- isotopes_sub %>% 
+  separate_wider_delim(cols = subsample_ID, names = c("date", "site", "ind", "sub"), delim = "-", cols_remove = FALSE) %>% 
+  unite("specimen_ID", date:ind, sep = "-") %>% 
+  select(!sub) %>% 
+  group_by(specimen_ID) %>% 
+  summarize(delta_15_n_mean = mean(delta_15_n, na.rm = TRUE),
+            delta_15_n_se = se(delta_15_n),
+            delta_13_c_mean = mean(delta_13_c, na.rm = TRUE),
+            delta_13_c_se = se(delta_13_c),
+            weight_percent_n_mean = mean(weight_percent_n, na.rm = TRUE),
+            weight_percent_n_se = se(weight_percent_n),
+            weight_percent_c_mean = mean(weight_percent_c, na.rm = TRUE),
+            weight_percent_c_se = se(weight_percent_c))
+
 ############################################################-
 # 2. trait by sample matrices -------------------------------
 ############################################################-
@@ -213,6 +233,7 @@ leaf_traits <- metadata_sub %>%
   left_join(., volume_sub, by = "subsample_ID") %>% 
   left_join(., lw_sub, by = "subsample_ID") %>% 
   left_join(., sa_peri_sub, by = "subsample_ID") %>% 
+  left_join(., isotopes_sub, by = "subsample_ID") %>% 
   # ratios
   mutate(sap_ratio = area_total/peri_total,
          sav_ratio = area_total/volume_total_mL,
@@ -245,6 +266,7 @@ ind_traits <- ct_prep %>%
   left_join(., weight_ind, by = "specimen_ID") %>% 
   left_join(., volume_ind, by = "specimen_ID") %>% 
   left_join(., chlA_ind, by = "specimen_ID") %>% 
+  left_join(., isotopes_ind, by = "specimen_ID") %>% 
   left_join(., (metadata_ind %>% select(specimen_ID, date_collected, site)), by = "specimen_ID") %>% 
   filter(!(sp_code == "PTCA" & lifestage == "recruit")) %>% 
   mutate(date_collected = ymd(date_collected)) %>% 

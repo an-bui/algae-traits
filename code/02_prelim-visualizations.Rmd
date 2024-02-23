@@ -1320,8 +1320,97 @@ write_csv(traits_df, file = here::here("data", "km_traits.csv"))
 # Use `rmarkdown::render(here::here("code", "02_prelim-visualizations.Rmd"))` to knit the document.
 ```
 
+# 19. isotopes
 
+```{r}
+delta_15_n_boxplot <- ind_traits %>% 
+  group_by(sp_code) %>% 
+  filter(sp_code %in% algae_proposal) %>% 
+  ggplot(aes(x = sp_code, y = delta_15_n_mean, group = sp_code)) +
+  geom_boxplot(aes(fill = sp_code)) +
+  scale_fill_manual(values = algae_spcode_colors) +
+  geom_jitter() +
+  # geom_text(aes(label = value, y = 0.83), nudge_y = 0.01) + 
+  facet_wrap(~ pigment_type, scales = "free_x") +
+  scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
+  theme_bw() +
+  labs(title = "delta 15 N",
+       x = "Species",
+       y = "delta 15 N") +
+  theme(legend.position = "none",
+        strip.background = element_blank(),
+        strip.text = element_text(size = 20),
+        axis.text = element_text(size = 20),
+        axis.title = element_text(size = 20),
+        plot.title = element_text(size = 20))
+delta_15_n_boxplot
 
+delta_13_c_boxplot <- ind_traits %>% 
+  group_by(sp_code) %>% 
+  filter(sp_code %in% algae_proposal) %>% 
+  ggplot(aes(x = sp_code, y = delta_13_c_mean, group = sp_code)) +
+  geom_boxplot(aes(fill = sp_code)) +
+  scale_fill_manual(values = algae_spcode_colors) +
+  geom_jitter() +
+  # geom_text(aes(label = value, y = 0.83), nudge_y = 0.01) + 
+  facet_wrap(~ pigment_type, scales = "free_x") +
+  scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
+  theme_bw() +
+  labs(title = "delta 13 C",
+       x = "Species",
+       y = "delta 13 C") +
+  theme(legend.position = "none",
+        strip.background = element_blank(),
+        strip.text = element_text(size = 20),
+        axis.text = element_text(size = 20),
+        axis.title = element_text(size = 20),
+        plot.title = element_text(size = 20))
+delta_13_c_boxplot
+
+weight_percent_n_boxplot <- ind_traits %>% 
+  group_by(sp_code) %>% 
+  filter(sp_code %in% algae_proposal) %>% 
+  ggplot(aes(x = sp_code, y = weight_percent_n_mean, group = sp_code)) +
+  geom_boxplot(aes(fill = sp_code)) +
+  scale_fill_manual(values = algae_spcode_colors) +
+  geom_jitter() +
+  # geom_text(aes(label = value, y = 0.83), nudge_y = 0.01) + 
+  facet_wrap(~ pigment_type, scales = "free_x") +
+  scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
+  theme_bw() +
+  labs(title = "% N",
+       x = "Species",
+       y = "% N") +
+  theme(legend.position = "none",
+        strip.background = element_blank(),
+        strip.text = element_text(size = 20),
+        axis.text = element_text(size = 20),
+        axis.title = element_text(size = 20),
+        plot.title = element_text(size = 20))
+weight_percent_n_boxplot
+
+weight_percent_c_boxplot <- ind_traits %>% 
+  group_by(sp_code) %>% 
+  filter(sp_code %in% algae_proposal) %>% 
+  ggplot(aes(x = sp_code, y = weight_percent_c_mean, group = sp_code)) +
+  geom_boxplot(aes(fill = sp_code)) +
+  scale_fill_manual(values = algae_spcode_colors) +
+  geom_jitter() +
+  # geom_text(aes(label = value, y = 0.83), nudge_y = 0.01) + 
+  facet_wrap(~ pigment_type, scales = "free_x") +
+  scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
+  theme_bw() +
+  labs(title = "% C",
+       x = "Species",
+       y = "% C") +
+  theme(legend.position = "none",
+        strip.background = element_blank(),
+        strip.text = element_text(size = 20),
+        axis.text = element_text(size = 20),
+        axis.title = element_text(size = 20),
+        plot.title = element_text(size = 20))
+weight_percent_c_boxplot
+```
 
 
 

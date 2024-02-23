@@ -94,6 +94,12 @@ volume <- read_csv(here::here("data", "google-sheet-traits", "volume_sheet_2023-
 
 chlA <- read_csv(here::here("data", "google-sheet-traits", "chlA_sheet_2023-07-26.csv"))
 
+
+# ⊣ l. isotopes ---------------------------------------------
+
+isotopes <- readxl::read_xls(here("data", "isotopes", "Bui6695_Final.xls"), sheet = "clean",
+                             na = "NA")
+
 ############################################################-
 # 3. categorical traits -------------------------------------
 ############################################################-
