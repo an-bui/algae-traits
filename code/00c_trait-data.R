@@ -76,7 +76,7 @@ weight <- read_csv(here::here("data", "google-sheet-traits", "weight_sheet_2024-
 
 # ⊣ g. surface area and perimeter ---------------------------
 
-sa_peri <- read_csv(here::here("data", "google-sheet-traits", "sa_peri_sheet_2024-01-24.csv"))
+sa_peri <- read_csv(here::here("data", "google-sheet-traits", "sa_peri_sheet_2024-03-14.csv"))
 
 # ⊣ h. branching order (still need to clean up) -------------
 
@@ -106,5 +106,16 @@ isotopes <- readxl::read_xls(here("data", "isotopes", "Bui6695_Final.xls"), shee
 
 coarse_traits <- read_csv(here::here("data", "algae-traits_literature-search_2022-02-28.csv"))
 
-joe_traits <- read_csv(here::here("data", "fong-categorical", "Traits.csv"))
+joe_traits <- read_csv(here::here("data", "fong-categorical", "Traits.csv")) %>% 
+  mutate(species = str_to_sentence(species))
+
+############################################################-
+# 4. LTE data -----------------------------------------------
+############################################################-
+
+lte <- read_csv(here("data", "SBC-LTER-benthics", "LTE_All_Species_Biomass_at_transect_20220208.csv")) %>% 
+  clean_names() %>% 
+  mutate(across(c(site, treatment, group, mobility, growth_morph), tolower))
+
+
 

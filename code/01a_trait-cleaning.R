@@ -303,3 +303,33 @@ ind_traits <- ct_prep %>%
 #   # replace NaNs with NAs
 #   mutate_all(na_if, "NaN")
 
+############################################################-
+# 3. categorical JoE traits ---------------------------------
+############################################################-
+
+lte_spp <- lte %>% 
+  filter(group == "algae") %>% 
+  filter(!scientific_name %in% c("Unidentifiable juvenile kelp", 
+                              # "Halymenia spp.; Schizymenia pacifica",
+                              "Unidentifiable Branching Red Alga", 
+                              "small Ceramiaceae spp.",
+                              "Unidentifiable small brown blade")) %>% 
+  select(scientific_name) %>% 
+  unique() %>% 
+  left_join(., joe_traits, by = c("scientific_name" = "species"))
+# 14 spp have traits already from Fong et al. JoE, 40 species do not, 1 "species" combines two genera
+
+# write_csv(lte_spp, file = here("data", "fong-categorical", "joe-traits-lter.csv"))
+
+
+
+
+
+
+
+
+
+
+
+
+

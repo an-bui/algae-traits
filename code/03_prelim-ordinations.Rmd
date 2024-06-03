@@ -110,7 +110,7 @@ pca_mat <- ind_traits %>%
     longevity == "perennial" ~ 3,
     longevity == "annual or perennial" ~ 2
   )) %>% 
-  dplyr::select(specimen_ID, maximum_height, total_volume, total_dry, sta_mean, tdmc_mean, sav_mean, sap_mean, fvfm_mean, thickness_mm_mean) %>% 
+  dplyr::select(specimen_ID, maximum_height, total_volume, sav_mean, thickness_mm_mean, tdmc_mean, sav_mean, sap_mean, fvfm_mean, thickness_mm_mean) %>% 
   column_to_rownames("specimen_ID") %>% 
   drop_na()
 
@@ -193,8 +193,8 @@ plot_PCA_12 <- ggplot() +
         axis.text = element_text(size = 16),
         title = element_text(size = 20),
         legend.text = element_text(size = 12)) +
-  labs(x = "PC1 (28.1%)",
-       y = "PC2 (21.4%)",
+  labs(x = "PC1 (28.2%)",
+       y = "PC2 (22.3%)",
        title = "PC1 and PC2",
        color = "Scientific name") 
 plot_PCA_12
@@ -221,7 +221,7 @@ plot_PCA_13 <- ggplot() +
         axis.text = element_text(size = 16),
         title = element_text(size = 20),
         legend.text = element_text(size = 12)) +
-  labs(x = "PC1 (28.1%)",
+  labs(x = "PC1 (28.2%)",
        y = "PC3 (11.5%)",
        title = "PC1 and PC3",
        color = "Scientific name") 
@@ -259,7 +259,7 @@ sort(abs(loadings[,2]), decreasing = TRUE)
 M <- pca_mat %>% 
   cor(method = "spearman")
 
-corr_traits <- corrplot(M, method = "circle", type = "lower", insig = "blank", addCoef.col = "black")
+corr_traits <- corrplot(M, method = "circle", type = "lower", insig = "pch", addCoef.col = "black")
 corr_traits
 
 new_corr <- ggcorr(data = pca_mat, 
@@ -275,11 +275,11 @@ new_corr <- ggcorr(data = pca_mat,
 
 new_corr
 
-ggsave(filename = here("figures", "prelim-ordinations",
-                       paste0("corrplot-traits_square_", today(), ".jpg")),
-       new_corr,
-       width = 12, height = 10, units = "cm",
-       dpi = 150)
+# ggsave(filename = here("figures", "prelim-ordinations",
+#                        paste0("corrplot-traits_square_", today(), ".jpg")),
+#        new_corr,
+#        width = 12, height = 10, units = "cm",
+#        dpi = 150)
 
 ggpairs(pca_mat)
 
@@ -295,9 +295,9 @@ tbsample_matrix_ptca <- av_leaf_values %>%
   left_join(., volume_ind, by = "specimen_ID") %>% 
   left_join(., fvfm_ind, by = "specimen_ID") %>% 
   left_join(., ind_height, by = "specimen_ID") %>% 
-  dplyr::select(site, lifestage, specimen_ID, sta_mean, tdmc_mean, total_volume, fvfm_mean, frond_length_mean, frond_width_mean, maximum_height) %>% 
+  dplyr::select(site, lifestage, specimen_ID, thickness_mm_mean, tdmc_mean, total_volume, fvfm_mean, frond_length_mean, frond_width_mean, maximum_height) %>% 
   rename("FvFm" = fvfm_mean,
-         "STA" = sta_mean,
+         "STA" = thickness_mm_mean,
          "TDMC" = tdmc_mean,
          "Volume" = total_volume,
          "Frond length" = frond_length_mean,
@@ -311,9 +311,9 @@ tbsample_mat <- av_leaf_values %>%
   left_join(., volume_ind, by = "specimen_ID") %>% 
   left_join(., fvfm_ind, by = "specimen_ID") %>% 
   left_join(., ind_height, by = "specimen_ID") %>% 
-  dplyr::select(specimen_ID, sta_mean, tdmc_mean, total_volume, fvfm_mean, frond_length_mean, frond_width_mean, maximum_height) %>% 
+  dplyr::select(specimen_ID, thickness_mm_mean, tdmc_mean, total_volume, fvfm_mean, frond_length_mean, frond_width_mean, maximum_height) %>% 
   rename("FvFm" = fvfm_mean,
-         "STA" = sta_mean,
+         "STA" = thickness_mm_mean,
          "TDMC" = tdmc_mean,
          "Volume" = total_volume,
          "Frond length" = frond_length_mean,
@@ -466,9 +466,189 @@ plot_PCA_12_env
 adonis2(env_mat ~ site, data = CWM_fixed_filtered, method = "euclidean")
 ```
 
-# 6. LTEs
+# 7. "Tradeoffs"
+
+## summarizing
 
 ```{r}
+tradeoff_df <- ind_traits %>% 
+  filter(sp_code %in% algae_proposal) %>% 
+  # filter(!(sp_code %in% c("CO"))) %>% 
+  # filter(!(sp_code == "PTCA" & lifestage == "recruit")) %>% 
+  # weird Nienburgia?
+  filter(!(specimen_ID %in% c("20210721-BULL-023", "20210719-IVEE-009", "20210719-IVEE-010")))
 
+tradeoff_summ <- tradeoff_df %>% 
+  group_by(scientific_name) %>% 
+  summarize(mean_thickness = mean(thickness_mm_mean, na.rm = TRUE),
+            sd_thickness = sd(thickness_mm_mean, na.rm = TRUE), 
+            mean_sav = mean(sav_mean, na.rm = TRUE),
+            sd_sav = sd(sav_mean, na.rm = TRUE),
+            mean_sap = mean(sap_mean, na.rm = TRUE),
+            sd_sap = mean(sap_mean, na.rm = TRUE),
+            mean_vol = mean(total_volume, na.rm = TRUE),
+            sd_vol = sd(total_volume, na.rm = TRUE),
+            mean_tdmc = mean(tdmc_mean, na.rm = TRUE),
+            sd_tdmc = sd(tdmc_mean, na.rm = TRUE),
+            mean_fvfm = mean(fvfm_mean, na.rm = TRUE),
+            sd_fvfm = sd(fvfm_mean, na.rm = TRUE)) 
+```
+
+
+## a. SAV and thickness
+
+```{r}
+thick_sav <- ggplot(tradeoff_summ,
+                    aes(x = mean_thickness,
+                        y = mean_sav)) +
+  geom_errorbarh(aes(xmin = mean_thickness - sd_thickness,
+                     xmax = mean_thickness + sd_thickness),
+                 alpha = 0.4) +
+  geom_errorbar(aes(ymin = mean_sav - sd_sav,
+                    ymax = mean_sav + sd_sav),
+                alpha = 0.4) +
+  geom_point(aes(fill = scientific_name),
+             size = 4,
+             stroke = 1,
+             shape = 21) +
+  geom_point(data = ind_traits,
+             aes(x = thickness_mm_mean,
+                 y = sav_mean,
+                 color = scientific_name),
+             alpha = 0.2) +
+  scale_fill_manual(values = algae_colors) +
+  scale_color_manual(values = algae_colors) +
+  annotate(geom = "text", x = 1, y = 7500, label = "Pearson's r = -0.645") +
+  labs(x = "Mean thickness (mm)",
+       y = "Mean surface area:volume ratio (mm \U00B2/mL") +
+  theme_bw() +
+  theme(legend.position = "none",
+        panel.grid = element_blank())
+
+thick_sav
+
+# ggsave(here::here("figures", "tradeoffs",
+#                   paste("thickness-sav_", today(), ".jpg", sep = "")),
+#        thick_sav,
+#        width = 8, height = 8, dpi = 150)
+
+```
+
+## b. SAV and SAP
+
+```{r}
+sap_sav <- ggplot(tradeoff_summ,
+                  aes(x = mean_sap,
+                      y = mean_sav)) +
+  geom_errorbarh(aes(xmin = mean_sap - sd_sap,
+                     xmax = mean_sap + sd_sap),
+                 alpha = 0.4) +
+  geom_errorbar(aes(ymin = mean_sav - sd_sav,
+                    ymax = mean_sav + sd_sav),
+                alpha = 0.4) +
+  geom_point(aes(fill = scientific_name),
+             size = 4,
+             stroke = 1,
+             shape = 21) +
+  geom_point(data = ind_traits,
+             aes(x = sap_mean,
+                 y = sav_mean,
+                 color = scientific_name),
+             alpha = 0.2) +
+  scale_fill_manual(values = algae_colors) +
+  scale_color_manual(values = algae_colors) +
+  annotate(geom = "text", x = 60, y = 7500, label = "Pearson's r = -0.389") +
+  labs(x = "Mean surface area:perimeter ratio (mm)",
+       y = "Mean surface area:volume ratio (mm \U00B2/mL") +
+  theme_bw() +
+  theme(legend.position = "none",
+        panel.grid = element_blank())
+
+sap_sav
+
+# ggsave(here::here("figures", "tradeoffs",
+#                   paste("sap-sav_", today(), ".jpg", sep = "")),
+#        sap_sav,
+#        width = 8, height = 8, dpi = 150)
+```
+
+## c. SAP and total volume
+
+Pearson's r = 0.409
+
+```{r}
+sap_vol <- ggplot(tradeoff_summ,
+                  aes(x = mean_sap,
+                      y = mean_vol)) +
+  geom_errorbarh(aes(xmin = mean_sap - sd_sap,
+                     xmax = mean_sap + sd_sap),
+                 alpha = 0.4) +
+  geom_errorbar(aes(ymin = mean_vol - sd_vol,
+                    ymax = mean_vol + sd_vol),
+                alpha = 0.4) +
+  geom_point(aes(fill = scientific_name),
+             size = 4,
+             stroke = 1,
+             shape = 21) +
+  geom_point(data = ind_traits %>% filter(specimen_ID != "20220824-MOHK-001"),
+             aes(x = sap_mean,
+                 y = total_volume,
+                 color = scientific_name),
+             alpha = 0.2) +
+  scale_fill_manual(values = algae_colors) +
+  scale_color_manual(values = algae_colors) +
+  annotate(geom = "text", x = 60, y = 1000, label = "Pearson's r = 0.409") +
+  labs(x = "Mean surface area:perimeter ratio (mm)",
+       y = "Mean volume (mL)") +
+  theme_bw() +
+  theme(legend.position = "none",
+        panel.grid = element_blank())
+
+sap_vol
+
+# ggsave(here::here("figures", "tradeoffs",
+#                   paste("sap-vol_", today(), ".jpg", sep = "")),
+#        sap_vol,
+#        width = 8, height = 8, dpi = 150)
+```
+
+## d. TDMC and fvfm
+
+Pearson's r = -0.446
+
+```{r}
+tdmc_fvfm <- ggplot(tradeoff_summ,
+                    aes(x = mean_tdmc,
+                        y = mean_fvfm)) +
+  geom_errorbarh(aes(xmin = mean_tdmc - sd_tdmc,
+                     xmax = mean_tdmc + sd_tdmc),
+                 alpha = 0.4) +
+  geom_errorbar(aes(ymin = mean_fvfm - sd_fvfm,
+                    ymax = mean_fvfm + sd_fvfm),
+                alpha = 0.4) +
+  geom_point(aes(fill = scientific_name),
+             size = 4,
+             stroke = 1,
+             shape = 21) +
+  geom_point(data = ind_traits,
+             aes(x = tdmc_mean,
+                 y = fvfm_mean,
+                 color = scientific_name),
+             alpha = 0.2) +
+  scale_fill_manual(values = algae_colors) +
+  scale_color_manual(values = algae_colors) +
+  annotate(geom = "text", x = 0.75, y = 0.8, label = "Pearson's r = -0.446") +
+  labs(x = "Mean thallus dry matter content (dry mass:fresh mass)",
+       y = "Mean photosynthetic efficiency") +
+  theme_bw() +
+  theme(legend.position = "none",
+        panel.grid = element_blank())
+
+tdmc_fvfm
+
+# ggsave(here::here("figures", "tradeoffs",
+#                   paste("tdmc-fvfm_", today(), ".jpg", sep = "")),
+#        tdmc_fvfm,
+#        width = 8, height = 8, dpi = 150)
 ```
 
