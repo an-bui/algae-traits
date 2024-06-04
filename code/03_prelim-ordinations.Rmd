@@ -110,7 +110,31 @@ pca_mat <- ind_traits %>%
     longevity == "perennial" ~ 3,
     longevity == "annual or perennial" ~ 2
   )) %>% 
-  dplyr::select(specimen_ID, maximum_height, total_volume, sav_mean, thickness_mm_mean, tdmc_mean, sav_mean, sap_mean, fvfm_mean, thickness_mm_mean) %>% 
+  dplyr::select(specimen_ID, maximum_height, total_volume, sav_mean, thickness_mm_mean, tdmc_mean, sta_mean, sav_mean, sap_mean, fvfm_mean, thickness_mm_mean) %>% 
+  column_to_rownames("specimen_ID") %>% 
+  drop_na()
+
+pca_mat_with_cn <- ind_traits %>% 
+  filter(sp_code %in% algae_proposal) %>% 
+  # filter(!(sp_code %in% c("CO"))) %>% 
+  # filter(!(sp_code == "PTCA" & lifestage == "recruit")) %>% 
+  # weird Nienburgia?
+  filter(!(specimen_ID %in% c("20210721-BULL-023", "20210719-IVEE-009"))) %>% 
+  mutate(growth_form_num = case_when(
+    growth_form == "leathery_macrophyte" ~ 1,
+    growth_form == "corticated_macrophytes" ~ 2,
+    growth_form == "corticated_foliose" ~ 3
+  ), 
+  pigment_type_num = case_when(
+    pigment_type == "red" ~ 1,
+    pigment_type == "brown" ~ 2
+  ), 
+  longevity_num = case_when(
+    longevity == "annual" ~ 1,
+    longevity == "perennial" ~ 3,
+    longevity == "annual or perennial" ~ 2
+  )) %>% 
+  dplyr::select(specimen_ID, maximum_height, total_volume, sav_mean, thickness_mm_mean, tdmc_mean, sta_mean, sav_mean, sap_mean, fvfm_mean, thickness_mm_mean, weight_percent_n_mean, weight_percent_c_mean) %>% 
   column_to_rownames("specimen_ID") %>% 
   drop_na()
 
@@ -193,8 +217,8 @@ plot_PCA_12 <- ggplot() +
         axis.text = element_text(size = 16),
         title = element_text(size = 20),
         legend.text = element_text(size = 12)) +
-  labs(x = "PC1 (28.2%)",
-       y = "PC2 (22.3%)",
+  labs(x = "PC1 (27%)",
+       y = "PC2 (25%)",
        title = "PC1 and PC2",
        color = "Scientific name") 
 plot_PCA_12
@@ -221,8 +245,8 @@ plot_PCA_13 <- ggplot() +
         axis.text = element_text(size = 16),
         title = element_text(size = 20),
         legend.text = element_text(size = 12)) +
-  labs(x = "PC1 (28.2%)",
-       y = "PC3 (11.5%)",
+  labs(x = "PC1 (27%)",
+       y = "PC3 (12%)",
        title = "PC1 and PC3",
        color = "Scientific name") 
 plot_PCA_13
@@ -240,7 +264,7 @@ sort(abs(loadings[,2]), decreasing = TRUE)
 # ggsave(here::here("figures/prelim-ordinations",
 #                   paste("PCA_together_cont-", today(), ".jpg", sep = "")),
 #        pca_together,
-#        width = 20, height = 8, dpi = 150)
+#        width = 20, height = 12, dpi = 300)
 # 
 # ggsave(here::here("figures/prelim-ordinations",
 #                   paste("PCA_spp-all-12-", today(), ".jpg", sep = "")),
@@ -281,7 +305,6 @@ new_corr
 #        width = 12, height = 10, units = "cm",
 #        dpi = 150)
 
-ggpairs(pca_mat)
 
 ```
 
@@ -468,6 +491,20 @@ adonis2(env_mat ~ site, data = CWM_fixed_filtered, method = "euclidean")
 
 # 7. "Tradeoffs"
 
+## pairs plot
+
+```{r}
+pairs_plot <- ggpairs(pca_mat_with_cn)
+pairs_plot
+```
+
+potentially interesting pairs:  
+
+- SAV and thickness (-0.762)  
+- thickness and N (-0.749)  
+- thickness and C (-0.588)   
+- STA and C (0.597)
+
 ## summarizing
 
 ```{r}
@@ -491,7 +528,13 @@ tradeoff_summ <- tradeoff_df %>%
             mean_tdmc = mean(tdmc_mean, na.rm = TRUE),
             sd_tdmc = sd(tdmc_mean, na.rm = TRUE),
             mean_fvfm = mean(fvfm_mean, na.rm = TRUE),
-            sd_fvfm = sd(fvfm_mean, na.rm = TRUE)) 
+            sd_fvfm = sd(fvfm_mean, na.rm = TRUE),
+            mean_c = mean(weight_percent_c_mean, na.rm = TRUE),
+            sd_c = sd(weight_percent_c_mean, na.rm = TRUE),
+            mean_n = mean(weight_percent_n_mean, na.rm = TRUE),
+            sd_n = sd(weight_percent_n_mean, na.rm = TRUE),
+            mean_sta = mean(sta_mean, na.rm = TRUE),
+            sd_sta = sd(sta_mean, na.rm = TRUE))
 ```
 
 
@@ -518,14 +561,18 @@ thick_sav <- ggplot(tradeoff_summ,
              alpha = 0.2) +
   scale_fill_manual(values = algae_colors) +
   scale_color_manual(values = algae_colors) +
-  annotate(geom = "text", x = 1, y = 7500, label = "Pearson's r = -0.645") +
+  annotate(geom = "text", x = 1, y = 7500, label = "Spearman ρ = -0.72", size = 10) +
   labs(x = "Mean thickness (mm)",
        y = "Mean surface area:volume ratio (mm \U00B2/mL") +
   theme_bw() +
   theme(legend.position = "none",
-        panel.grid = element_blank())
+        panel.grid = element_blank(),
+        text = element_text(size = 18))
 
 thick_sav
+
+cor.test(ind_traits$thickness_mm_mean, ind_traits$sav_mean,
+         method = "spearman")
 
 # ggsave(here::here("figures", "tradeoffs",
 #                   paste("thickness-sav_", today(), ".jpg", sep = "")),
@@ -557,14 +604,18 @@ sap_sav <- ggplot(tradeoff_summ,
              alpha = 0.2) +
   scale_fill_manual(values = algae_colors) +
   scale_color_manual(values = algae_colors) +
-  annotate(geom = "text", x = 60, y = 7500, label = "Pearson's r = -0.389") +
+  annotate(geom = "text", x = 60, y = 7500, label = "Spearman ρ = -0.194", size = 10) +
   labs(x = "Mean surface area:perimeter ratio (mm)",
        y = "Mean surface area:volume ratio (mm \U00B2/mL") +
   theme_bw() +
   theme(legend.position = "none",
-        panel.grid = element_blank())
+        panel.grid = element_blank(),
+        text = element_text(size = 18))
 
 sap_sav
+
+cor.test(ind_traits$sap_mean, ind_traits$sav_mean,
+         method = "spearman")
 
 # ggsave(here::here("figures", "tradeoffs",
 #                   paste("sap-sav_", today(), ".jpg", sep = "")),
@@ -597,14 +648,18 @@ sap_vol <- ggplot(tradeoff_summ,
              alpha = 0.2) +
   scale_fill_manual(values = algae_colors) +
   scale_color_manual(values = algae_colors) +
-  annotate(geom = "text", x = 60, y = 1000, label = "Pearson's r = 0.409") +
+  annotate(geom = "text", x = 60, y = 1000, label = "Spearman ρ = 0.48", size = 10) +
   labs(x = "Mean surface area:perimeter ratio (mm)",
        y = "Mean volume (mL)") +
   theme_bw() +
   theme(legend.position = "none",
-        panel.grid = element_blank())
+        panel.grid = element_blank(),
+        text = element_text(size = 18))
 
 sap_vol
+
+cor.test(ind_traits$sap_mean, ind_traits$total_volume,
+         method = "spearman")
 
 # ggsave(here::here("figures", "tradeoffs",
 #                   paste("sap-vol_", today(), ".jpg", sep = "")),
@@ -637,18 +692,64 @@ tdmc_fvfm <- ggplot(tradeoff_summ,
              alpha = 0.2) +
   scale_fill_manual(values = algae_colors) +
   scale_color_manual(values = algae_colors) +
-  annotate(geom = "text", x = 0.75, y = 0.8, label = "Pearson's r = -0.446") +
+  annotate(geom = "text", x = 0.75, y = 0.8, label = "Spearman ρ = -0.42", size = 10) +
   labs(x = "Mean thallus dry matter content (dry mass:fresh mass)",
        y = "Mean photosynthetic efficiency") +
   theme_bw() +
   theme(legend.position = "none",
-        panel.grid = element_blank())
+        panel.grid = element_blank(),
+        text = element_text(size = 18))
 
 tdmc_fvfm
+
+cor.test(ind_traits$tdmc_mean, ind_traits$fvfm_mean,
+         method = "spearman")
 
 # ggsave(here::here("figures", "tradeoffs",
 #                   paste("tdmc-fvfm_", today(), ".jpg", sep = "")),
 #        tdmc_fvfm,
+#        width = 8, height = 8, dpi = 150)
+```
+
+## e. N and STA
+
+```{r}
+n_sta <- ggplot(tradeoff_summ,
+                    aes(x = mean_n,
+                        y = mean_sta)) +
+  # geom_errorbarh(aes(xmin = mean_n - sd_n,
+  #                    xmax = mean_n + sd_n),
+  #                alpha = 0.4) +
+  # geom_errorbar(aes(ymin = mean_sta - sd_sta,
+  #                   ymax = mean_sta + sd_sta),
+  #               alpha = 0.4) +
+  geom_point(aes(fill = scientific_name),
+             size = 4,
+             stroke = 1,
+             shape = 21) +
+  geom_point(data = ind_traits,
+             aes(x = weight_percent_n_mean,
+                 y = sta_mean,
+                 color = scientific_name),
+             alpha = 0.2) +
+  scale_fill_manual(values = algae_colors) +
+  scale_color_manual(values = algae_colors) +
+  # annotate(geom = "text", x = 20, y = 0.8, label = "Spearman ρ = 0.789", size = 10) +
+  labs(x = "Mean %C",
+       y = "Mean specific thallus area (mm \U00B2/g)") +
+  theme_bw() +
+  theme(legend.position = "none",
+        panel.grid = element_blank(),
+        text = element_text(size = 18))
+
+n_sta
+
+cor.test(ind_traits$weight_percent_c_mean, ind_traits$fvfm_mean,
+         method = "spearman")
+
+# ggsave(here::here("figures", "tradeoffs",
+#                   paste("c-fvfm_", today(), ".jpg", sep = "")),
+#        c_fvfm,
 #        width = 8, height = 8, dpi = 150)
 ```
 
