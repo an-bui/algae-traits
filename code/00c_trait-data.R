@@ -88,7 +88,7 @@ toughness <- read_csv(here::here("data", "google-sheet-traits", "toughness_sheet
 
 # ⊣ j. volume -----------------------------------------------
 
-volume <- read_csv(here::here("data", "google-sheet-traits", "volume_sheet_2023-11-08.csv"))
+volume <- read_csv(here::here("data", "google-sheet-traits", "volume_sheet_2024-06-20.csv"))
 
 # ⊣ k. chlorophyll A ----------------------------------------
 
@@ -116,6 +116,15 @@ joe_traits <- read_csv(here::here("data", "fong-categorical", "Traits.csv")) %>%
 lte <- read_csv(here("data", "SBC-LTER-benthics", "LTE_All_Species_Biomass_at_transect_20220208.csv")) %>% 
   clean_names() %>% 
   mutate(across(c(site, treatment, group, mobility, growth_morph), tolower))
+
+############################################################-
+# 5. categorical trait data ---------------------------------
+############################################################-
+
+# in dropbox: /Users/An/Dropbox/grad-work/01_research/02-phd/03-functional-responses/data
+
+cat_data <- repmis::source_data("https://www.dropbox.com/scl/fi/vpnue7o7dz2so6z1sxpwj/joe-traits-lter_2024-06-04.csv?rlkey=youehrjjnbunfc93gegiemopq&dl=1")
+
 
 
 
