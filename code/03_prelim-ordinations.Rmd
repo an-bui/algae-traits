@@ -892,12 +892,11 @@ cont_nmds_plot <- ggplot(cont_nmds_scores,
                      breaks = c(-0.2, 0, 0.2)) +
   scale_y_continuous(limits = c(-0.25, 0.25),
                      breaks = c(-0.2, 0, 0.2)) +
-  scale_color_manual(values = c(cluster1, cluster2, cluster3, cluster4)) +
-  scale_fill_manual(values = c(cluster1, cluster2, cluster3, cluster4)) +
+  scale_color_manual(values = c(cluster1, cluster2, cluster3)) +
+  scale_fill_manual(values = c(cluster1, cluster2, cluster3)) +
   annotate(geom = "text", x = -0.2, y = 0.15, label = "1", color = cluster1, size = 10) +
   annotate(geom = "text", x = -0.1, y = -0.1, label = "2", color = cluster2, size = 10) +
-  annotate(geom = "text", x = 0.2, y = -0.2, label = "3", color = cluster3, size = 10) +
-  annotate(geom = "text", x = 0.2, y = 0.1, label = "4", color = cluster4, size = 10) +
+  annotate(geom = "text", x = 0.2, y = 0.08, label = "3", color = cluster3, size = 10) +
   labs(title = "PAM clusters with continuous traits") +
   theme_bw() +
   theme(legend.position = "none",
@@ -941,4 +940,34 @@ cat_nmds_plot
 #        width = 6, height = 6, units = "cm", dpi = 300)
 ```
 
+## e. table
+
+```{r}
+FitFlextableToPage <- function(ft, pgwidth = 6){
+  
+  ft_out <- ft %>% autofit()
+  
+  ft_out <- width(ft_out, width = dim(ft_out)$widths*pgwidth /(flextable_dim(ft_out)$widths))
+  return(ft_out)
+}
+
+cont_clusters_table <- cont_spp_mat %>% 
+  rownames_to_column("scientific_name") %>% 
+  left_join(., cont_clusters, by = "scientific_name") %>% 
+  arrange(cont_cluster) %>% 
+  relocate(cont_cluster, .after = "scientific_name") %>% 
+  rename(cluster = cont_cluster) %>% 
+  mutate(across(maximum_height:fvfm_mean, ~ round(., digits = 2))) %>% 
+  flextable() %>% 
+  bg(i = ~ cluster == 1, j = c("scientific_name", "cluster"), bg = cluster1) %>% 
+  bg(i = ~ cluster == 2, j = c("scientific_name", "cluster"), bg = cluster2) %>% 
+  bg(i = ~ cluster == 3, j = c("scientific_name", "cluster"), bg = cluster3) %>% 
+  autofit() %>% 
+  FitFlextableToPage(pgwidth = 10)
+cont_clusters_table
+
+# save_as_docx(cont_clusters_table,
+#              path = here::here("tables",
+#                                paste0("cont-trait-clusters_", today(), ".docx")))
+```
 
