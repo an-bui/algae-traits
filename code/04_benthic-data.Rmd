@@ -18,7 +18,7 @@ knitr::opts_chunk$set(echo = TRUE)
 # 0. set up
 ```{r source, warning = FALSE, message = FALSE}
 # source the cleaning/summarizing script, which sources the set up
-source(here::here("code", "01_cleaning-and-summarizing.R"))
+source(here::here("code", "01a_trait-cleaning.R"))
 ```
 
 # 1. Biomass
