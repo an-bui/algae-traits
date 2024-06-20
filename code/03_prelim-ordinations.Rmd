@@ -753,3 +753,192 @@ cor.test(ind_traits$weight_percent_c_mean, ind_traits$fvfm_mean,
 #        width = 8, height = 8, dpi = 150)
 ```
 
+# 8. Clustering
+
+Need two data frames:  
+
+1. species x trait for continuous traits  
+2. species x trait for categorical traits
+
+## a. getting species x trait matrices
+
+```{r}
+cont_spp_mat <- ind_traits %>% 
+  filter(sp_code %in% algae_proposal) %>% 
+  # filter(!(sp_code %in% c("CO"))) %>% 
+  # filter(!(sp_code == "PTCA" & lifestage == "recruit")) %>% 
+  # weird Nienburgia?
+  filter(!(specimen_ID %in% c("20210721-BULL-023"))) %>% 
+  select(scientific_name, maximum_height, total_volume, sav_mean, thickness_mm_mean, tdmc_mean, sta_mean, sav_mean, sap_mean, fvfm_mean, thickness_mm_mean) %>% 
+  group_by(scientific_name) %>% 
+  mutate(across(c(maximum_height, total_volume, sav_mean, thickness_mm_mean, tdmc_mean, sta_mean, sav_mean, sap_mean, fvfm_mean, thickness_mm_mean), ~mean(., na.rm = TRUE))) %>% 
+  unique() %>% 
+  column_to_rownames("scientific_name")
+
+cat_spp_mat <- cat_data %>% 
+  # all traits
+  select(scientific_name,
+         size_cm, thickness, position_to_benthos, articulated, stipe,
+         midrib, branching, branch_shape, blades, blade_category,
+         coenocyte, attachment, tissue_complexity, growth, calcification) %>%
+  filter(scientific_name %in% rownames(cont_spp_mat)) %>% 
+  column_to_rownames("scientific_name") %>% 
+  mutate(across(.cols = thickness:calcification, as_factor))
+```
+
+## b. gower dissimilarity matrices
+
+```{r}
+cont_gower <- gowdis(cont_spp_mat)
+cat_gower <- gowdis(cat_spp_mat)
+```
+
+## c. clustering
+
+continuous
+
+```{r}
+cont_groups <- cluster::pam(x = cont_gower,
+                            k = 3,
+                            metric = "euclidean")
+
+pairwise.perm.manova(cont_gower, 
+                     fact = cont_groups$clustering, 
+                     p.method = "none")
+
+# 4 is too many groups
+# groups 1 and 4 are not different from each other
+# cont_groups <- cluster::pam(x = cont_gower,
+#                             k = 4,
+#                             metric = "euclidean")
+# 
+# pairwise.perm.manova(cont_gower,
+#                      fact = cont_groups$clustering,
+#                      p.method = "none")
+```
+
+categorical
+
+```{r}
+cat_groups <- cluster::pam(x = cat_gower,
+                            k = 2,
+                            metric = "euclidean")
+
+pairwise.perm.manova(cat_gower, 
+                     fact = cat_groups$clustering, 
+                     p.method = "none")
+
+# 3 is too many groups
+# groups 2 and 3 are not different
+# cat_groups <- cluster::pam(x = cat_gower,
+#                             k = 3,
+#                             metric = "euclidean")
+# 
+# pairwise.perm.manova(cat_gower, 
+#                      fact = cat_groups$clustering, 
+#                      p.method = "none")
+```
+
+getting clusters out
+
+```{r}
+cont_clusters <- cont_groups$clustering %>% 
+  enframe() %>% 
+  rename(cont_cluster = value,
+         scientific_name = name) %>% 
+  # make sure clusters are factors
+  mutate(cont_cluster = factor(cont_cluster)) 
+
+cat_clusters <- cat_groups$clustering %>% 
+  enframe() %>% 
+  rename(cat_cluster = value,
+         scientific_name = name) %>% 
+  # make sure clusters are factors
+  mutate(cat_cluster = factor(cat_cluster)) 
+```
+
+
+## d. visualizing
+
+```{r}
+cont_nmds <- metaMDS(cont_gower) 
+
+cont_nmds_scores <- scores(cont_nmds,
+                           choices = c(1, 2),
+                           display = c("sites", "species"),
+                           tidy = TRUE) %>% 
+  as_tibble(rownames = NA) %>% 
+  rownames_to_column("scientific_name") %>% 
+  mutate(label = case_when(
+    scientific_name == "Dictyota binghamiae; Dictyota flabellata; Dictyota coriacea" ~ "Dictyota spp.",
+    scientific_name == "Chondracanthus corymbiferus; Chondracanthus exasperatus" ~ "Chondracanthus spp.",
+    TRUE ~ scientific_name
+  )) %>% 
+  left_join(., lte_spp, by = "scientific_name") %>% 
+  select(!(life_cycle:eco_zone)) %>% 
+  left_join(., cont_clusters, by = "scientific_name") %>% 
+  left_join(., cat_clusters, by = "scientific_name")
+
+
+cont_nmds_plot <- ggplot(cont_nmds_scores,
+                          aes(x = NMDS1, y = NMDS2)) +
+  geom_point(aes(color = cont_cluster,
+                 shape = taxon_phylum), 
+             size = 1,
+             alpha = 0.9) +
+  geom_convexhull(aes(fill = cont_cluster),
+                  alpha = 0.6) +
+  scale_x_continuous(limits = c(-0.25, 0.25),
+                     breaks = c(-0.2, 0, 0.2)) +
+  scale_y_continuous(limits = c(-0.25, 0.25),
+                     breaks = c(-0.2, 0, 0.2)) +
+  scale_color_manual(values = c(cluster1, cluster2, cluster3, cluster4)) +
+  scale_fill_manual(values = c(cluster1, cluster2, cluster3, cluster4)) +
+  annotate(geom = "text", x = -0.2, y = 0.15, label = "1", color = cluster1, size = 10) +
+  annotate(geom = "text", x = -0.1, y = -0.1, label = "2", color = cluster2, size = 10) +
+  annotate(geom = "text", x = 0.2, y = -0.2, label = "3", color = cluster3, size = 10) +
+  annotate(geom = "text", x = 0.2, y = 0.1, label = "4", color = cluster4, size = 10) +
+  labs(title = "PAM clusters with continuous traits") +
+  theme_bw() +
+  theme(legend.position = "none",
+        panel.grid = element_blank(),
+        text = element_text(size = 16))
+  
+cont_nmds_plot
+
+cat_nmds_plot <- ggplot(cont_nmds_scores,
+                          aes(x = NMDS1, y = NMDS2)) +
+  geom_point(aes(color = cat_cluster,
+                 shape = taxon_phylum), 
+             size = 1,
+             alpha = 0.9) +
+  geom_convexhull(aes(fill = cat_cluster),
+                  alpha = 0.6) +
+  scale_x_continuous(limits = c(-0.25, 0.25),
+                     breaks = c(-0.2, 0, 0.2)) +
+  scale_y_continuous(limits = c(-0.25, 0.25),
+                     breaks = c(-0.2, 0, 0.2)) +
+  scale_color_manual(values = c(`1` = cat_cluster1, `2` = cat_cluster2)) +
+  scale_fill_manual(values = c(`1` = cat_cluster1, `2` = cat_cluster2)) +
+  annotate(geom = "text", x = 0.2, y = -0.2, label = "1", color = cat_cluster1, size = 10) +
+  annotate(geom = "text", x = -0.2, y = 0, label = "2", color = cat_cluster2, size = 10) +
+  labs(title = "PAM clusters with categorical traits") +
+  theme_bw() +
+  theme(legend.position = "none",
+        panel.grid = element_blank(),
+        text = element_text(size = 12))
+  
+cat_nmds_plot
+
+# ggsave(here::here("figures", "prelim-ordinations",
+#                   paste("cont-nmds-plot_", today(), ".jpg", sep = "")),
+#        cont_nmds_plot,
+#        width = 6, height = 6, units = "cm", dpi = 300)
+# 
+# ggsave(here::here("figures", "prelim-ordinations",
+#                   paste("cat-nmds-plot_", today(), ".jpg", sep = "")),
+#        cat_nmds_plot,
+#        width = 6, height = 6, units = "cm", dpi = 300)
+```
+
+

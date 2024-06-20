@@ -108,10 +108,20 @@ weight_ind <- weight %>%
 
 # subsample
 volume_sub <- volume %>%
-  select(subsample_ID, volume_total_mL)
+  select(subsample_ID, volume_total_mL) %>% 
+  # for samples that had too small of a volume to read, make them have 1 mL volume
+  mutate(volume_total_mL = case_when(
+    subsample_ID %in% c("20210719-IVEE-009-A", "20210719-IVEE-010-A", "20220407-AQUE-010-F") ~  1,
+    TRUE ~ volume_total_mL
+  ))
 
 # individual
 volume_ind <- volume %>% 
+  # for samples that had too small of a volume to read, make them have 1 mL volume
+  mutate(volume_total_mL = case_when(
+    subsample_ID %in% c("20210719-IVEE-009-A", "20210719-IVEE-010-A", "20220407-AQUE-010-F") ~  1,
+    TRUE ~ volume_total_mL
+  )) %>% 
   group_by(specimen_ID) %>% 
   summarize(total_volume = sum(volume_total_mL, na.rm = TRUE))
 
@@ -314,7 +324,7 @@ lte_spp <- lte %>%
                               "Unidentifiable Branching Red Alga", 
                               "small Ceramiaceae spp.",
                               "Unidentifiable small brown blade")) %>% 
-  select(scientific_name) %>% 
+  select(scientific_name, taxon_phylum, taxon_order, taxon_family) %>% 
   unique() %>% 
   left_join(., joe_traits, by = c("scientific_name" = "species"))
 # 14 spp have traits already from Fong et al. JoE, 40 species do not, 1 "species" combines two genera

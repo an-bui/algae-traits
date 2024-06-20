@@ -28,6 +28,7 @@ library(FD) # functional diversity
 library(pairwiseAdonis) # pairwise comparisons for permanova
 library(factoextra) # extract components from multivariate analyses
 library(cati) # partitioning species composition/intraspecific variation
+library(RVAideMemoire) # pairwise permanova
 
 # ⊣ b. models -----------------------------------------------
 
@@ -56,6 +57,7 @@ library(emmeans) # also plot model predictions
 library(ggnewscale) # multiple color scales on ggplot
 library(ggridges) # ridge plots
 library(GGally) # pairs plots
+library(ggConvexHull) # convex hulls
 
 # ⊣ b. tables -----------------------------------------------
 
@@ -228,6 +230,16 @@ algae_spcode_colors <- c(
 rhodo_col <- "#781416"
   ochro_col <- "#CC7540"
     chloro_col <- "#6D5A18"
+
+# rhodophyta: 1 and 2
+cluster1 <- "#CC5A17"
+cluster2 <- "#8C5332"
+# ochrophyta: 3 and 4
+cluster3 <- "#16CCCB"
+cluster4 <- "#357777"
+
+cat_cluster1 <- "#CC8613"
+cat_cluster2 <- "#1274CC"
       
     # gradient palette
     gradient_palette <- c("#FFFFFF", "#009BB0")
