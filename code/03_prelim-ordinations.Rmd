@@ -208,10 +208,10 @@ plot_PCA_12 <- ggplot() +
   # scale_x_continuous(limits = c(-1.75, 3.75)) +
   # scale_y_continuous(limits = c(-2, 3.25)) +
   theme_bw() +
-  guides(colour = guide_legend(ncol = 1),
-         shape = guide_legend(ncol = 1)) +
-  theme(legend.position = "right", 
-        # legend.box = "", 
+  guides(colour = guide_legend(ncol = 2),
+         shape = guide_legend(ncol = 2)) +
+  theme(legend.position = "bottom", 
+        legend.box = "vertical", 
         legend.margin = margin(),
         axis.title = element_text(size = 18),
         axis.text = element_text(size = 16),
@@ -227,7 +227,7 @@ plot_PCA_13 <- ggplot() +
   coord_cartesian() +
   geom_vline(xintercept = c(0), color = "grey70", linetype = 2) +
   geom_hline(yintercept = c(0), color = "grey70", linetype = 2) +
-  geom_point(data = PCAscores_13, aes(x = PC1, y = PC3, color = scientific_name, shape = site), size = 4) +
+  geom_point(data = PCAscores_13, aes(x = PC1, y = PC3, color = scientific_name), size = 4) +
   # geom_text(data = PCAscores, aes(x = PC1, y = PC2, color = scientific_name, label = specimen_ID)) +
   scale_color_manual(values = algae_colors) +
 
@@ -261,20 +261,20 @@ loadings <- scores(tbs_pca, display = 'species', scaling = 0)
 sort(abs(loadings[,1]), decreasing = TRUE)
 sort(abs(loadings[,2]), decreasing = TRUE)
 
-# ggsave(here::here("figures/prelim-ordinations",
+# ggsave(here::here("figures", "prelim-ordinations",
 #                   paste("PCA_together_cont-", today(), ".jpg", sep = "")),
 #        pca_together,
-#        width = 20, height = 12, dpi = 300)
+#        width = 12, height = 8, dpi = 300)
 # 
-# ggsave(here::here("figures/prelim-ordinations",
+# ggsave(here::here("figures", "prelim-ordinations",
 #                   paste("PCA_spp-all-12-", today(), ".jpg", sep = "")),
 #        plot_PCA_12,
-#        width = 16, height = 8, dpi = 150)
+#        width = 6, height = 6, dpi = 300)
 # 
-# ggsave(here::here("figures/prelim-ordinations",
+# ggsave(here::here("figures", "prelim-ordinations",
 #                   paste("PCA_spp-all-13-", today(), ".jpg", sep = "")),
 #        plot_PCA_13,
-#        width = 10, height = 10, dpi = 150)
+#        width = 6, height = 6, dpi = 300)
 ```
 
 # 3. Corrplot
@@ -302,8 +302,8 @@ new_corr
 # ggsave(filename = here("figures", "prelim-ordinations",
 #                        paste0("corrplot-traits_square_", today(), ".jpg")),
 #        new_corr,
-#        width = 12, height = 10, units = "cm",
-#        dpi = 150)
+#        width = 12, height = 12, units = "cm",
+#        dpi = 300)
 
 
 ```
@@ -786,6 +786,132 @@ cat_spp_mat <- cat_data %>%
   mutate(across(.cols = thickness:calcification, as_factor))
 ```
 
+### i. sidebar: doing PCA with mean trait values for each species
+
+```{r}
+tbs_mean_pca <- rda(cont_spp_mat, scale = TRUE)
+screeplot(tbs_mean_pca, bstick = TRUE)
+
+# extract proportion explained for each axis
+summary(tbs_mean_pca)
+loadings <- scores(tbs_mean_pca, display = 'species', scaling = 0, choices = c(1, 2, 3))
+
+# extract correlation of variables with PC1
+sort(abs(loadings[,1]), decreasing = TRUE)
+# extract correlation of variables with PC2
+sort(abs(loadings[,2]), decreasing = TRUE)
+
+# simple biplot (compare with ggplot output to make sure it's right)
+biplot(tbs_mean_pca)
+
+# species points
+PCAscores_mean <- scores(tbs_mean_pca, display = "sites", choices = c(1, 2)) %>% 
+  as_tibble(rownames = NA) %>% 
+  rownames_to_column("scientific_name") %>% 
+  left_join(., coarse_traits, by = "scientific_name") %>% 
+  mutate(scientific_name = factor(scientific_name, levels = algae_proposal_sciname_factors))
+
+PCAscores_mean_13 <- scores(tbs_mean_pca, display = "sites", choices = c(1, 3)) %>% 
+  as_tibble(rownames = NA) %>% 
+  rownames_to_column("scientific_name") %>% 
+  left_join(., coarse_traits, by = "scientific_name") %>% 
+  mutate(scientific_name = factor(scientific_name, levels = algae_proposal_sciname_factors))
+
+# trait vectors
+PCAvect_mean <- scores(tbs_mean_pca, display = "species", choices = c(1, 2)) %>% 
+  as.data.frame()
+
+PCAvect_13_mean <- scores(tbs_mean_pca, display = "species", choices = c(1, 3)) %>% 
+  as.data.frame()
+
+# plot PCA
+plot_PCA_mean_12 <- ggplot() +
+  geom_vline(xintercept = c(0), color = "grey70", linetype = 2) +
+  geom_hline(yintercept = c(0), color = "grey70", linetype = 2) +
+  geom_point(data = PCAscores_mean, 
+             aes(x = PC1, 
+                 y = PC2, 
+                 color = scientific_name), 
+             size = 2) +
+  # geom_text(data = PCAscores, aes(x = PC1, y = PC2, color = scientific_name, label = specimen_ID)) +
+  scale_color_manual(values = algae_colors) +
+  geom_segment(data = PCAvect_mean, 
+               aes(x = 0, 
+                   y = 0, 
+                   xend = PC1, 
+                   yend = PC2), 
+               arrow = arrow(length = unit(0.2, "cm"))) +
+  geom_text(data = PCAvect_mean, 
+            aes(x = PC1, 
+                y = PC2, 
+                label = rownames(PCAvect)), 
+            size = 5, 
+            alpha = 0.8) +
+  scale_x_continuous(limits = c(-1.75, 1.75), 
+                     expand = c(0, 0)) +
+  scale_y_continuous(limits = c(-1.4, 2.1), 
+                     expand = c(0, 0)) +
+  theme_bw() +
+  guides(colour = guide_legend(ncol = 2),
+         shape = guide_legend(ncol = 2)) +
+  theme(legend.position = "none", 
+        legend.box = "vertical", 
+        legend.margin = margin(),
+        axis.title = element_text(size = 18),
+        axis.text = element_text(size = 16),
+        title = element_text(size = 20),
+        legend.text = element_text(size = 12),
+        panel.grid = element_blank()) +
+  labs(x = "PC1 (33%)",
+       y = "PC2 (30%)",
+       title = "PC1 and PC2",
+       color = "Scientific name") 
+plot_PCA_mean_12
+
+plot_PCA_mean_13 <- ggplot() +
+  geom_vline(xintercept = c(0), color = "grey70", linetype = 2) +
+  geom_hline(yintercept = c(0), color = "grey70", linetype = 2) +
+  geom_point(data = PCAscores_mean_13, aes(x = PC1, y = PC3, color = scientific_name), size = 2) +
+  # geom_text(data = PCAscores, aes(x = PC1, y = PC2, color = scientific_name, label = specimen_ID)) +
+  scale_color_manual(values = algae_colors) +
+
+  geom_segment(data = PCAvect_13_mean, aes(x = 0, y = 0, xend = PC1, yend = PC3), arrow = arrow(length = unit(0.2, "cm"))) +
+  geom_text(data = PCAvect_13_mean, aes(x = PC1, y = PC3, label = rownames(PCAvect)), size = 5, alpha = 0.8) +
+  scale_x_continuous(limits = c(-2.05, 2.05), 
+                     expand = c(0, 0)) +
+  scale_y_continuous(limits = c(-1.1, 3), 
+                     expand = c(0, 0)) +
+  theme_bw() +
+  guides(colour = guide_legend(ncol = 2),
+         shape = guide_legend(ncol = 2)) +
+  theme(legend.position = "none", 
+        legend.box = "vertical", 
+        legend.margin = margin(),
+        axis.title = element_text(size = 18),
+        axis.text = element_text(size = 16),
+        title = element_text(size = 20),
+        legend.text = element_text(size = 12),
+        panel.grid = element_blank()) +
+  labs(x = "PC1 (33%)",
+       y = "PC3 (15%)",
+       title = "PC1 and PC3",
+       color = "Scientific name") 
+plot_PCA_mean_13
+
+pca_mean_together <- (plot_PCA_mean_12 | plot_PCA_mean_13) +
+  plot_layout(widths = c(1, 1)) 
+pca_mean_together
+
+# ggsave(here("figures", "prelim-ordinations",
+#             paste0("PCA_together_means_", today(), ".jpg")),
+#        width = 16,
+#        height = 8.5,
+#        units = "cm",
+#        dpi = 300)
+
+```
+
+
 ## b. gower dissimilarity matrices
 
 ```{r}
@@ -970,4 +1096,164 @@ cont_clusters_table
 #              path = here::here("tables",
 #                                paste0("cont-trait-clusters_", today(), ".docx")))
 ```
+
+# 9. Functional diversity
+
+```{r}
+benthics <- read_csv(
+  here("data",
+       "SBC-LTER-benthics",
+       "Annual_All_Species_Biomass_at_transect_20240501.csv")
+) 
+
+benthics_clean <- benthics %>% 
+  clean_names() %>%
+  # replace NA sp_code with Nandersoniana
+  mutate(sp_code = case_when(
+    scientific_name == "Nienburgia andersoniana" ~ "Nandersoniana",
+    TRUE ~ sp_code
+  )) %>%
+  filter(sp_code %in% algae_proposal) %>% 
+  # replace all -99999 values with NA
+  mutate(dry_gm2 = replace(dry_gm2, dry_gm2 < 0, NA),
+         wm_gm2 = replace(wm_gm2, wm_gm2 < 0, NA),
+         density = replace(density, density < 0, NA)) %>%
+  # create a sample_ID for each sampling date at each treatment at each site
+  unite("sample_ID", site, year, transect, remove = FALSE) %>%
+  # change to lower case
+  mutate_at(c("group", "mobility", "growth_morph", "site"), str_to_lower) 
+
+site_by_spp <- benthics_clean %>% 
+  select(sample_ID, scientific_name, dry_gm2) %>% 
+  pivot_wider(names_from = "scientific_name",
+              values_from = "dry_gm2") %>% 
+  column_to_rownames("sample_ID") %>% 
+  select(rownames(cont_spp_mat)) %>% 
+  mutate(sum = rowSums(.[1:16])) %>% 
+  filter(sum > 0) %>% 
+  select(-sum)
+
+site_meta <- benthics_clean %>% 
+  # select metadata columns
+  select(sample_ID, year, month, date, site, transect, vis) %>% 
+  # get rid of duplicates
+  unique() %>% 
+  # replace all -99999 values with NA
+  mutate(vis = replace(vis, vis < 0, NA)) 
+
+zero_sites <- benthics_clean %>% 
+  select(sample_ID, scientific_name, dry_gm2) %>% 
+  pivot_wider(names_from = "scientific_name",
+              values_from = "dry_gm2") %>% 
+  column_to_rownames("sample_ID") %>% 
+  select(rownames(cont_spp_mat)) %>% 
+  mutate(sum = rowSums(.[1:16])) %>% 
+  filter(!(sum > 0)) %>% 
+  rownames_to_column("sample_ID") %>% 
+  select(sample_ID)
+
+# cont_spp_mat is the spp x trait matrix
+
+
+```
+
+run this if you need to regenerate the fd stuff:
+
+```{r}
+fd <- dbFD(x = cont_spp_mat, # traits
+           a = site_by_spp, # abundance
+           stand.x = TRUE # standardize all traits to mean 0
+           )
+
+str(fd)
+
+write_rds(x = fd,
+          file = here("data", "rds-objects",
+                      paste0("fd_", today(), ".rds")))
+```
+
+run this if you just need to read it in!
+
+```{r}
+fd <- read_rds(here("data", 
+                    "rds-objects",
+                    "fd_2024-06-21.rds"))
+
+test <- fd_fric(cont_spp_mat, site_by_spp)
+
+fric <- fd$FRic %>% 
+  as_tibble(rownames = NA) %>% 
+  rownames_to_column("sample_ID") %>% 
+  rename(funcrich = value)
+
+fdiv <- fd$FDiv %>% 
+  as_tibble(rownames = NA) %>% 
+  rownames_to_column("sample_ID") %>% 
+  rename(funcdiv = value)
+
+fdis <- fd$FDis %>% 
+  as_tibble(rownames = NA) %>% 
+  rownames_to_column("sample_ID") %>% 
+  rename(funcdis = value)
+
+cwm <- fd$CWM %>% 
+  as_tibble(rownames = NA) %>% 
+  rownames_to_column("sample_ID") %>% 
+  rename_with(~str_c(., "_cwm"), .cols = maximum_height:fvfm_mean)
+  
+```
+
+
+1. calculate biomass of species that have traits  
+2. plot biomass on y-axis, functional richness or evenness on x-axis
+
+```{r}
+
+survey_biomass <- site_by_spp %>% 
+  mutate(sum = rowSums(.[1:16])) %>% 
+  rownames_to_column("sample_ID") %>% 
+  left_join(., site_meta, by = "sample_ID") %>% 
+  left_join(., fric, by = "sample_ID") %>% 
+  left_join(., fdiv, by = "sample_ID") %>% 
+  left_join(., fdis, by = "sample_ID") %>% 
+  left_join(., cwm, by = "sample_ID")
+
+ggplot(data = survey_biomass,
+       aes(x = funcrich,
+           y = sum)) +
+  geom_point(aes(color = site),
+             alpha = 0.4) +
+  geom_smooth(method = "lm",
+              se = FALSE,
+              linewidth = 2) +
+  labs(title = "smooth line for visualization only") +
+  theme_bw() +
+  theme(panel.grid = element_blank())
+
+mod <- glmmTMB(sum ~ funcrich + (1|site/transect) + (1|year),
+               data = survey_biomass %>% filter(!(is.na(funcrich))),
+               na.action = na.omit)
+
+simulateResiduals(mod) %>% plot()
+
+plotResiduals(simulateResiduals(mod), form = survey_biomass$funcrich, 
+              quantreg = FALSE)
+
+ggpairs(data = survey_biomass,
+        columns = c("sum", "funcrich", "funcdiv",
+                    "funcdis", "maximum_height_cwm",
+                    "total_volume_cwm", "sav_mean_cwm",
+                    "thickness_mm_mean_cwm", "tdmc_mean_cwm",
+                    "sta_mean_cwm", "sap_mean_cwm",
+                    "fvfm_mean_cwm"))
+```
+
+
+
+
+
+
+
+
+
 
