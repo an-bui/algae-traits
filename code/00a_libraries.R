@@ -25,6 +25,7 @@ library(fuzzyjoin) # fuzzy matching
 library(vegan) # ordinations etc
 library(cluster) # get gower distance on categorical variables
 library(FD) # functional diversity
+library(fundiversity) # another functional diversity package
 library(pairwiseAdonis) # pairwise comparisons for permanova
 library(factoextra) # extract components from multivariate analyses
 library(cati) # partitioning species composition/intraspecific variation
