@@ -16,7 +16,7 @@ benthic_cleaning_fxn <- function(df) {
     # change to lower case
     mutate_at(c("group", "mobility", "growth_morph", "site"), str_to_lower) %>% 
     # # create a sample_ID for each sampling date at each site
-    unite("sample_ID", site, year, remove = FALSE) %>% 
+    unite("sample_ID", site, year, transect, remove = FALSE) %>% 
     # only include algae
     filter(group == "algae") %>% 
     # make sure that sp_code for Nienburgia andersoniana isn't NA
@@ -33,7 +33,7 @@ benthic_cleaning_fxn <- function(df) {
 # ⊣ a. biomass ----------------------------------------------
 
 biomass <- read_csv(here::here("data", "SBC-LTER-benthics", 
-                               "Annual_All_Species_Biomass_at_transect_20230201.csv")) %>% 
+                               "Annual_All_Species_Biomass_at_transect_20240501.csv")) %>% 
   benthic_cleaning_fxn() %>% 
   # replace all -99999 values with NA
   mutate(dry_gm2 = replace(dry_gm2, dry_gm2 < 0, NA),
