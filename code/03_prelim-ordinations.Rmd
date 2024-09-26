@@ -110,9 +110,18 @@ pca_mat <- ind_traits %>%
     longevity == "perennial" ~ 3,
     longevity == "annual or perennial" ~ 2
   )) %>% 
-  dplyr::select(specimen_ID, maximum_height, mass_to_vol, sav_mean, thickness_mm_mean, tdmc_mean, sta_mean, sav_mean, sap_mean, fvfm_mean, thickness_mm_mean) %>% 
+  dplyr::select(specimen_ID, maximum_height, mass_to_vol, sav_mean, thickness_mm_mean, tdmc_mean, sta_mean, sav_mean, sap_mean, fvfm_mean) %>% 
   column_to_rownames("specimen_ID") %>% 
-  drop_na()
+  drop_na() %>% 
+  rename(`Maximum height` = maximum_height,
+         `Mass:volume` = mass_to_vol,
+         `SA:V` = sav_mean,
+         `Thickness` = thickness_mm_mean,
+         `TDMC` = tdmc_mean,
+         `STA` = sta_mean,
+         `SA:V` = sav_mean,
+         `SA:P` = sap_mean,
+         `F\U1D65/Fm` = fvfm_mean)
 
 pca_mat_with_cn <- ind_traits %>% 
   filter(sp_code %in% algae_proposal) %>% 
@@ -165,9 +174,9 @@ screeplot(tbs_pca, bstick = TRUE)
 summary(tbs_pca)
 loadings <- scores(tbs_pca, display = 'species', scaling = 0, choices = c(1, 2, 3))
 
-# extract correlation of variables with PC1
+# extract correlation of variables with PC1 with absolute value
 sort(abs(loadings[,1]), decreasing = TRUE)
-# extract correlation of variables with PC2
+# extract correlation of variables with PC2 with absolute value
 sort(abs(loadings[,2]), decreasing = TRUE)
 
 # simple biplot (compare with ggplot output to make sure it's right)
@@ -286,24 +295,35 @@ M <- pca_mat %>%
 corr_traits <- corrplot(M, method = "circle", type = "lower", insig = "pch", addCoef.col = "black")
 corr_traits
 
-new_corr <- ggcorr(data = pca_mat, 
+new_corr <- GGally::ggcorr(data = pca_mat, 
        method = c("pairwise", "spearman"), 
+       
+       # correlation coefficients
        label = TRUE, 
        label_alpha = TRUE,
        label_round = 2,
+       label_size = 6,
+       
+       # colors
        high = "#3B9AB2",
        low = "#F21A00",
-       label_size = 6,
-       legend.size = 8,
-       size = 6)
+       
+       # legend text size
+       legend.size = 12,
+       
+       # variable text size
+       size = 4) 
+
+# +
+#   scale_y_discrete(labels = c("", "", "", "", "", "", "", ""))
 
 new_corr
 
-# ggsave(filename = here("figures", "prelim-ordinations",
-#                        paste0("corrplot-traits_square_", today(), ".jpg")),
-#        new_corr,
-#        width = 12, height = 12, units = "cm",
-#        dpi = 300)
+ggsave(filename = here("figures", "prelim-ordinations",
+                       paste0("corrplot-traits_square_", today(), ".jpg")),
+       new_corr,
+       width = 10, height = 10, units = "cm",
+       dpi = 300)
 
 
 ```
@@ -494,7 +514,8 @@ adonis2(env_mat ~ site, data = CWM_fixed_filtered, method = "euclidean")
 ## pairs plot
 
 ```{r}
-pairs_plot <- ggpairs(pca_mat_with_cn)
+pairs_plot <- GGally::ggpairs(pca_mat, 
+                      upper = list(continuous = wrap("cor", method = "spearman")))
 pairs_plot
 ```
 
@@ -533,6 +554,10 @@ tradeoff_summ <- tradeoff_df %>%
             sd_c = sd(weight_percent_c_mean, na.rm = TRUE),
             mean_n = mean(weight_percent_n_mean, na.rm = TRUE),
             sd_n = sd(weight_percent_n_mean, na.rm = TRUE),
+            mean_mv = mean(mass_to_vol, na.rm = TRUE),
+            sd_mv = sd(mass_to_vol, na.rm = TRUE),
+            mean_mh = mean(maximum_height, na.rm = TRUE),
+            sd_mh = sd(maximum_height, na.rm = TRUE),
             mean_sta = mean(sta_mean, na.rm = TRUE),
             sd_sta = sd(sta_mean, na.rm = TRUE))
 ```
@@ -750,6 +775,90 @@ cor.test(ind_traits$weight_percent_c_mean, ind_traits$fvfm_mean,
 # ggsave(here::here("figures", "tradeoffs",
 #                   paste("c-fvfm_", today(), ".jpg", sep = "")),
 #        c_fvfm,
+#        width = 8, height = 8, dpi = 150)
+```
+
+## f. mass:volume and tdmc
+
+```{r}
+mv_tdmc <- ggplot(tradeoff_summ,
+                    aes(x = mean_mv,
+                        y = mean_tdmc)) +
+  geom_errorbarh(aes(xmin = mean_mv - sd_mv,
+                     xmax = mean_mv + sd_mv),
+                 alpha = 0.4) +
+  geom_errorbar(aes(ymin = mean_tdmc - sd_tdmc,
+                    ymax = mean_tdmc + sd_tdmc),
+                alpha = 0.4) +
+  geom_point(aes(fill = scientific_name),
+             size = 4,
+             stroke = 1,
+             shape = 21) +
+  geom_point(data = ind_traits,
+             aes(x = mass_to_vol,
+                 y = tdmc_mean,
+                 color = scientific_name),
+             alpha = 0.2) +
+  scale_fill_manual(values = algae_colors) +
+  scale_color_manual(values = algae_colors) +
+  annotate(geom = "text", x = 1000, y = 0.9, label = "Spearman ρ = 0.77", size = 10) +
+  labs(x = "Mean mass:volume ratio",
+       y = "Mean TDMC") +
+  theme_bw() +
+  theme(legend.position = "none",
+        panel.grid = element_blank(),
+        text = element_text(size = 18))
+
+mv_tdmc
+
+cor.test(ind_traits$mass_to_vol, ind_traits$tdmc_mean,
+         method = "spearman")
+
+# ggsave(here::here("figures", "tradeoffs",
+#                   paste("mv-tdmc_", today(), ".jpg", sep = "")),
+#        mv_tdmc,
+#        width = 8, height = 8, dpi = 150)
+```
+
+## g. mass:volume and STA
+
+```{r}
+mv_sta <- ggplot(tradeoff_summ,
+                    aes(x = mean_mv,
+                        y = mean_sta)) +
+  geom_errorbarh(aes(xmin = mean_mv - sd_mv,
+                     xmax = mean_mv + sd_mv),
+                 alpha = 0.4) +
+  geom_errorbar(aes(ymin = mean_sta - sd_sta,
+                    ymax = mean_sta + sd_sta),
+                alpha = 0.4) +
+  geom_point(aes(fill = scientific_name),
+             size = 4,
+             stroke = 1,
+             shape = 21) +
+  geom_point(data = ind_traits,
+             aes(x = mass_to_vol,
+                 y = sta_mean,
+                 color = scientific_name),
+             alpha = 0.2) +
+  scale_fill_manual(values = algae_colors) +
+  scale_color_manual(values = algae_colors) +
+  annotate(geom = "text", x = 1000, y = 700, label = "Spearman ρ = -0.59", size = 10) +
+  labs(x = "Mean mass:volume ratio",
+       y = "Mean STA") +
+  theme_bw() +
+  theme(legend.position = "none",
+        panel.grid = element_blank(),
+        text = element_text(size = 18))
+
+mv_sta
+
+cor.test(ind_traits$mass_to_vol, ind_traits$sta_mean,
+         method = "spearman")
+
+# ggsave(here::here("figures", "tradeoffs",
+#                   paste("mv-sta_", today(), ".jpg", sep = "")),
+#        mv_sta,
 #        width = 8, height = 8, dpi = 150)
 ```
 
@@ -1177,7 +1286,7 @@ run this if you just need to read it in!
 ```{r}
 fd <- read_rds(here("data", 
                     "rds-objects",
-                    "fd_2024-06-21.rds"))
+                    "fd_2024-09-26.rds"))
 
 test <- fd_fric(cont_spp_mat, site_by_spp)
 
