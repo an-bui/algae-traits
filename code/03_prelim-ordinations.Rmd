@@ -110,7 +110,7 @@ pca_mat <- ind_traits %>%
     longevity == "perennial" ~ 3,
     longevity == "annual or perennial" ~ 2
   )) %>% 
-  dplyr::select(specimen_ID, maximum_height, total_volume, sav_mean, thickness_mm_mean, tdmc_mean, sta_mean, sav_mean, sap_mean, fvfm_mean, thickness_mm_mean) %>% 
+  dplyr::select(specimen_ID, maximum_height, mass_to_vol, sav_mean, thickness_mm_mean, tdmc_mean, sta_mean, sav_mean, sap_mean, fvfm_mean, thickness_mm_mean) %>% 
   column_to_rownames("specimen_ID") %>% 
   drop_na()
 
@@ -204,7 +204,7 @@ plot_PCA_12 <- ggplot() +
   # geom_text(data = PCAscores, aes(x = PC1, y = PC2, color = scientific_name, label = specimen_ID)) +
   scale_color_manual(values = algae_colors) +
   geom_segment(data = PCAvect, aes(x = 0, y = 0, xend = PC1, yend = PC2), arrow = arrow(length = unit(0.2, "cm")), linewidth = 1) +
-  geom_text(data = PCAvect, aes(x = PC1, y = PC2, label = rownames(PCAvect)), size = 5, alpha = 0.8) +
+  geom_text(data = PCAvect, aes(x = PC1, y = PC2, label = rownames(PCAvect)), size = 8, alpha = 0.8) +
   # scale_x_continuous(limits = c(-1.75, 3.75)) +
   # scale_y_continuous(limits = c(-2, 3.25)) +
   theme_bw() +
@@ -217,8 +217,8 @@ plot_PCA_12 <- ggplot() +
         axis.text = element_text(size = 16),
         title = element_text(size = 20),
         legend.text = element_text(size = 12)) +
-  labs(x = "PC1 (27%)",
-       y = "PC2 (25%)",
+  labs(x = "PC1 (32.7%)",
+       y = "PC2 (23.6%)",
        title = "PC1 and PC2",
        color = "Scientific name") 
 plot_PCA_12
@@ -232,7 +232,7 @@ plot_PCA_13 <- ggplot() +
   scale_color_manual(values = algae_colors) +
 
   geom_segment(data = PCAvect_13, aes(x = 0, y = 0, xend = PC1, yend = PC3), arrow = arrow(length = unit(0.2, "cm")), linewidth = 1) +
-  geom_text(data = PCAvect_13, aes(x = PC1, y = PC3, label = rownames(PCAvect)), size = 5, alpha = 0.8) +
+  geom_text(data = PCAvect_13, aes(x = PC1, y = PC3, label = rownames(PCAvect)), size = 8, alpha = 0.8) +
   # scale_x_continuous(limits = c(-1.5, 2.3)) +
   # scale_y_continuous(limits = c(-3, 2)) +
   theme_bw() +
@@ -245,8 +245,8 @@ plot_PCA_13 <- ggplot() +
         axis.text = element_text(size = 16),
         title = element_text(size = 20),
         legend.text = element_text(size = 12)) +
-  labs(x = "PC1 (27%)",
-       y = "PC3 (12%)",
+  labs(x = "PC1 (32.7%)",
+       y = "PC3 (12.7%)",
        title = "PC1 and PC3",
        color = "Scientific name") 
 plot_PCA_13

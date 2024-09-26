@@ -1412,6 +1412,31 @@ weight_percent_c_boxplot <- ind_traits %>%
 weight_percent_c_boxplot
 ```
 
+# 20. mass to volume
+
+```{r}
+mv_boxplot <- ind_traits %>% 
+  group_by(sp_code) %>% 
+  filter(sp_code %in% algae_proposal) %>% 
+  ggplot(aes(x = sp_code, y = mass_to_vol, group = sp_code)) +
+  geom_boxplot(aes(fill = sp_code)) +
+  scale_fill_manual(values = algae_spcode_colors) +
+  geom_jitter() +
+  # geom_text(aes(label = value, y = 0.83), nudge_y = 0.01) + 
+  facet_wrap(~ pigment_type, scales = "free_x") +
+  scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
+  theme_bw() +
+  labs(title = "mass to volume ratio",
+       x = "Species",
+       y = "mass/volume (dry mg/mL\U00B3)") +
+  theme(legend.position = "none",
+        strip.background = element_blank(),
+        strip.text = element_text(size = 20),
+        axis.text = element_text(size = 20),
+        axis.title = element_text(size = 20),
+        plot.title = element_text(size = 20))
+mv_boxplot
+```
 
 
 
