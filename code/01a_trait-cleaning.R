@@ -247,6 +247,7 @@ leaf_traits <- metadata_sub %>%
   # ratios
   mutate(sap_ratio = area_total/peri_total,
          sav_ratio = area_total/volume_total_mL,
+         aspect_ratio = length/width,
          sta_mm_mg = area_total/weight_dry_mg)
 
 # average leaf values
@@ -260,6 +261,8 @@ av_leaf_values <- leaf_traits %>%
             sav_se = se(sav_ratio),
             sap_mean = mean(sap_ratio, na.rm = TRUE),
             sap_se = se(sap_ratio),
+            aspect_ratio_mean = mean(aspect_ratio, na.rm = TRUE),
+            aspect_ratio_se = se(aspect_ratio),
             frond_length_mean = mean(length, na.rm = TRUE),
             frond_length_se = se(length),
             frond_width_mean = mean(width, na.rm = TRUE), 
@@ -277,7 +280,7 @@ ind_traits <- ct_prep %>%
   left_join(., volume_ind, by = "specimen_ID") %>% 
   left_join(., chlA_ind, by = "specimen_ID") %>% 
   left_join(., isotopes_ind, by = "specimen_ID") %>% 
-  mutate(mass_to_vol = total_dry/total_volume) %>% 
+  mutate(mass_to_height = total_dry/maximum_height) %>% 
   left_join(., (metadata_ind %>% select(specimen_ID, date_collected, site)), by = "specimen_ID") %>% 
   filter(!(sp_code == "PTCA" & lifestage == "recruit")) %>% 
   mutate(date_collected = ymd(date_collected)) %>% 

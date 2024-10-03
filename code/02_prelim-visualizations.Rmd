@@ -1412,13 +1412,13 @@ weight_percent_c_boxplot <- ind_traits %>%
 weight_percent_c_boxplot
 ```
 
-# 20. mass to volume
+# 20. mass to height
 
 ```{r}
-mv_boxplot <- ind_traits %>% 
+mh_boxplot <- ind_traits %>% 
   group_by(sp_code) %>% 
   filter(sp_code %in% algae_proposal) %>% 
-  ggplot(aes(x = sp_code, y = mass_to_vol, group = sp_code)) +
+  ggplot(aes(x = sp_code, y = mass_to_height, group = sp_code)) +
   geom_boxplot(aes(fill = sp_code)) +
   scale_fill_manual(values = algae_spcode_colors) +
   geom_jitter() +
@@ -1426,18 +1426,43 @@ mv_boxplot <- ind_traits %>%
   facet_wrap(~ pigment_type, scales = "free_x") +
   scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
   theme_bw() +
-  labs(title = "mass to volume ratio",
+  labs(title = "mass to height ratio",
        x = "Species",
-       y = "mass/volume (dry mg/mL\U00B3)") +
+       y = "mass/height (dry mg/cm)") +
   theme(legend.position = "none",
         strip.background = element_blank(),
         strip.text = element_text(size = 20),
         axis.text = element_text(size = 20),
         axis.title = element_text(size = 20),
         plot.title = element_text(size = 20))
-mv_boxplot
+mh_boxplot
 ```
 
 
+# 21. aspect ratio
+
+```{r}
+aspect_ratio_boxplot <- ind_traits %>% 
+  group_by(sp_code) %>% 
+  filter(sp_code %in% algae_proposal) %>% 
+  ggplot(aes(x = sp_code, y = aspect_ratio_mean, group = sp_code)) +
+  geom_boxplot(aes(fill = sp_code)) +
+  scale_fill_manual(values = algae_spcode_colors) +
+  geom_jitter() +
+  # geom_text(aes(label = value, y = 0.83), nudge_y = 0.01) + 
+  facet_wrap(~ pigment_type, scales = "free_x") +
+  scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
+  theme_bw() +
+  labs(title = "aspect ratio (length/width)",
+       x = "Species",
+       y = "aspect ratio") +
+  theme(legend.position = "none",
+        strip.background = element_blank(),
+        strip.text = element_text(size = 20),
+        axis.text = element_text(size = 20),
+        axis.title = element_text(size = 20),
+        plot.title = element_text(size = 20))
+aspect_ratio_boxplot
+```
 
 
