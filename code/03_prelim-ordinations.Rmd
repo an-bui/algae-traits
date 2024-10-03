@@ -173,7 +173,7 @@ Got a lot of help from David Zeleny's [blog post](https://www.davidzeleny.net/an
 
 # only include numeric variables
 # tbs_pca <- rda(matrix_choice[, 2:10], scale = TRUE)
-tbs_pca <- rda(pca_mat, scale = TRUE)
+tbs_pca <- rda(pca_mat_log, scale = TRUE)
 screeplot(tbs_pca, bstick = TRUE)
 
 # extract proportion explained for each axis
@@ -282,8 +282,8 @@ plot_PCA_12 <- ggplot() +
         axis.text = element_text(size = 16),
         title = element_text(size = 20),
         legend.text = element_text(size = 10)) +
-  labs(x = "PC1 (32.1%)",
-       y = "PC2 (21.7%)",
+  labs(x = "PC1 (37%)",
+       y = "PC2 (30%)",
        title = "PC1 and PC2",
        color = "Scientific name") 
 plot_PCA_12
@@ -310,8 +310,8 @@ plot_PCA_13 <- ggplot() +
         axis.text = element_text(size = 16),
         title = element_text(size = 20),
         legend.text = element_text(size = 10)) +
-  labs(x = "PC1 (32.1%)",
-       y = "PC3 (12.2%)",
+  labs(x = "PC1 (37%)",
+       y = "PC3 (11%)",
        title = "PC1 and PC3",
        color = "Scientific name") 
 plot_PCA_13
