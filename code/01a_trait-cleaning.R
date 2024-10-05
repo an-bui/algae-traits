@@ -317,6 +317,75 @@ ind_traits <- ct_prep %>%
 #   # replace NaNs with NAs
 #   mutate_all(na_if, "NaN")
 
+
+# ⟞ d. species collection table -------------------------------------------
+
+total_sample_collection_table <- ind_traits %>% 
+  filter(sp_code %in% algae_proposal) %>% 
+  group_by(scientific_name, site) %>% 
+  count() %>% 
+  pivot_wider(names_from = "site",
+              values_from = "n") %>% 
+  select(scientific_name, Bullito, `Arroyo Quemado`, Naples, `Isla Vista`,
+         Mohawk, Carpinteria) %>% 
+  adorn_totals(c("row", "col")) %>% 
+  rename(`Scientific name` = scientific_name) %>% 
+  flextable() %>% 
+  colformat_num(
+    part = "all",
+    na_str = "-"
+  ) %>% 
+  autofit() %>% 
+  fit_to_width(10) %>% 
+  font(fontname = "Times New Roman",
+       part = "all")
+
+total_sample_collection_table
+
+# total_sample_collection_table %>%
+#   save_as_docx(path = here::here(
+#     "tables",
+#     "sample-tables",
+#     paste0("total-samples_", today(), ".docx")
+#     ))
+
+total_samples_with_all_data <- ind_traits %>% 
+  filter(sp_code %in% algae_proposal) %>% 
+  select(scientific_name, site,
+         maximum_height, thickness_mm_mean, sta_mean, tdmc_mean,
+         sav_mean, sap_mean, aspect_ratio_mean, frond_length_mean,
+         frond_width_mean, fvfm_mean, total_wet, total_dry, total_volume) %>% 
+  drop_na(maximum_height, thickness_mm_mean, sta_mean, tdmc_mean,
+          sav_mean, sap_mean, aspect_ratio_mean, frond_length_mean,
+          frond_width_mean, fvfm_mean, total_wet, total_dry, total_volume) %>% 
+  select(scientific_name, site) %>% 
+  group_by(scientific_name, site) %>% 
+  count() %>% 
+  pivot_wider(names_from = "site",
+              values_from = "n") %>% 
+  select(scientific_name, Bullito, `Arroyo Quemado`, Naples, `Isla Vista`,
+         Mohawk, Carpinteria) %>% 
+  adorn_totals(c("row", "col")) %>% 
+  rename(`Scientific name` = scientific_name) %>% 
+  flextable() %>% 
+  colformat_num(
+    part = "all",
+    na_str = "-"
+  ) %>% 
+  autofit() %>% 
+  fit_to_width(10) %>% 
+  font(fontname = "Times New Roman",
+       part = "all")
+
+total_samples_with_all_data 
+
+# total_samples_with_all_data %>%
+#   save_as_docx(path = here::here(
+#     "tables",
+#     "sample-tables",
+#     paste0("total-samples_all-data_", today(), ".docx")
+#     ))
+
 ############################################################-
 # 3. categorical JoE traits ---------------------------------
 ############################################################-
