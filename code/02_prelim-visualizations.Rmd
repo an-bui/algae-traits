@@ -1465,4 +1465,184 @@ aspect_ratio_boxplot <- ind_traits %>%
 aspect_ratio_boxplot
 ```
 
+# 22. distributions
+
+```{r}
+distributions <- ind_traits %>% 
+  select(specimen_ID, scientific_name,
+         maximum_height, mass_to_height, sav_mean, thickness_mm_mean, tdmc_mean, sta_mean, sav_mean, sap_mean, fvfm_mean, aspect_ratio_mean, frond_length_mean, frond_width_mean, total_wet, total_dry) %>% 
+  pivot_longer(maximum_height:total_dry,
+               names_to = "trait",
+               values_to = "value") %>% 
+  nest(.by = "trait",
+       data = everything()) %>% 
+  mutate(length = map(
+    data,
+    ~ .x %>% 
+      drop_na(value) %>% 
+      nrow(.)
+  )) %>% 
+  mutate(bins = map(
+    length,
+    ~ round((.x^(1/3))*2)
+  )) %>% 
+  mutate(distribution_plot = pmap(
+    list(x = data, y = trait, z = bins),
+    function(x, y, z) ggplot(data = x,
+                             aes(x = value)) +
+      geom_histogram(bins = z) +
+      labs(title = paste0(y, " (no transformation)"))
+  )) %>% 
+  mutate(distribution_plot_log = pmap(
+    list(x = data, y = trait, z = bins),
+    function(x, y, z) ggplot(data = x,
+                             aes(x = log(value))) +
+      geom_histogram(bins = z) +
+      labs(title = paste0(y, " (natural log transform)"))
+  )) %>% 
+  mutate(distribution_plot_sqrt = pmap(
+    list(x = data, y = trait, z = bins),
+    function(x, y, z) ggplot(data = x,
+                             aes(x = sqrt(value))) +
+      geom_histogram(bins = z) +
+      labs(title = paste0(y, " (square root transform)"))
+  )) %>% 
+  mutate(qq = pmap(
+    list(x = data, y = trait),
+    function(x, y) ggplot(data = x,
+                          aes(sample = value)) +
+      geom_qq() +
+      geom_qq_line() +
+      labs(title = paste0(y, " (no transformation)"))
+  )) %>% 
+  mutate(qq_log = pmap(
+    list(x = data, y = trait),
+    function(x, y) ggplot(data = x,
+                          aes(sample = log(value))) +
+      geom_qq() +
+      geom_qq_line() +
+      labs(title = paste0(y, " (natural log transform)"))
+  )) %>% 
+  mutate(qq_sqrt = pmap(
+    list(x = data, y = trait),
+    function(x, y) ggplot(data = x,
+                          aes(sample = log(value))) +
+      geom_qq() +
+      geom_qq_line() +
+      labs(title = paste0(y, " (square root transform)"))
+  ))
+
+# maximum height
+pluck(distributions, 5, 1) # right skewed
+pluck(distributions, 8, 1)
+pluck(distributions, 6, 1) # log transform looks normal (ish)
+pluck(distributions, 9, 1)
+pluck(distributions, 7, 1)
+pluck(distributions, 10, 1)
+
+# mass to height
+pluck(distributions, 5, 2) # right skewed
+pluck(distributions, 8, 2)
+pluck(distributions, 6, 2) # log transform looks normal
+pluck(distributions, 9, 2)
+pluck(distributions, 7, 2)
+pluck(distributions, 10, 2)
+
+# surface area to volume
+pluck(distributions, 5, 3) # normal ish
+pluck(distributions, 8, 3)
+pluck(distributions, 6, 3) # log transform looks normal
+pluck(distributions, 9, 3)
+pluck(distributions, 7, 3)
+pluck(distributions, 10, 3)
+
+# thickness
+pluck(distributions, 5, 4) # right skewed
+pluck(distributions, 8, 4)
+pluck(distributions, 6, 4) # log transform looks normal
+pluck(distributions, 9, 4)
+pluck(distributions, 7, 4)
+pluck(distributions, 10, 4)
+
+# TDMC
+pluck(distributions, 5, 5) # potentially bimodal
+pluck(distributions, 8, 5)
+pluck(distributions, 6, 5) 
+pluck(distributions, 9, 5)
+pluck(distributions, 7, 5)
+pluck(distributions, 10, 5)
+# no transformations look good
+
+# STA
+pluck(distributions, 5, 6) # right skewed
+pluck(distributions, 8, 6)
+pluck(distributions, 6, 6) 
+pluck(distributions, 9, 6) # log transform is better?
+pluck(distributions, 7, 6)
+pluck(distributions, 10, 6)
+
+# SA:P
+pluck(distributions, 5, 7) # right skewed
+pluck(distributions, 8, 7)
+pluck(distributions, 6, 7) 
+pluck(distributions, 9, 7) # log transform is better?
+pluck(distributions, 7, 7)
+pluck(distributions, 10, 7)
+
+# FvFm
+pluck(distributions, 5, 8) # bimodal
+pluck(distributions, 8, 8)
+pluck(distributions, 6, 8) 
+pluck(distributions, 9, 8)
+pluck(distributions, 7, 8)
+pluck(distributions, 10, 8)
+# no transformations look good
+
+# aspect ratio
+pluck(distributions, 5, 9) # right skewed
+pluck(distributions, 8, 9)
+pluck(distributions, 6, 9) 
+pluck(distributions, 9, 9) # log transformation looks better?
+pluck(distributions, 7, 9)
+pluck(distributions, 10, 9)
+
+# frond length
+pluck(distributions, 5, 10) # right skewed
+pluck(distributions, 8, 10)
+pluck(distributions, 6, 10) 
+pluck(distributions, 9, 10) # log transformation looks better
+pluck(distributions, 7, 10)
+pluck(distributions, 10, 10)
+
+# frond width
+pluck(distributions, 5, 11) # right skewed
+pluck(distributions, 8, 11)
+pluck(distributions, 6, 11) 
+pluck(distributions, 9, 11)
+pluck(distributions, 7, 11)
+pluck(distributions, 10, 11)
+# no transformations look good
+
+# total wet mass
+pluck(distributions, 5, 12) # right skewed
+pluck(distributions, 8, 12)
+pluck(distributions, 6, 12) # log transform looks normal
+pluck(distributions, 9, 12)
+pluck(distributions, 7, 12)
+pluck(distributions, 10, 12)
+
+# total dry mass
+pluck(distributions, 5, 13) # right skewed
+pluck(distributions, 8, 13)
+pluck(distributions, 6, 13) # log transform looks normal
+pluck(distributions, 9, 13)
+pluck(distributions, 7, 13)
+pluck(distributions, 10, 13)
+
+# traits to transform (potentially)
+# max height, mass to height, SAV, thickness, STA, SAP, aspect ratio, 
+# frond length, wet mass, dry mass
+
+
+```
 

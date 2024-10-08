@@ -127,7 +127,9 @@ pca_mat <- ind_traits %>%
 
 pca_mat_scale <- scale(pca_mat)
 
-pca_mat_log <- log(pca_mat)
+pca_mat_log <- pca_mat %>% 
+  mutate(across(c(`Maximum height`, `Mass:height`, `SA:V`,
+                `Thickness`, `STA`, `SA:P`, `Aspect ratio`), log))
 
 pca_mat_with_cn <- ind_traits %>% 
   filter(sp_code %in% algae_proposal) %>% 
@@ -173,7 +175,7 @@ Got a lot of help from David Zeleny's [blog post](https://www.davidzeleny.net/an
 
 # only include numeric variables
 # tbs_pca <- rda(matrix_choice[, 2:10], scale = TRUE)
-tbs_pca <- rda(pca_mat, scale = TRUE)
+tbs_pca <- rda(pca_mat_log)
 screeplot(tbs_pca, bstick = TRUE)
 
 # extract proportion explained for each axis
@@ -269,7 +271,7 @@ plot_PCA_12 <- ggplot() +
   # geom_text(data = PCAscores, aes(x = PC1, y = PC2, color = scientific_name, label = specimen_ID)) +
   scale_color_manual(values = algae_colors) +
   geom_segment(data = PCAvect, aes(x = 0, y = 0, xend = PC1, yend = PC2), arrow = arrow(length = unit(0.2, "cm")), linewidth = 0.5) +
-  geom_text(data = PCAvect, aes(x = PC1, y = PC2, label = rownames(PCAvect)), size = 8, alpha = 0.8,
+  geom_text_repel(data = PCAvect, aes(x = PC1, y = PC2, label = rownames(PCAvect)), size = 8, alpha = 0.8,
             color = "red") +
   # scale_x_continuous(limits = c(-1.75, 3.75)) +
   # scale_y_continuous(limits = c(-2, 3.25)) +
@@ -282,8 +284,8 @@ plot_PCA_12 <- ggplot() +
         axis.text = element_text(size = 16),
         title = element_text(size = 20),
         legend.text = element_text(size = 10)) +
-  labs(x = "PC1 (31.9%)",
-       y = "PC2 (22.2%)",
+  labs(x = "PC1 (37.6%)",
+       y = "PC2 (30.4%)",
        title = "PC1 and PC2",
        color = "Scientific name") 
 plot_PCA_12
@@ -297,7 +299,7 @@ plot_PCA_13 <- ggplot() +
   scale_color_manual(values = algae_colors) +
 
   geom_segment(data = PCAvect_13, aes(x = 0, y = 0, xend = PC1, yend = PC3), arrow = arrow(length = unit(0.2, "cm")), linewidth = 0.5) +
-  geom_text(data = PCAvect_13, aes(x = PC1, y = PC3, label = rownames(PCAvect)), size = 8, alpha = 0.8,
+  geom_text_repel(data = PCAvect_13, aes(x = PC1, y = PC3, label = rownames(PCAvect)), size = 8, alpha = 0.8,
             color = "red") +
   # scale_x_continuous(limits = c(-1.5, 2.3)) +
   # scale_y_continuous(limits = c(-3, 2)) +
@@ -310,8 +312,8 @@ plot_PCA_13 <- ggplot() +
         axis.text = element_text(size = 16),
         title = element_text(size = 20),
         legend.text = element_text(size = 10)) +
-  labs(x = "PC1 (31.9%)",
-       y = "PC3 (12.1%)",
+  labs(x = "PC1 (37.6%)",
+       y = "PC3 (18.5%)",
        title = "PC1 and PC3",
        color = "Scientific name") 
 plot_PCA_13
@@ -465,7 +467,7 @@ dev.off()
 ## pairs plot
 
 ```{r}
-pairs_plot <- GGally::ggpairs(pca_mat, 
+pairs_plot <- GGally::ggpairs(pca_mat_log, 
                       upper = list(continuous = wrap("cor", method = "spearman")))
 pairs_plot
 ```
@@ -932,9 +934,9 @@ p_df <- p$p
 
 # thank you rguha for this solution: https://stackoverflow.com/questions/24554642/what-is-the-best-way-to-remove-items-above-a-diagonal-in-a-data-frame-in-r
 # get rid of the upper triangle
-p_df_1[upper.tri(p_df_1)] <- NA
+p_df[upper.tri(p_df)] <- NA
 
-pairwise_comparisons <- p_df_1 %>% 
+pairwise_comparisons <- p_df %>% 
   # turn into data frame
   as.data.frame() %>% 
   # make the rownames into "trait1" or the first trait in the pairwise comparison
@@ -973,7 +975,9 @@ pairwise_comparisons <- p_df_1 %>%
   mutate(formula = paste(trait1_column, "~", trait2_column, sep = " "))
 
 log_ind_traits <- ind_traits_filtered %>% 
-      mutate(across(where(is.numeric), log))
+      mutate(across(c(maximum_height, mass_to_height, sav_mean,
+                      thickness_mm_mean, sta_mean, sap_mean, aspect_ratio_mean), 
+                    log))
 
 scaled_ind_traits <- ind_traits_filtered %>% 
       mutate(across(where(is.numeric), scale))
@@ -1014,14 +1018,14 @@ pair_sav_height <- pairwise_sma(
   model_formula = "sav_mean ~ maximum_height", 
   trait1 = sav_mean,
   trait2 = maximum_height,
-  data = "scaled"
+  data = "log"
 )
 
 pair_sav_mh <- pairwise_sma(
   model_formula = "sav_mean ~ mass_to_height", 
   trait1 = sav_mean,
   trait2 = mass_to_height,
-  data = "scaled"
+  data = "log"
 )
 
 # fix this later with new mass data entry, though not sure why things worked with 
@@ -1030,147 +1034,147 @@ pair_thickness_mh <- pairwise_sma(
   model_formula = "thickness_mm_mean ~ mass_to_height",
   trait1 = thickness_mm_mean,
   trait2 = mass_to_height,
-  data = "scaled"
+  data = "log"
 )
 
 pair_thickness_sav <- pairwise_sma(
   model_formula = "thickness_mm_mean ~ sav_mean", 
   trait1 = thickness_mm_mean,
   trait2 = sav_mean,
-  data = "scaled"
+  data = "log"
 )
 
 pair_tdmc_height <- pairwise_sma(
   model_formula = "tdmc_mean ~ maximum_height", 
   trait1 = tdmc_mean,
   trait2 = maximum_height,
-  data = "scaled"
+  data = "log"
 )
 
 pair_tdmc_mh <- pairwise_sma(
   model_formula = "tdmc_mean ~ mass_to_height", 
   trait1 = tdmc_mean,
   trait2 = mass_to_height,
-  data = "scaled"
+  data = "log"
 )
 
 pair_tdmc_thickness <- pairwise_sma(
   model_formula = "tdmc_mean ~ thickness_mm_mean", 
   trait1 = tdmc_mean,
   trait2 = thickness_mm_mean,
-  data = "scaled"
+  data = "log"
 )
 
 pair_sta_height <- pairwise_sma(
   model_formula = "sta_mean ~ maximum_height", 
   trait1 = sta_mean,
   trait2 = maximum_height,
-  data = "scaled"
+  data = "log"
 )
 
 pair_sta_mh <- pairwise_sma(
   model_formula = "sta_mean ~ mass_to_height", 
   trait1 = sta_mean,
   trait2 = mass_to_height,
-  data = "scaled"
+  data = "log"
 )
 
 pair_sta_sav <- pairwise_sma(
   model_formula = "sta_mean ~ sav_mean", 
   trait1 = sta_mean,
   trait2 = sav_mean,
-  data = "scaled"
+  data = "log"
 )
 
 pair_sta_thickness <- pairwise_sma(
   model_formula = "sta_mean ~ thickness_mm_mean", 
   trait1 = sta_mean,
   trait2 = thickness_mm_mean,
-  data = "scaled"
+  data = "log"
 )
 
 pair_sta_tdmc <- pairwise_sma(
   model_formula = "sta_mean ~ tdmc_mean", 
   trait1 = sta_mean,
   trait2 = tdmc_mean,
-  data = "scaled"
+  data = "log"
 )
 
 pair_sap_height <- pairwise_sma(
   model_formula = "sap_mean ~ maximum_height", 
   trait1 = sap_mean,
   trait2 = maximum_height,
-  data = "scaled"
+  data = "log"
 )
 
 pair_sap_sav <- pairwise_sma(
   model_formula = "sap_mean ~ sav_mean", 
   trait1 = sap_mean,
   trait2 = sav_mean,
-  data = "scaled"
+  data = "log"
 )
 
 pair_sap_thickness <- pairwise_sma(
   model_formula = "sap_mean ~ thickness_mm_mean", 
   trait1 = sap_mean,
   trait2 = thickness_mm_mean,
-  data = "scaled"
+  data = "log"
 )
 
 pair_sap_tdmc <- pairwise_sma(
   model_formula = "sap_mean ~ tdmc_mean", 
   trait1 = sap_mean,
   trait2 = tdmc_mean,
-  data = "scaled"
+  data = "log"
 )
 
 pair_sap_sta <- pairwise_sma(
   model_formula = "sap_mean ~ sta_mean", 
   trait1 = sap_mean,
   trait2 = sta_mean,
-  data = "scaled"
+  data = "log"
 )     
 
 pair_fvfm_height <- pairwise_sma(
   model_formula = "fvfm_mean ~ maximum_height", 
   trait1 = fvfm_mean,
   trait2 = maximum_height,
-  data = "scaled"
+  data = "log"
 )     
 
 pair_fvfm_sav <- pairwise_sma(
   model_formula = "fvfm_mean ~ sav_mean", 
   trait1 = fvfm_mean,
   trait2 = sav_mean,
-  data = "scaled"
+  data = "log"
 )    
 
 pair_fvfm_tdmc <- pairwise_sma(
   model_formula = "fvfm_mean ~ tdmc_mean", 
   trait1 = fvfm_mean,
   trait2 = tdmc_mean,
-  data = "scaled"
+  data = "log"
 )
 
 pair_fvfm_sta <- pairwise_sma(
   model_formula = "fvfm_mean ~ sta_mean", 
   trait1 = fvfm_mean,
   trait2 = sta_mean,
-  data = "scaled"
+  data = "log"
 )
 
 pair_fvfm_sap <- pairwise_sma(
   model_formula = "fvfm_mean ~ sap_mean", 
   trait1 = fvfm_mean,
   trait2 = sap_mean,
-  data = "scaled"
+  data = "log"
 )
 
 pair_ar_height <- pairwise_sma(
   model_formula = "aspect_ratio_mean ~ maximum_height", 
   trait1 = aspect_ratio_mean,
   trait2 = maximum_height,
-  data = "scaled"
+  data = "log"
 )
 
 # this also doesn't work!
@@ -1178,35 +1182,35 @@ pair_ar_mh <- pairwise_sma(
   model_formula = "aspect_ratio_mean ~ mass_to_height",
   trait1 = aspect_ratio_mean,
   trait2 = mass_to_height,
-  data = "scaled"
+  data = "log"
 )
 
 pair_ar_sav <- pairwise_sma(
   model_formula = "aspect_ratio_mean ~ sav_mean", 
   trait1 = aspect_ratio_mean,
   trait2 = sav_mean,
-  data = "scaled"
+  data = "log"
 )
 
 pair_ar_thickness <- pairwise_sma(
   model_formula = "aspect_ratio_mean ~ thickness_mm_mean", 
   trait1 = aspect_ratio_mean,
   trait2 = thickness_mm_mean,
-  data = "scaled"
+  data = "log"
 )
 
 pair_ar_tdmc <- pairwise_sma(
   model_formula = "aspect_ratio_mean ~ tdmc_mean", 
   trait1 = aspect_ratio_mean,
   trait2 = tdmc_mean,
-  data = "scaled"
+  data = "log"
 )
 
 pair_ar_fvfm <- pairwise_sma(
   model_formula = "aspect_ratio_mean ~ fvfm_mean", 
   trait1 = aspect_ratio_mean,
   trait2 = fvfm_mean,
-  data = "scaled"
+  data = "log"
 )
 
 mh_row_scaled <- plot_grid(
