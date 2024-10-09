@@ -42,6 +42,10 @@ library(DHARMa) # plotting residuals from `glmmTMB`
 library(performance) # checks of collinearity, amongst other things
 library(car) # checking VIR
 library(specr) # variance decomposition for lmer objects
+library(lmodel2) # SMA
+library(smatr) # SMA
+library(ggpmisc) # visualization of SMA
+library(ggExtra) # visualization of SMA
 
 ############################################################-
 # 4. visualization packages ---------------------------------
