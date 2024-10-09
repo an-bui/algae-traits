@@ -17,6 +17,10 @@ basic_theme <- list(
 # ------------------------------ 1. boxplots ------------------------------
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+# This section includes code to generate a bunch of boxplots showing trait
+# distributions across species. Each point is an individual, and the boxplots
+# depict the median, IQR, and 1.5*IQR. The outliers aren't shown.
+
 # ⟞ a. generating plots ---------------------------------------------------
 
 boxplots <- ind_traits %>% 
@@ -153,11 +157,19 @@ for(i in 1:length(boxplot_traits)) {
 # ---------------------------- 2. distributions ---------------------------
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+# This section includes code to generate histograms and qq plots for each trait
+# in three forms: 1) untransformed, 2) log transformed, and 3) square root
+# transformed. Because many of the traits followed a skewed distribution, we
+# wanted to know which traits would be candidates for transformation to follow
+# a normal distribution.
+
 # ⟞ a. generating plots ---------------------------------------------------
 
 distributions <- ind_traits %>% 
   select(specimen_ID, scientific_name,
-         maximum_height, mass_to_height, sav_mean, thickness_mm_mean, tdmc_mean, sta_mean, sav_mean, sap_mean, fvfm_mean, aspect_ratio_mean, frond_length_mean, frond_width_mean, total_wet, total_dry) %>% 
+         maximum_height, mass_to_height, sav_mean, thickness_mm_mean, 
+         tdmc_mean, sta_mean, sav_mean, sap_mean, fvfm_mean, aspect_ratio_mean, 
+         frond_length_mean, frond_width_mean, total_wet, total_dry) %>% 
   pivot_longer(maximum_height:total_dry,
                names_to = "trait",
                values_to = "value") %>% 
@@ -451,10 +463,4 @@ for(i in 1:length(distributions_traits)) {
                sqrt_transform_qq = sqrt_transform_qq)
   
 }
-
-
-
-
-
-
 
