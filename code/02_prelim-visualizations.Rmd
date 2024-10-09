@@ -166,7 +166,7 @@ fvfm_boxplot <- ind_traits %>%
 
 fvfm_boxplot
 
-# ggsave(here::here("figures/prelim-visualizations",
+# ggsave(here::here("figures/basic-visualizations",
 #                   paste("fvfm-boxplot-", today(), ".jpg", sep = "")),
 #        fvfm_boxplot,
 #        width = 8, height = 5, dpi = 200)
@@ -239,7 +239,7 @@ ptca_fvfm_plot
 # 
 # test_plot
 
-# ggsave(here::here("figures/prelim-visualizations",
+# ggsave(here::here("figures/basic-visualizations",
 #                   paste("fvfm-boxplot-lifestage-", todays_date, ".jpg", sep = "")),
 #        ptca_fvfm_plot,
 #        width = 8, height = 5, dpi = 150)
@@ -266,7 +266,7 @@ fvfm_boxplot_ptca_recruit <- fvfm_ptca_recruit %>%
   labs(caption = "significantly different across sites, ANOVA: F(3) = 14.89, p < 0.001")
 fvfm_boxplot_ptca_recruit
 
-# ggsave(here::here("figures/prelim-visualizations",
+# ggsave(here::here("figures/basic-visualizations",
 #                   paste("fvfm-boxplot-PTCA_recruits-", todays_date, ".jpg", sep = "")),
 #        fvfm_boxplot_ptca_recruit,
 #        width = 8, height = 5, dpi = 150)
@@ -297,7 +297,7 @@ fvfm_boxplot_ptca_adult <- fvfm_ptca_adult %>%
   labs(caption = "ANOVA: F(2) = 3.273, p = 0.06")
 fvfm_boxplot_ptca_adult
 
-ggsave(here::here("figures/prelim-visualizations",
+ggsave(here::here("figures/basic-visualizations",
                   paste("fvfm-boxplot-PTCA_adults-", todays_date, ".jpg", sep = "")),
        fvfm_boxplot_ptca_adult,
        width = 8, height = 5, dpi = 150)
@@ -337,7 +337,7 @@ plot <- fvfm_raw %>%
        subtitle = "~10 readings per blade, 167 blades, 22 individuals, 1664 readings total")
 plot
 
-ggsave(here::here("figures", "prelim-visualizations", paste("fvfm-boxplot-01_BB_", today(), ".jpg", sep = "")))
+ggsave(here::here("figures", "basic-visualizations", paste("fvfm-boxplot-01_BB_", today(), ".jpg", sep = "")))
   
 adult_plot <- fvfm_ind %>% 
   left_join(., metadata_ind, by = "specimen_ID") %>% 
@@ -352,7 +352,7 @@ adult_plot <- fvfm_ind %>%
        title = "Mean PTCA FvFm by individual",
        subtitle = "~10 readings per blade, 167 blades, 22 individuals")
 adult_plot
-ggsave(here::here("figures", "prelim-visualizations", paste("fvfm-boxplot-02_BB_", today(), ".jpg", sep = "")))
+ggsave(here::here("figures", "basic-visualizations", paste("fvfm-boxplot-02_BB_", today(), ".jpg", sep = "")))
 ```
 
 ## f. boxplot (BF BULL vs IVEE)
@@ -377,7 +377,7 @@ bf_plot <- bf_fvfm %>%
 
 bf_plot
 
-# ggsave(here::here("figures/prelim-visualizations",
+# ggsave(here::here("figures/basic-visualizations",
 #                   paste("fvfm-boxplot-bf-", todays_date, ".jpg", sep = "")),
 #        bf_plot,
 #        width = 8, height = 5, dpi = 150)
@@ -434,7 +434,7 @@ thickness_boxplot <- ind_traits %>%
 
 thickness_boxplot
 
-# ggsave(here::here("figures/prelim-visualizations",
+# ggsave(here::here("figures/basic-visualizations",
 #                   paste("thickness-boxplot-", todays_date, ".jpg", sep = "")),
 #        thickness_boxplot,
 #        width = 8, height = 5, dpi = 150)
@@ -466,7 +466,7 @@ thickness_boxplot_bf <- bf_thickness %>%
 
 thickness_boxplot_bf
 
-# ggsave(here::here("figures/prelim-visualizations",
+# ggsave(here::here("figures/basic-visualizations",
 #                   paste("thickness-boxplot-bf-", todays_date, ".jpg", sep = "")),
 #        thickness_boxplot_bf,
 #        width = 8, height = 5, dpi = 150)
@@ -502,7 +502,7 @@ thickness_boxplot_ptca <- ptca_thickness %>%
   theme(legend.position = "none")
 thickness_boxplot_ptca
 
-# ggsave(here::here("figures/prelim-visualizations",
+# ggsave(here::here("figures/basic-visualizations",
 #                   paste("thickness-boxplot-lifestage-", todays_date, ".jpg", sep = "")),
 #        thickness_boxplot_ptca,
 #        width = 8, height = 5, dpi = 150)
@@ -582,7 +582,7 @@ dryw_boxplot <- ind_traits %>%
 
 dryw_boxplot
 
-# ggsave(here::here("figures/prelim-visualizations",
+# ggsave(here::here("figures/basic-visualizations",
 #                   paste("dryw-boxplot-", todays_date, ".jpg", sep = "")),
 #        dryw_boxplot,
 #        width = 8, height = 5, dpi = 150)
@@ -599,7 +599,7 @@ wetw_boxplot <- ggplot(ind_traits, aes(x = sp_code, y = total_wet)) +
 
 wetw_boxplot
 
-# ggsave(here::here("figures/prelim-visualizations",
+# ggsave(here::here("figures/basic-visualizations",
 #                   paste("wetw-boxplot-", todays_date, ".jpg", sep = "")),
 #        wetw_boxplot,
 #        width = 8, height = 5, dpi = 150)
@@ -622,7 +622,7 @@ tdmc_boxplot <- ind_traits %>%
 
 tdmc_boxplot
 
-# ggsave(here::here("figures/prelim-visualizations",
+# ggsave(here::here("figures/basic-visualizations",
 #                   paste("tdmc_boxplot-", todays_date, ".jpg", sep = "")),
 #        tdmc_boxplot,
 #        width = 8, height = 5, dpi = 150)
@@ -654,7 +654,7 @@ tdmc_boxplot_bf <- bf_tdmc %>%
 
 tdmc_boxplot_bf
 
-# ggsave(here::here("figures/prelim-visualizations",
+# ggsave(here::here("figures/basic-visualizations",
 #                   paste("tdmc-boxplot-bf-", todays_date, ".jpg", sep = "")),
 #        tdmc_boxplot_bf,
 #        width = 8, height = 5, dpi = 150)
@@ -693,7 +693,7 @@ tdmc_boxplot_ptca <- ptca_leaf %>%
 
 tdmc_boxplot_ptca
 
-# ggsave(here::here("figures/prelim-visualizations",
+# ggsave(here::here("figures/basic-visualizations",
 #                   paste("tdmc-boxplot-ptca-", todays_date, ".jpg", sep = "")),
 #        tdmc_boxplot_ptca,
 #        width = 8, height = 5, dpi = 150)
@@ -716,7 +716,7 @@ volume_boxplot <- ggplot(ind_traits %>% filter(sp_code %in% algae_proposal), aes
 
 volume_boxplot
 
-# ggsave(here::here("figures/prelim-visualizations",
+# ggsave(here::here("figures/basic-visualizations",
 #                   paste("volume-boxplot-", todays_date, ".jpg", sep = "")),
 #        volume_boxplot,
 #        width = 8, height = 5, dpi = 150)
@@ -738,7 +738,7 @@ sa_boxplot <- ggplot(sa_peri_summary, aes(x = sp_code, y = area_total)) +
 
 sa_boxplot
 
-# ggsave(here::here("figures/prelim-visualizations",
+# ggsave(here::here("figures/basic-visualizations",
 #                   paste("sa-boxplot-", todays_date, ".jpg", sep = "")),
 #        sa_boxplot,
 #        width = 8, height = 5, dpi = 150)
@@ -760,7 +760,7 @@ peri_boxplot <- ggplot(sa_peri_summary, aes(x = sp_code, y = peri_total)) +
 
 peri_boxplot
 
-# ggsave(here::here("figures/prelim-visualizations",
+# ggsave(here::here("figures/basic-visualizations",
 #                   paste("peri_boxplot-", todays_date, ".jpg", sep = "")),
 #        peri_boxplot,
 #        width = 8, height = 5, dpi = 150)
@@ -785,7 +785,7 @@ ratio_saperi_boxplot <- ind_traits %>%
 
 ratio_saperi_boxplot 
 
-# ggsave(here::here("figures/prelim-visualizations",
+# ggsave(here::here("figures/basic-visualizations",
 #                   paste("ratio_saperi_boxplot-", todays_date, ".jpg", sep = "")),
 #        ratio_saperi_boxplot,
 #        width = 8, height = 5, dpi = 150)
@@ -811,7 +811,7 @@ ratio_savolume_boxplot <- ind_traits %>%
 
 ratio_savolume_boxplot
 
-# ggsave(here::here("figures/prelim-visualizations",
+# ggsave(here::here("figures/basic-visualizations",
 #                   paste("ratio_savolume_boxplot-", todays_date, ".jpg", sep = "")),
 #        ratio_savolume_boxplot,
 #        width = 8, height = 5, dpi = 150)
@@ -834,7 +834,7 @@ height_boxplot <- ind_traits %>%
 
 height_boxplot
 
-# ggsave(here::here("figures/prelim-visualizations",
+# ggsave(here::here("figures/basic-visualizations",
 #                   paste("height_boxplot-", todays_date, ".jpg", sep = "")),
 #        height_boxplot,
 #        width = 8, height = 5, dpi = 150)
@@ -851,7 +851,7 @@ width_boxplot <- ggplot(hw_summary, aes(x = sp_code, y = max_width_cm)) +
 
 width_boxplot
 
-# ggsave(here::here("figures/prelim-visualizations",
+# ggsave(here::here("figures/basic-visualizations",
 #                   paste("width_boxplot-", todays_date, ".jpg", sep = "")),
 #        width_boxplot,
 #        width = 8, height = 5, dpi = 150)
@@ -927,7 +927,7 @@ sta_boxplot <- sta_df %>%
 
 sta_boxplot
 
-# ggsave(here::here("figures/prelim-visualizations",
+# ggsave(here::here("figures/basic-visualizations",
 #                   paste("sta_boxplot-", today(), ".jpg", sep = "")),
 #        sta_boxplot,
 #        width = 8, height = 5, dpi = 150)
@@ -955,7 +955,7 @@ sta_boxplot_bf <- sta_summary %>%
 
 sta_boxplot_bf
 
-# ggsave(here::here("figures/prelim-visualizations",
+# ggsave(here::here("figures/basic-visualizations",
 #                   paste("sta-boxplot-bf-", todays_date, ".jpg", sep = "")),
 #        sta_boxplot_bf,
 #        width = 8, height = 5, dpi = 150)
@@ -1041,7 +1041,7 @@ bra_ord_boxplot <- ggplot(bra_ord_summary, aes(x = sp_code, y = mean)) +
 
 bra_ord_boxplot
 
-# ggsave(here::here("figures/prelim-visualizations",
+# ggsave(here::here("figures/basic-visualizations",
 #                   paste("bra_ord_boxplot-", todays_date, ".jpg", sep = "")),
 #        bra_ord_boxplot,
 #        width = 8, height = 5, dpi = 150)
@@ -1062,7 +1062,7 @@ toughness_boxplot <- ggplot(toughness_summary, aes(x = sp_code, y = mean)) +
 
 toughness_boxplot
 
-# ggsave(here::here("figures/prelim-visualizations",
+# ggsave(here::here("figures/basic-visualizations",
 #                   paste("toughness_boxplot-", todays_date, ".jpg", sep = "")),
 #        toughness_boxplot,
 #        width = 8, height = 5, dpi = 150)
@@ -1317,7 +1317,7 @@ write_csv(traits_df, file = here::here("data", "km_traits.csv"))
 
 
 ```{r include = FALSE}
-# Use `rmarkdown::render(here::here("code", "02_prelim-visualizations.Rmd"))` to knit the document.
+# Use `rmarkdown::render(here::here("code", "02_basic-visualizations.Rmd"))` to knit the document.
 ```
 
 # 19. isotopes
