@@ -701,6 +701,7 @@ ggsave(filename = here::here(
 # ⟞ a. PCA ----------------------------------------------------------------
 
 # trait by species PCA
+tbs_pca <- prcomp(x = pca_mat_log)
 tbs_pca <- rda(pca_mat_log)
 
 # create a screeplot to visualize axis contributions
@@ -713,6 +714,26 @@ summary(tbs_pca)
 prop_PC1 <- "43.1%"
 prop_PC2 <- "26.2%"
 prop_PC3 <- "15.4%"
+
+library(factoextra)
+
+facto_summarize(X = tbs_pca,
+                element = "var")$contrib
+
+fviz_contrib(X = tbs_pca,
+             choice = "var",
+             axes = 1) +
+  theme(panel.grid = element_blank())
+
+get_pca_var(tbs_pca)$contrib
+
+fviz_contrib(X = tbs_pca,
+             choice = "var",
+             axes = 2)
+
+fviz_contrib(X = tbs_pca,
+             choice = "var",
+             axes = 3)
 
 # ⟞ b. loadings -----------------------------------------------------------
 
@@ -803,6 +824,52 @@ PCAvect <- scores(tbs_pca,
                   display = "species", 
                   choices = c(1, 2, 3)) %>% 
   as.data.frame()
+
+# got calculation from http://www.sthda.com/english/articles/31-principal-component-methods-in-r-practical-guide/112-pca-principal-component-analysis-essentials/
+varcoord <- PCAvect %>% 
+  rownames_to_column("trait") %>% 
+  mutate(quality_1 = PC1^2,
+         quality_2 = PC2^2,
+         quality_3 = PC3^2) %>% 
+  select(trait, quality_1, quality_2, quality_3) %>% 
+  pivot_longer(cols = quality_1:quality_3,
+               names_to = "axis",
+               values_to = "values") %>% 
+  mutate(axis = case_match(
+    axis,
+    "quality_1" ~ "PC1",
+    "quality_2" ~ "PC2",
+    "quality_3" ~ "PC3"
+  )) %>% 
+  group_by(axis) %>% 
+  mutate(component_total = sum(values)) %>% 
+  ungroup() %>% 
+  mutate(contrib = (values/component_total)*100)
+
+# The red dashed line on the graph above indicates the expected average contribution. If the contribution of the variables were uniform, the expected value would be 1/length(variables) = 1/10 = 10%
+expected_average <- (1/length(unique(varcoord$trait)))*100
+
+ggplot(data = varcoord %>% filter(axis == "PC1"),
+       aes(x = reorder(trait, -contrib),
+           y = contrib)) +
+  geom_col() +
+  geom_hline(yintercept = expected_average,
+             color = "red",
+             linetype = 2) +
+  labs(title = "Contributions to PC1")
+
+ggplot(data = varcoord %>% filter(axis == "PC2"),
+       aes(x = reorder(trait, -contrib),
+           y = contrib)) +
+  geom_col() +
+  labs(title = "Contributions to PC2")
+
+ggplot(data = varcoord %>% filter(axis == "PC3"),
+       aes(x = reorder(trait, -contrib),
+           y = contrib)) +
+  geom_col() +
+  labs(title = "Contributions to PC3")
+  
 
 PCA_aesthetics <- list(
   coord_cartesian(),
