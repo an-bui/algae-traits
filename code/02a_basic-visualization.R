@@ -169,8 +169,9 @@ distributions <- ind_traits %>%
   select(specimen_ID, scientific_name,
          maximum_height, mass_to_height, sav_mean, thickness_mm_mean, 
          tdmc_mean, sta_mean, sav_mean, sap_mean, fvfm_mean, aspect_ratio_mean, 
-         frond_length_mean, frond_width_mean, total_wet, total_dry) %>% 
-  pivot_longer(maximum_height:total_dry,
+         frond_length_mean, frond_width_mean, total_wet, total_dry,
+         total_volume, chlA_mean) %>% 
+  pivot_longer(maximum_height:chlA_mean,
                names_to = "trait",
                values_to = "value") %>% 
   nest(.by = "trait",
@@ -183,17 +184,19 @@ distributions <- ind_traits %>%
       "mass_to_height" ~ "mass_to_height",
       "sav_mean" ~ "sav",
       "thickness_mm_mean" ~ "thickness",
-      "tdmc_mean" ~ "tdmc",
-      "sta_mean",
-      "sap_mean",
-      "fvfm_mean",
-      "aspect_ratio_mean",
-      "frond_length_mean",
-      "frond_width_mean",
-      "total_wet",
-      "total_dry"
+      "tdmc_mean" ~ "TDMC",
+      "sta_mean" ~ "sta",
+      "sap_mean" ~ "sap",
+      "fvfm_mean" ~ "fvfm",
+      "aspect_ratio_mean" ~ "aspect_ratio",
+      "frond_length_mean" ~ "thallus_length",
+      "frond_width_mean" ~ "thallus_width",
+      "total_wet" ~ "weight_wet",
+      "total_dry" ~ "weight_dry",
+      "total_volume" ~ "volume",
+      "chlA_mean" ~ "chlA"
     )
-  ))
+  )) %>% 
   mutate(length = map(
     data,
     ~ .x %>% 
@@ -255,7 +258,7 @@ distributions <- ind_traits %>%
   mutate(qq_sqrt = pmap(
     list(x = data, y = trait),
     function(x, y) ggplot(data = x,
-                          aes(sample = log(value))) +
+                          aes(sample = sqrt(value))) +
       geom_qq_line(color = "darkgrey") +
       geom_qq(shape = 21) +
       labs(title = paste0(y, " (square root transform)")) +
@@ -376,11 +379,37 @@ pluck(distributions, 10, 13)
 # ⟞ b. saving outputs -----------------------------------------------------
 
 # traits in the distributions data frame
-distributions_traits <- c("maximum_height", "mass_to_height", "sav_mean", 
-                          "thickness_mm_mean", "tdmc_mean", "sta_mean", 
-                          "sap_mean", "fvfm_mean", "aspect_ratio_mean", 
-                          "frond_length_mean", "frond_width_mean", "total_wet",      
-                          "total_dry")
+
+# "maximum_height" ~    "max_height",
+# "mass_to_height" ~    "mass_to_height",
+# "sav_mean" ~          "sav",
+# "thickness_mm_mean" ~ "thickness",
+# "tdmc_mean" ~         "TDMC",
+# "sta_mean" ~          "sta",
+# "sap_mean" ~          "sap",
+# "fvfm_mean" ~         "fvfm",
+# "aspect_ratio_mean" ~ "aspect_ratio",
+# "frond_length_mean" ~ "thallus_length",
+# "frond_width_mean" ~  "thallus_width",
+# "total_wet" ~         "weight_wet",
+# "total_dry" ~         "weight_dry",
+# "total_volume" ~      "volume",
+# "chlA_mean" ~         "chlA"
+distributions_traits <- c("max_height",
+                          "mass_to_height",
+                          "sav",
+                          "thickness",
+                          "TDMC",
+                          "sta",
+                          "sap",
+                          "fvfm",
+                          "aspect_ratio",
+                          "thallus_length",
+                          "thallus_width",
+                          "weight_wet",
+                          "weight_dry",
+                          "volume",
+                          "chlA")
 
 # function to save histograms
 save_hist_qq <- function(trait, 
