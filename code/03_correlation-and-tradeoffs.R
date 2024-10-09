@@ -185,9 +185,9 @@ pairwise_sma <- function(model_formula, trait1, trait2, data) {
   df <- if(data == "normal") {
     ind_traits_filtered
   } else if(data == "scaled") {
-    scaled_ind_traits
+    scaled_ind_traits 
   } else if(data == "log") {
-    log_ind_traits
+    log_ind_traits 
   } 
   
   # lmodel2
@@ -235,6 +235,25 @@ pair_thickness_mh <- pairwise_sma(
   trait2 = mass_to_height,
   data = "log"
 )
+
+sma(mass_to_height ~ thickness_mm_mean,
+    data = log_ind_traits %>% 
+      filter(mass_to_height != "-Inf"))
+
+ggplot(data = log_ind_traits %>% 
+         filter(mass_to_height != "-Inf"),
+       aes(x = mass_to_height,
+           y = thickness_mm_mean)) +
+  geom_point(alpha = 0.5,
+             shape = 21) +
+  stat_ma_line(method = "SMA") +
+  # labs(title = model_formula) +
+  theme_bw() +
+  theme(panel.grid = element_blank()) +
+  labs(x = "log mass:height ratio",
+       y = "log thickness") +
+  coord_cartesian(ylim = c(-2.5, 0.6)) +
+  annotate(geom = "text", x = -1.5, y = -2.5, label = "R\U00B2 = 0.20, p < 0.001")
 
 pair_thickness_sav <- pairwise_sma(
   model_formula = "thickness_mm_mean ~ sav_mean", 
@@ -334,6 +353,23 @@ pair_sap_sta <- pairwise_sma(
   data = "log"
 )     
 
+sma(mass_to_height ~ sav_mean,
+        data = log_ind_traits)
+
+ggplot(data = log_ind_traits,
+       aes(x = mass_to_height,
+           y = sav_mean)) +
+  geom_point(alpha = 0.5,
+             shape = 21) +
+  stat_ma_line(method = "SMA") +
+  # labs(title = model_formula) +
+  theme_bw() +
+  theme(panel.grid = element_blank()) +
+  labs(x = "log mass:height ratio",
+       y = "log surface area:volume ratio") +
+  coord_cartesian(ylim = c(4, 9.5)) +
+  annotate(geom = "text", x = -1.5, y = 4, label = "R\U00B2 = 0.049, p < 0.001")
+
 pair_fvfm_height <- pairwise_sma(
   model_formula = "fvfm_mean ~ maximum_height", 
   trait1 = fvfm_mean,
@@ -412,6 +448,13 @@ pair_ar_fvfm <- pairwise_sma(
   data = "log"
 )
 
+ar_plots <- (pair_ar_height[[3]] | pair_ar_fvfm[[3]] | pair_ar_sav[[3]] | pair_ar_tdmc[[3]] | pair_ar_thickness[[3]]) 
+
+fvfm_plots <- 
+  (pair_fvfm_height[[3]] | pair_fvfm_sap[[3]] | pair_fvfm_sav[[3]] | pair_fvfm_tdmc[[3]] | pair_fvfm_sta[[3]] ) 
+
+ar_plots/fvfm_plots
+
 mh_row_scaled <- plot_grid(
   NULL,
   NULL,
@@ -459,6 +502,8 @@ sav_row <- plot_grid(
   NULL,
   nrow = 1
 )
+
+
 
 thickness_row_scaled <- plot_grid(
   NULL,
