@@ -47,7 +47,7 @@ fvfm_ind <- fvfm_raw %>%
     TRUE ~ fvfm_meas
   )) %>% 
   # take out observations with "-" in the measurement
-  filter(fvfm_meas != "-")%>% 
+  filter(fvfm_meas != "-") %>% 
   # only use FvFm, drop the NAs, change the column name
   select(specimen_ID, subsample_ID, 'fvfm_meas') %>% 
   drop_na(specimen_ID) %>%
@@ -97,12 +97,23 @@ weight_sub <- weight %>%
   # take out specimen_ID column
   select(-specimen_ID)
 
+# EGME weights
+egme_weight
+
 # individual
 weight_ind <- weight %>% 
   group_by(specimen_ID) %>% 
   summarize(total_wet = sum(weight_wet_mg, na.rm = TRUE),
             total_dry = sum(weight_dry_mg, na.rm = TRUE)) %>% 
-  ungroup()
+  ungroup() %>% 
+  mutate(total_dry = case_when(
+    specimen_ID == pluck(egme_weight, 1, 1) ~ pluck(egme_weight, 4, 1),
+    specimen_ID == pluck(egme_weight, 1, 2) ~ pluck(egme_weight, 4, 2),
+    specimen_ID == pluck(egme_weight, 1, 3) ~ pluck(egme_weight, 4, 3),
+    specimen_ID == pluck(egme_weight, 1, 4) ~ pluck(egme_weight, 4, 4),
+    specimen_ID == pluck(egme_weight, 1, 5) ~ pluck(egme_weight, 4, 5),
+    TRUE ~ total_dry
+  ))
 
 # ⊣ d. volume -----------------------------------------------
 
@@ -283,6 +294,8 @@ ind_traits <- ct_prep %>%
   mutate(mass_to_height = total_dry/maximum_height) %>% 
   left_join(., (metadata_ind %>% select(specimen_ID, date_collected, site)), by = "specimen_ID") %>% 
   filter(!(sp_code == "PTCA" & lifestage == "recruit")) %>% 
+  filter(!(specimen_ID %in% c("20220726-BULL-016",
+                              "20220726-BULL-024"))) %>% 
   mutate(date_collected = ymd(date_collected)) %>% 
   mutate(year = year(date_collected))
 
@@ -318,73 +331,7 @@ ind_traits <- ct_prep %>%
 #   mutate_all(na_if, "NaN")
 
 
-# ⟞ d. species collection table -------------------------------------------
 
-total_sample_collection_table <- ind_traits %>% 
-  filter(sp_code %in% algae_proposal) %>% 
-  group_by(scientific_name, site) %>% 
-  count() %>% 
-  pivot_wider(names_from = "site",
-              values_from = "n") %>% 
-  select(scientific_name, Bullito, `Arroyo Quemado`, Naples, `Isla Vista`,
-         Mohawk, Carpinteria) %>% 
-  adorn_totals(c("row", "col")) %>% 
-  rename(`Scientific name` = scientific_name) %>% 
-  flextable() %>% 
-  colformat_num(
-    part = "all",
-    na_str = "-"
-  ) %>% 
-  autofit() %>% 
-  fit_to_width(10) %>% 
-  font(fontname = "Times New Roman",
-       part = "all")
-
-total_sample_collection_table
-
-# total_sample_collection_table %>%
-#   save_as_docx(path = here::here(
-#     "tables",
-#     "sample-tables",
-#     paste0("total-samples_", today(), ".docx")
-#     ))
-
-total_samples_with_all_data <- ind_traits %>% 
-  filter(sp_code %in% algae_proposal) %>% 
-  select(scientific_name, site,
-         maximum_height, thickness_mm_mean, sta_mean, tdmc_mean,
-         sav_mean, sap_mean, aspect_ratio_mean, frond_length_mean,
-         frond_width_mean, fvfm_mean, total_wet, total_dry, total_volume) %>% 
-  drop_na(maximum_height, thickness_mm_mean, sta_mean, tdmc_mean,
-          sav_mean, sap_mean, aspect_ratio_mean, frond_length_mean,
-          frond_width_mean, fvfm_mean, total_wet, total_dry, total_volume) %>% 
-  select(scientific_name, site) %>% 
-  group_by(scientific_name, site) %>% 
-  count() %>% 
-  pivot_wider(names_from = "site",
-              values_from = "n") %>% 
-  select(scientific_name, Bullito, `Arroyo Quemado`, Naples, `Isla Vista`,
-         Mohawk, Carpinteria) %>% 
-  adorn_totals(c("row", "col")) %>% 
-  rename(`Scientific name` = scientific_name) %>% 
-  flextable() %>% 
-  colformat_num(
-    part = "all",
-    na_str = "-"
-  ) %>% 
-  autofit() %>% 
-  fit_to_width(10) %>% 
-  font(fontname = "Times New Roman",
-       part = "all")
-
-total_samples_with_all_data 
-
-# total_samples_with_all_data %>%
-#   save_as_docx(path = here::here(
-#     "tables",
-#     "sample-tables",
-#     paste0("total-samples_all-data_", today(), ".docx")
-#     ))
 
 ############################################################-
 # 3. categorical JoE traits ---------------------------------

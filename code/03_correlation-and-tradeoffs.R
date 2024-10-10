@@ -44,7 +44,8 @@ pca_mat <- ind_traits %>%
          `SA:V` = sav_mean,
          `SA:P` = sap_mean,
          `Fv/Fm` = fvfm_mean,
-         `Aspect ratio` = aspect_ratio_mean)
+         `Aspect ratio` = aspect_ratio_mean) %>% 
+  select(!(`Fv/Fm`))
 
 pca_mat_scale <- scale(pca_mat)
 
@@ -701,7 +702,6 @@ ggsave(filename = here::here(
 # ⟞ a. PCA ----------------------------------------------------------------
 
 # trait by species PCA
-tbs_pca <- prcomp(x = pca_mat_log)
 tbs_pca <- rda(pca_mat_log)
 
 # create a screeplot to visualize axis contributions
@@ -711,29 +711,9 @@ screeplot(tbs_pca, bstick = TRUE)
 summary(tbs_pca)
 
 # proportion variance explained for downstream figure making
-prop_PC1 <- "43.1%"
-prop_PC2 <- "26.2%"
-prop_PC3 <- "15.4%"
-
-library(factoextra)
-
-facto_summarize(X = tbs_pca,
-                element = "var")$contrib
-
-fviz_contrib(X = tbs_pca,
-             choice = "var",
-             axes = 1) +
-  theme(panel.grid = element_blank())
-
-get_pca_var(tbs_pca)$contrib
-
-fviz_contrib(X = tbs_pca,
-             choice = "var",
-             axes = 2)
-
-fviz_contrib(X = tbs_pca,
-             choice = "var",
-             axes = 3)
+prop_PC1 <- "39.8%"
+prop_PC2 <- "27.4%"
+prop_PC3 <- "17.2%"
 
 # ⟞ b. loadings -----------------------------------------------------------
 
@@ -817,58 +797,14 @@ PCAscores <- scores(tbs_pca,
   left_join(., metadata_ind, by = "specimen_ID") %>% 
   left_join(., coarse_traits, by = "sp_code") %>% 
   mutate(scientific_name = factor(scientific_name, 
-                                  levels = algae_proposal_sciname_factors))
+                                  levels = algae_proposal_sciname_factors)) %>% 
+  left_join(., fvfm_ind, by = "specimen_ID")
 
 # trait vectors
 PCAvect <- scores(tbs_pca, 
                   display = "species", 
                   choices = c(1, 2, 3)) %>% 
   as.data.frame()
-
-# got calculation from http://www.sthda.com/english/articles/31-principal-component-methods-in-r-practical-guide/112-pca-principal-component-analysis-essentials/
-varcoord <- PCAvect %>% 
-  rownames_to_column("trait") %>% 
-  mutate(quality_1 = PC1^2,
-         quality_2 = PC2^2,
-         quality_3 = PC3^2) %>% 
-  select(trait, quality_1, quality_2, quality_3) %>% 
-  pivot_longer(cols = quality_1:quality_3,
-               names_to = "axis",
-               values_to = "values") %>% 
-  mutate(axis = case_match(
-    axis,
-    "quality_1" ~ "PC1",
-    "quality_2" ~ "PC2",
-    "quality_3" ~ "PC3"
-  )) %>% 
-  group_by(axis) %>% 
-  mutate(component_total = sum(values)) %>% 
-  ungroup() %>% 
-  mutate(contrib = (values/component_total)*100)
-
-# The red dashed line on the graph above indicates the expected average contribution. If the contribution of the variables were uniform, the expected value would be 1/length(variables) = 1/10 = 10%
-expected_average <- (1/length(unique(varcoord$trait)))*100
-
-ggplot(data = varcoord %>% filter(axis == "PC1"),
-       aes(x = reorder(trait, -contrib),
-           y = contrib)) +
-  geom_col() +
-  geom_hline(yintercept = expected_average,
-             color = "red",
-             linetype = 2) +
-  labs(title = "Contributions to PC1")
-
-ggplot(data = varcoord %>% filter(axis == "PC2"),
-       aes(x = reorder(trait, -contrib),
-           y = contrib)) +
-  geom_col() +
-  labs(title = "Contributions to PC2")
-
-ggplot(data = varcoord %>% filter(axis == "PC3"),
-       aes(x = reorder(trait, -contrib),
-           y = contrib)) +
-  geom_col() +
-  labs(title = "Contributions to PC3")
   
 
 PCA_aesthetics <- list(
@@ -896,8 +832,9 @@ plot_PCA_12 <- ggplot() +
   geom_point(data = PCAscores, 
              aes(x = PC1, 
                  y = PC2, 
-                 color = scientific_name), 
-             size = 1) +
+                 color = scientific_name, 
+                 size = fvfm_mean),
+             alpha = 0.7) +
   geom_segment(data = PCAvect, 
                aes(x = 0, 
                    y = 0, 
@@ -925,9 +862,10 @@ plot_PCA_13 <- ggplot() +
   PCA_aesthetics +
   geom_point(data = PCAscores, 
              aes(x = PC1, 
-                 y = PC3, 
-                 color = scientific_name), 
-             size = 1) +
+                 y = PC2, 
+                 color = scientific_name, 
+                 size = fvfm_mean),
+             alpha = 0.7) +
   geom_segment(data = PCAvect, 
                aes(x = 0, 
                    y = 0, 
@@ -963,3 +901,150 @@ ggsave(here::here("figures",
        pca_together,
        width = 18, height = 12, units = "cm", dpi = 300)
 
+
+# ⟞ d. trait contributions to axes ----------------------------------------
+
+library(factoextra)
+
+prcomp_pca <- prcomp(x = pca_mat_log)
+
+get_pca_var(prcomp_pca)$contrib
+
+fviz_contrib(X = prcomp_pca,
+             choice = "var",
+             axes = 1) +
+  theme(panel.grid = element_blank())
+
+fviz_contrib(X = prcomp_pca,
+             choice = "var",
+             axes = 2)
+
+fviz_contrib(X = prcomp_pca,
+             choice = "var",
+             axes = 3)
+
+# got calculation from http://www.sthda.com/english/articles/31-principal-component-methods-in-r-practical-guide/112-pca-principal-component-analysis-essentials/
+varcoord <- PCAvect %>% 
+  rownames_to_column("trait") %>% 
+  mutate(quality_1 = PC1^2,
+         quality_2 = PC2^2,
+         quality_3 = PC3^2) %>% 
+  select(trait, quality_1, quality_2, quality_3) %>% 
+  pivot_longer(cols = quality_1:quality_3,
+               names_to = "axis",
+               values_to = "values") %>% 
+  mutate(axis = case_match(
+    axis,
+    "quality_1" ~ "PC1",
+    "quality_2" ~ "PC2",
+    "quality_3" ~ "PC3"
+  )) %>% 
+  group_by(axis) %>% 
+  mutate(component_total = sum(values)) %>% 
+  ungroup() %>% 
+  mutate(contrib = (values/component_total)*100)
+
+# The red dashed line on the graph above indicates the expected average contribution. If the contribution of the variables were uniform, the expected value would be 1/length(variables) = 1/10 = 10%
+expected_average <- (1/length(unique(varcoord$trait)))*100
+
+ggplot(data = varcoord %>% filter(axis == "PC1"),
+       aes(x = reorder(trait, -contrib),
+           y = contrib)) +
+  geom_col(fill = "blue") +
+  geom_hline(yintercept = expected_average,
+             color = "red",
+             linetype = 2) +
+  labs(title = "Contributions to PC1")
+
+ggplot(data = varcoord %>% filter(axis == "PC2"),
+       aes(x = reorder(trait, -contrib),
+           y = contrib)) +
+  geom_col(fill = "blue") +
+  geom_hline(yintercept = expected_average,
+             color = "red",
+             linetype = 2) +
+  labs(title = "Contributions to PC2")
+
+ggplot(data = varcoord %>% filter(axis == "PC3"),
+       aes(x = reorder(trait, -contrib),
+           y = contrib)) +
+  geom_col(fill = "blue") +
+  geom_hline(yintercept = expected_average,
+             color = "red",
+             linetype = 2) +
+  labs(title = "Contributions to PC3")
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ---------------------- 5. species collection table ----------------------
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+total_sample_collection_table <- pca_mat %>% 
+  rownames_to_column("specimen_ID") %>% 
+  select(specimen_ID) %>% 
+  left_join(., metadata_ind, by = "specimen_ID") %>% 
+  left_join(., coarse_traits, by = "sp_code") %>% 
+  filter(sp_code %in% algae_proposal) %>% 
+  select(specimen_ID, scientific_name, site) %>% 
+  group_by(scientific_name, site) %>% 
+  count() %>% 
+  pivot_wider(names_from = "site",
+              values_from = "n") %>% 
+  select(scientific_name, Bullito, `Arroyo Quemado`, Naples, `Isla Vista`,
+         Mohawk, Carpinteria) %>% 
+  adorn_totals(c("row", "col")) %>% 
+  rename(`Scientific name` = scientific_name) %>% 
+  flextable() %>% 
+  colformat_num(
+    part = "all",
+    na_str = "-"
+  ) %>% 
+  autofit() %>% 
+  fit_to_width(10) %>% 
+  font(fontname = "Times New Roman",
+       part = "all")
+
+total_sample_collection_table
+
+# total_sample_collection_table %>%
+#   save_as_docx(path = here::here(
+#     "tables",
+#     "sample-tables",
+#     paste0("total-samples_", today(), ".docx")
+#     ))
+
+total_samples_with_all_data <- ind_traits %>% 
+  filter(sp_code %in% algae_proposal) %>% 
+  select(scientific_name, site,
+         maximum_height, thickness_mm_mean, sta_mean, tdmc_mean,
+         sav_mean, sap_mean, aspect_ratio_mean, frond_length_mean,
+         frond_width_mean, fvfm_mean, total_wet, total_dry, total_volume) %>% 
+  drop_na(maximum_height, thickness_mm_mean, sta_mean, tdmc_mean,
+          sav_mean, sap_mean, aspect_ratio_mean, frond_length_mean,
+          frond_width_mean, fvfm_mean, total_wet, total_dry, total_volume) %>% 
+  select(scientific_name, site) %>% 
+  group_by(scientific_name, site) %>% 
+  count() %>% 
+  pivot_wider(names_from = "site",
+              values_from = "n") %>% 
+  select(scientific_name, Bullito, `Arroyo Quemado`, Naples, `Isla Vista`,
+         Mohawk, Carpinteria) %>% 
+  adorn_totals(c("row", "col")) %>% 
+  rename(`Scientific name` = scientific_name) %>% 
+  flextable() %>% 
+  colformat_num(
+    part = "all",
+    na_str = "-"
+  ) %>% 
+  autofit() %>% 
+  fit_to_width(10) %>% 
+  font(fontname = "Times New Roman",
+       part = "all")
+
+total_samples_with_all_data 
+
+# total_samples_with_all_data %>%
+#   save_as_docx(path = here::here(
+#     "tables",
+#     "sample-tables",
+#     paste0("total-samples_all-data_", today(), ".docx")
+#     ))

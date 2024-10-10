@@ -64,6 +64,7 @@ library(ggridges) # ridge plots
 library(GGally) # pairs plots
 # source("https://raw.githubusercontent.com/briatte/ggcorr/master/ggcorr.R") # correlation plot
 library(ggConvexHull) # convex hulls
+library(ggrepel)
 
 # ⊣ b. tables -----------------------------------------------
 
