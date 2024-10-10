@@ -72,7 +72,7 @@ sheet_write_csv(weight_sheet)
 
 egme_weight_sheet <- read_sheet(sheet_id, sheet = "04b-EGME_weight", na = "NA")
 
-# last updated: 2024-10-09
+# last updated: 2024-10-10
 sheet_write_csv(egme_weight_sheet)
 
 # ⊣ g. surface area and perimeter ---------------------------

@@ -73,7 +73,7 @@ thickness <- read_csv(here::here("data", "google-sheet-traits", "thickness_sheet
 # ⊣ f. wet and dry weight -----------------------------------
 
 weight <- read_csv(here::here("data", "google-sheet-traits", "weight_sheet_2024-09-26.csv"))
-egme_weight <- read_csv(here::here("data", "google-sheet-traits", "egme_weight_sheet_2024-10-09.csv"))
+egme_weight <- read_csv(here::here("data", "google-sheet-traits", "egme_weight_sheet_2024-10-10.csv"))
 
 # ⊣ g. surface area and perimeter ---------------------------
 

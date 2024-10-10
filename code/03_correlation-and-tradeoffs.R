@@ -44,8 +44,8 @@ pca_mat <- ind_traits %>%
          `SA:V` = sav_mean,
          `SA:P` = sap_mean,
          `Fv/Fm` = fvfm_mean,
-         `Aspect ratio` = aspect_ratio_mean) %>% 
-  select(!(`Fv/Fm`))
+         `Aspect ratio` = aspect_ratio_mean)  
+  # select(!(`Fv/Fm`))
 
 pca_mat_scale <- scale(pca_mat)
 
@@ -711,9 +711,9 @@ screeplot(tbs_pca, bstick = TRUE)
 summary(tbs_pca)
 
 # proportion variance explained for downstream figure making
-prop_PC1 <- "39.8%"
-prop_PC2 <- "27.4%"
-prop_PC3 <- "17.2%"
+prop_PC1 <- "42.0%"
+prop_PC2 <- "25.2%"
+prop_PC3 <- "15.7%"
 
 # ⟞ b. loadings -----------------------------------------------------------
 
@@ -909,19 +909,6 @@ library(factoextra)
 prcomp_pca <- prcomp(x = pca_mat_log)
 
 get_pca_var(prcomp_pca)$contrib
-
-fviz_contrib(X = prcomp_pca,
-             choice = "var",
-             axes = 1) +
-  theme(panel.grid = element_blank())
-
-fviz_contrib(X = prcomp_pca,
-             choice = "var",
-             axes = 2)
-
-fviz_contrib(X = prcomp_pca,
-             choice = "var",
-             axes = 3)
 
 # got calculation from http://www.sthda.com/english/articles/31-principal-component-methods-in-r-practical-guide/112-pca-principal-component-analysis-essentials/
 varcoord <- PCAvect %>% 
