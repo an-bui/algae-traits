@@ -827,7 +827,7 @@ ggsave(filename = here::here(
 # ⟞ ⟞ i. PCA --------------------------------------------------------------
 
 # trait by species PCA
-pca_full <- rda(pca_mat_log, scale = TRUE)
+pca_full <- rda(pca_mat_log)
 
 # create a screeplot to visualize axis contributions
 screeplot(pca_full, bstick = TRUE)
@@ -934,8 +934,8 @@ plot_PCA_12_full <- ggplot() +
   geom_label_repel(data = PCAvect_full, 
                   aes(x = PC1, 
                       y = PC2, 
-                      label = rownames(PCAvect),
-                      fill = rownames(PCAvect)), 
+                      label = rownames(PCAvect_full),
+                      fill = rownames(PCAvect_full)), 
                   size = 6, 
                   alpha = 0.8,
                   color = "black") +
@@ -966,8 +966,8 @@ plot_PCA_13_full <- ggplot() +
   geom_label_repel(data = PCAvect_full, 
                    aes(x = PC1, 
                        y = PC2, 
-                       label = rownames(PCAvect),
-                       fill = rownames(PCAvect)), 
+                       label = rownames(PCAvect_full),
+                       fill = rownames(PCAvect_full)), 
                    size = 6, 
                    alpha = 0.8,
                    color = "black") +
@@ -983,12 +983,12 @@ plot_PCA_13_full
 pca_together_full <- (plot_PCA_12_full | plot_PCA_13_full) +
   plot_layout(ncol = 2, widths = c(1, 1)) 
 
-ggsave(here::here("figures",
-                  "ordination",
-                  paste("PCA-log_scale_full-model_", today(), ".jpg", sep = "")),
-       plot_PCA_12_full,
-       width = 12, height = 12, units = "cm", dpi = 300)
-
+# ggsave(here::here("figures",
+#                   "ordination",
+#                   paste("PCA-log_scale_full-model_", today(), ".jpg", sep = "")),
+#        plot_PCA_12_full,
+#        width = 12, height = 12, units = "cm", dpi = 300)
+# 
 # ggsave(here::here("figures",
 #                   "ordination",
 #                   paste("PCA-log_no-scale_full-model_", today(), ".jpg", sep = "")),
@@ -1054,18 +1054,18 @@ pc3_contrib_full <- varcoord_full %>%
 
 pc3_contrib_full
 
-contrib_together_full <- pc1_contrib_full / pc2_contrib_full#  / pc3_contrib_full
+contrib_together_full <- pc1_contrib_full / pc2_contrib_full / pc3_contrib_full
 
-# ggsave(here::here(
-#   "figures",
-#   "ordination",
-#   paste0("contributions_scale_full-model_", today(), ".jpg")),
-#   contrib_together_full,
-#   width = 14,
-#   height = 14,
-#   units = "cm",
-#   dpi = 300
-# )
+ggsave(here::here(
+  "figures",
+  "ordination",
+  paste0("contributions_no-scale_full-model_", today(), ".jpg")),
+  contrib_together_full,
+  width = 14,
+  height = 14,
+  units = "cm",
+  dpi = 300
+)
 
 # ⟞ b. reduced model ------------------------------------------------------
 
