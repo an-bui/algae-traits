@@ -247,6 +247,23 @@ cluster4 <- "#357777"
 
 cat_cluster1 <- "#CC8613"
 cat_cluster2 <- "#1274CC"
+
+trait_color_palette <- c(
+  # economic spectrum: cool
+  # from rachele2113 on color-hex.com
+  `TDMC` = "#004c4c",
+  `Thickness` = "#006666",
+  `STA` = "#008080",
+  `SA:V` = "#66b2b2",
+  `Fv/Fm` = "#b2d8d8",
+  
+  # competitive dominance: warm
+  `Maximum height` = "#ff6347",
+  `SA:P` = "#ff826b",
+  `Mass:height` = "#ffa190",
+  `SA:V` = "#ffc0b5",
+  `Aspect ratio` = "#ffdfda"
+)
       
     # gradient palette
     gradient_palette <- c("#FFFFFF", "#009BB0")

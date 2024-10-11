@@ -55,6 +55,11 @@ pca_mat_log <- pca_mat %>%
                   `Thickness`, `STA`, `SA:P`, `Aspect ratio`), 
                 log))
 
+# reduced model: mass:height, max height, SA:V
+
+pca_mat_log_reduced <- pca_mat_log %>% 
+  select(`Mass:height`, `Maximum height`, `SA:V`, STA)
+
 pca_mat_with_cn <- ind_traits %>% 
   filter(sp_code %in% algae_proposal) %>% 
   # weird Nienburgia?
@@ -81,8 +86,126 @@ pca_mat_with_cn <- ind_traits %>%
   drop_na()
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# ----------------------------- 2. correlations ---------------------------
+# --------------------------- 2. plot aesthetics --------------------------
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+# ⟞ a. SMA plots ----------------------------------------------------------
+
+
+# ⟞ b. loadings plots -----------------------------------------------------
+
+# aesthetics for the loadings plots
+loadings_plot_aes <- list(
+  geom_col(color = "#000000", 
+           fill = "orange", 
+           linewidth = 0.5),
+  geom_vline(xintercept = 0),
+  scale_x_continuous(limits = c(-1, 1), 
+                     breaks = seq(from = -1, to = 1, by = 0.5))
+)
+
+# theme elements for the loadings plots
+loadings_plot_theme <- function() {
+  theme_bw() +
+    theme(panel.grid = element_blank(),
+          axis.text = element_text(size = 18),
+          axis.title = element_blank(),
+          # plot.title.position = "plot",
+          plot.title = element_text(hjust = 0.5, size = 20))
+}
+
+
+# ⟞ c. PCA plots ----------------------------------------------------------
+
+PCA_aesthetics <- list(
+  coord_cartesian(),
+  geom_vline(xintercept = c(0), color = "grey70", linetype = 2),
+  geom_hline(yintercept = c(0), color = "grey70", linetype = 2),
+  scale_color_manual(values = trait_color_palette),
+  scale_fill_manual(values = trait_color_palette),
+  guides(colour = guide_legend(ncol = 4),
+         shape = guide_legend(ncol = 4)) 
+)
+
+PCA_theme <- function() {
+  theme_bw() +
+    theme(legend.position = "none", 
+          # legend.box = "vertical", 
+          axis.title = element_text(size = 18),
+          axis.text = element_text(size = 16),
+          title = element_text(size = 20),
+          legend.text = element_text(size = 10)) 
+}
+
+# ⟞ d. trait contributions plots ------------------------------------------
+
+contrib_theme <- function() {
+  theme_bw() +
+    theme(legend.position = "none",
+          panel.grid = element_blank(),
+          axis.text = element_text(size = 18),
+          axis.title = element_text(size = 20),
+          plot.title = element_text(size = 22)) 
+}
+
+contrib_aesthetics <- list(
+  geom_col(color = "black"),
+  geom_hline(yintercept = expected_average_full,
+             color = "#96a39e",
+             linetype = 2),
+  scale_fill_manual(values = trait_color_palette),
+  scale_y_continuous(expand = expansion(c(0, 0.05))),
+  labs(x = "Trait",
+       y = "% contribution to axis")
+)
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ----------------------------- 3. correlations ---------------------------
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+# ⟞ a. full model ---------------------------------------------------------
+
+mat_for_corr <- pca_mat_log
+
+# create a correlation matrix based on pearson correlation
+M <- mat_for_corr %>% 
+  cor(method = "pearson")
+
+p <- cor.mtest(mat_for_corr,
+               conf.level = 0.95,
+               method = "pearson")
+
+corr_traits <- corrplot(corr = M, 
+                        p.mat = p$p,
+                        diag = FALSE,
+                        method = "circle", 
+                        # addgrid.col = NA,
+                        type = "lower", 
+                        insig = "blank", 
+                        addCoef.col = "black", 
+                        col= colorRampPalette(c("#F21A00", "#FFFFFF", "#3B9AB2"))(200), 
+                        sig.level = 0.05)
+
+jpeg(here::here("figures", 
+                "correlation",
+                paste0("corrplot_log_full-model_", today(), ".jpeg")),
+     width = 14, height = 14, units = "cm", res = 200)
+corrplot(corr = M, 
+         p.mat = p$p,
+         diag = FALSE,
+         method = "circle", 
+         # addgrid.col = NA,
+         type = "lower", 
+         insig = "blank", 
+         addCoef.col = "black", 
+         col= colorRampPalette(c("#F21A00", "#FFFFFF", "#3B9AB2"))(200), 
+         sig.level = 0.05)
+dev.off()
+
+# ⟞ b. reduced model ------------------------------------------------------
 
 mat_for_corr <- pca_mat_log
 
@@ -122,7 +245,7 @@ corrplot(corr = M,
 dev.off()
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# ------------------ 3. standardized major axis regression ----------------
+# ------------------ 4. standardized major axis regression ----------------
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # ⟞ a. identify significant correlations ----------------------------------
@@ -689,7 +812,7 @@ ggsave(filename = here::here(
 )
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# -------------------- 4. Principal Components Analysis -------------------
+# -------------------- 5. Principal Components Analysis -------------------
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # This section includes a Principal Components Analysis (PCA) to visualize the
@@ -699,29 +822,31 @@ ggsave(filename = here::here(
 # https://www.davidzeleny.net/anadat-r/doku.php/en:pca_examples).
 
 
-# ⟞ a. PCA ----------------------------------------------------------------
+# ⟞ a. full model ---------------------------------------------------------
+
+# ⟞ ⟞ i. PCA --------------------------------------------------------------
 
 # trait by species PCA
-tbs_pca <- rda(pca_mat_log)
+pca_full <- rda(pca_mat_log, scale = TRUE)
 
 # create a screeplot to visualize axis contributions
-screeplot(tbs_pca, bstick = TRUE)
+screeplot(pca_full, bstick = TRUE)
 
 # look at the summary
-summary(tbs_pca)
+summary(pca_full)
 
 # proportion variance explained for downstream figure making
-prop_PC1 <- "42.0%"
-prop_PC2 <- "25.2%"
-prop_PC3 <- "15.7%"
+prop_PC1_full <- "38.6%"
+prop_PC2_full <- "27.6%"
+# prop_PC3_full <- "15.7%"
 
-# ⟞ b. loadings -----------------------------------------------------------
+# ⟞ ⟞ ii. loadings --------------------------------------------------------
 
 # get loadings into data frame
-loadings_df <- scores(tbs_pca, 
-                      display = 'species', 
-                      scaling = 0, 
-                      choices = c(1, 2, 3)) %>% 
+loadings_df_full <- scores(pca_full, 
+                           display = 'species', 
+                           scaling = 0, 
+                           choices = c(1, 2, 3)) %>% 
   as_tibble(rownames = NA) %>% 
   rownames_to_column("trait") %>% 
   # arrange the data frame in order of PC1 loadings
@@ -729,67 +854,47 @@ loadings_df <- scores(tbs_pca,
   # set the factor levels so that all the traits appear in the same order
   mutate(trait = fct_inorder(trait))
 
-# aesthetics for the loadings plots
-loadings_plot_aes <- list(
-  geom_col(color = "#000000", 
-           fill = "orange", 
-           linewidth = 0.5),
-  geom_vline(xintercept = 0),
-  scale_x_continuous(limits = c(-0.89, 1), 
-                     breaks = seq(from = -0.75, to = 1, by = 0.25))
-)
-
-# theme elements for the loadings plots
-loadings_plot_theme <- function() {
-  theme_bw() +
-    theme(panel.grid = element_blank(),
-          axis.text = element_text(size = 20),
-          axis.title = element_blank(),
-          # plot.title.position = "plot",
-          plot.title = element_text(hjust = 0.5, size = 20))
-}
-
-pc1_plot <- ggplot(data = loadings_df, 
+pc1_plot_full <- ggplot(data = loadings_df_full, 
                    aes(x = PC1,
                        y = trait)) +
   loadings_plot_aes +
   loadings_plot_theme() +
   labs(title = "PC1")
 
-pc2_plot <- ggplot(data = loadings_df, 
+pc2_plot_full <- ggplot(data = loadings_df, 
                    aes(x = PC2,
                        y = trait)) +
   loadings_plot_aes +
   loadings_plot_theme() +
   labs(title = "PC2")
 
-pc3_plot <- ggplot(data = loadings_df, 
+pc3_plot_full <- ggplot(data = loadings_df, 
                    aes(x = PC3,
                        y = trait)) +
   loadings_plot_aes +
   loadings_plot_theme() +
   labs(title = "PC3")
 
-loadings_plot <- pc1_plot / pc2_plot / pc3_plot
+loadings_plot_full <- pc1_plot_full / pc2_plot_full # / pc3_plot_full
 
 # ggsave(here::here(
 #   "figures",
 #   "ordination",
-#   paste0("loadings_", today(), ".jpg")),
-#   loadings_plot,
-#   width = 14,
-#   height = 16,
+#   paste0("loadings_scaled_full-model_", today(), ".jpg")),
+#   loadings_plot_full,
+#   width = 12,
+#   height = 14,
 #   units = "cm",
-#   dpi = 150
+#   dpi = 300
 # )
 
-# ⟞ c. PCA plots ----------------------------------------------------------
+# ⟞ ⟞ iii. PCA plots ------------------------------------------------------
 
 # simple biplot (compare with ggplot output to make sure it's right)
-biplot(tbs_pca)
+biplot(pca_full)
 
 # species points
-PCAscores <- scores(tbs_pca, 
+PCAscores_full <- scores(pca_full, 
                     display = "sites", 
                     choices = c(1, 2, 3)) %>% 
   as.data.frame() %>% 
@@ -801,117 +906,99 @@ PCAscores <- scores(tbs_pca,
   left_join(., fvfm_ind, by = "specimen_ID")
 
 # trait vectors
-PCAvect <- scores(tbs_pca, 
-                  display = "species", 
-                  choices = c(1, 2, 3)) %>% 
+PCAvect_full <- scores(pca_full, 
+                       display = "species", 
+                       choices = c(1, 2, 3)) %>% 
   as.data.frame()
-  
-
-PCA_aesthetics <- list(
-  coord_cartesian(),
-    geom_vline(xintercept = c(0), color = "grey70", linetype = 2),
-    geom_hline(yintercept = c(0), color = "grey70", linetype = 2),
-  scale_color_manual(values = algae_colors),
-  guides(colour = guide_legend(ncol = 4),
-         shape = guide_legend(ncol = 4)) 
-)
-
-PCA_theme <- function() {
-  theme_bw() +
-    theme(legend.position = "bottom", 
-          legend.box = "vertical", 
-          axis.title = element_text(size = 18),
-          axis.text = element_text(size = 16),
-          title = element_text(size = 20),
-          legend.text = element_text(size = 10)) 
-}
 
 # plot PCA
-plot_PCA_12 <- ggplot() +
+plot_PCA_12_full <- ggplot() +
   PCA_aesthetics +
-  geom_point(data = PCAscores, 
+  geom_point(data = PCAscores_full, 
              aes(x = PC1, 
                  y = PC2, 
-                 color = scientific_name, 
-                 size = fvfm_mean),
-             alpha = 0.7) +
-  geom_segment(data = PCAvect, 
+                 # color = scientific_name, 
+                 # size = fvfm_mean
+                 ),
+             # alpha = 0.7,
+             shape = 21,
+             color = "darkgrey") +
+  geom_segment(data = PCAvect_full, 
                aes(x = 0, 
                    y = 0, 
                    xend = PC1, 
-                   yend = PC2), 
+                   yend = PC2,
+                   color = rownames(PCAvect_full)), 
                arrow = arrow(length = unit(0.2, "cm")), 
                linewidth = 0.5) +
-  geom_text_repel(data = PCAvect, 
+  geom_label_repel(data = PCAvect_full, 
                   aes(x = PC1, 
                       y = PC2, 
-                      label = rownames(PCAvect)), 
-                  size = 8, 
+                      label = rownames(PCAvect),
+                      fill = rownames(PCAvect)), 
+                  size = 6, 
                   alpha = 0.8,
-                  color = "red") +
+                  color = "black") +
   # scale_x_continuous(limits = c(-1.75, 3.75)) +
   # scale_y_continuous(limits = c(-2, 3.25)) +
   PCA_theme() +
-  labs(x = paste0("PC1 (", prop_PC1, ")"),
-       y = paste0("PC2 (", prop_PC2, ")"),
+  labs(x = paste0("PC1 (", prop_PC1_full, ")"),
+       y = paste0("PC2 (", prop_PC2_full, ")"),
        title = "PC1 and PC2",
        color = "Scientific name") 
-plot_PCA_12
+plot_PCA_12_full
 
-plot_PCA_13 <- ggplot() +
+plot_PCA_13_full <- ggplot() +
   PCA_aesthetics +
-  geom_point(data = PCAscores, 
+  geom_point(data = PCAscores_full, 
              aes(x = PC1, 
-                 y = PC2, 
-                 color = scientific_name, 
-                 size = fvfm_mean),
-             alpha = 0.7) +
-  geom_segment(data = PCAvect, 
+                 y = PC2),
+             shape = 21,
+             color = "darkgrey") +
+  geom_segment(data = PCAvect_full, 
                aes(x = 0, 
                    y = 0, 
                    xend = PC1, 
-                   yend = PC3), 
+                   yend = PC2,
+                   color = rownames(PCAvect_full)), 
                arrow = arrow(length = unit(0.2, "cm")), 
                linewidth = 0.5) +
-  geom_text_repel(data = PCAvect, 
-                  aes(x = PC1, 
-                      y = PC3, 
-                      label = rownames(PCAvect)), 
-                  size = 8, 
-                  alpha = 0.8,
-                  color = "red") +
+  geom_label_repel(data = PCAvect_full, 
+                   aes(x = PC1, 
+                       y = PC2, 
+                       label = rownames(PCAvect),
+                       fill = rownames(PCAvect)), 
+                   size = 6, 
+                   alpha = 0.8,
+                   color = "black") +
   # scale_x_continuous(limits = c(-1.75, 3.75)) +
   # scale_y_continuous(limits = c(-2, 3.25)) +
   PCA_theme() +
-  labs(x = paste0("PC1 (", prop_PC1, ")"),
-       y = paste0("PC3 (", prop_PC3, ")"),
+  labs(x = paste0("PC1 (", prop_PC1_full, ")"),
+       y = paste0("PC3 (", prop_PC3_full, ")"),
        title = "PC1 and PC3",
        color = "Scientific name") 
-plot_PCA_13
+plot_PCA_13_full
 
-pca_together <- (plot_PCA_12 | plot_PCA_13) +
-  plot_layout(guides = "collect", ncol = 2, widths = c(1, 1)) &
-  theme(legend.position = "bottom")
+pca_together_full <- (plot_PCA_12_full | plot_PCA_13_full) +
+  plot_layout(ncol = 2, widths = c(1, 1)) 
 
-pca_together
-
-ggsave(here::here("figures", 
+ggsave(here::here("figures",
                   "ordination",
-                  paste("PCA-log_", today(), ".jpg", sep = "")),
-       pca_together,
-       width = 18, height = 12, units = "cm", dpi = 300)
+                  paste("PCA-log_scale_full-model_", today(), ".jpg", sep = "")),
+       plot_PCA_12_full,
+       width = 12, height = 12, units = "cm", dpi = 300)
 
+# ggsave(here::here("figures",
+#                   "ordination",
+#                   paste("PCA-log_no-scale_full-model_", today(), ".jpg", sep = "")),
+#        pca_together_full,
+#        width = 20, height = 8, units = "cm", dpi = 300)
 
-# ⟞ d. trait contributions to axes ----------------------------------------
-
-library(factoextra)
-
-prcomp_pca <- prcomp(x = pca_mat_log)
-
-get_pca_var(prcomp_pca)$contrib
+# ⟞ ⟞ iv. trait contributions to axes -------------------------------------
 
 # got calculation from http://www.sthda.com/english/articles/31-principal-component-methods-in-r-practical-guide/112-pca-principal-component-analysis-essentials/
-varcoord <- PCAvect %>% 
+varcoord_full <- PCAvect_full %>% 
   rownames_to_column("trait") %>% 
   mutate(quality_1 = PC1^2,
          quality_2 = PC2^2,
@@ -932,37 +1019,185 @@ varcoord <- PCAvect %>%
   mutate(contrib = (values/component_total)*100)
 
 # The red dashed line on the graph above indicates the expected average contribution. If the contribution of the variables were uniform, the expected value would be 1/length(variables) = 1/10 = 10%
-expected_average <- (1/length(unique(varcoord$trait)))*100
+expected_average_full <- (1/length(unique(varcoord_full$trait)))*100
 
-ggplot(data = varcoord %>% filter(axis == "PC1"),
-       aes(x = reorder(trait, -contrib),
-           y = contrib)) +
-  geom_col(fill = "blue") +
-  geom_hline(yintercept = expected_average,
-             color = "red",
-             linetype = 2) +
+pc1_contrib_full <- varcoord_full %>% 
+  filter(axis == "PC1") %>% 
+  ggplot(aes(x = reorder(trait, -contrib),
+             y = contrib, 
+             fill = trait)) +
+  contrib_aesthetics +
+  contrib_theme() +
   labs(title = "Contributions to PC1")
 
-ggplot(data = varcoord %>% filter(axis == "PC2"),
-       aes(x = reorder(trait, -contrib),
-           y = contrib)) +
-  geom_col(fill = "blue") +
-  geom_hline(yintercept = expected_average,
-             color = "red",
-             linetype = 2) +
+pc1_contrib_full
+
+pc2_contrib_full <- varcoord_full %>% 
+  filter(axis == "PC2") %>% 
+  ggplot(aes(x = reorder(trait, -contrib),
+             y = contrib, 
+             fill = trait)) +
+  contrib_aesthetics +
+  contrib_theme() +
   labs(title = "Contributions to PC2")
 
-ggplot(data = varcoord %>% filter(axis == "PC3"),
-       aes(x = reorder(trait, -contrib),
-           y = contrib)) +
-  geom_col(fill = "blue") +
-  geom_hline(yintercept = expected_average,
-             color = "red",
-             linetype = 2) +
+pc2_contrib_full
+
+pc3_contrib_full <- varcoord_full %>% 
+  filter(axis == "PC3") %>% 
+  ggplot(aes(x = reorder(trait, -contrib),
+             y = contrib, 
+             fill = trait)) +
+  contrib_aesthetics +
+  contrib_theme() +
   labs(title = "Contributions to PC3")
 
+pc3_contrib_full
+
+contrib_together_full <- pc1_contrib_full / pc2_contrib_full#  / pc3_contrib_full
+
+# ggsave(here::here(
+#   "figures",
+#   "ordination",
+#   paste0("contributions_scale_full-model_", today(), ".jpg")),
+#   contrib_together_full,
+#   width = 14,
+#   height = 14,
+#   units = "cm",
+#   dpi = 300
+# )
+
+# ⟞ b. reduced model ------------------------------------------------------
+
+# ⟞ ⟞ i. PCA --------------------------------------------------------------
+
+reduced_mat <- pca_mat_log %>% 
+  select(`Mass:height`, `Maximum height`, `SA:V`)
+
+# trait by species PCA
+pca_reduced <- rda(reduced_mat)
+
+# create a screeplot to visualize axis contributions
+screeplot(pca_reduced, bstick = TRUE)
+
+# look at the summary
+summary(pca_reduced)
+
+# proportion variance explained for downstream figure making
+prop_PC1_reduced <- "65.1%"
+prop_PC2_reduced <- "29.7%"
+
+
+# ⟞ ⟞ ii. loadings --------------------------------------------------------
+
+# get loadings into data frame
+loadings_df_reduced <- scores(pca_reduced, 
+                              display = 'species', 
+                              scaling = 0, 
+                              choices = c(1, 2, 3)) %>% 
+  as_tibble(rownames = NA) %>% 
+  rownames_to_column("trait") %>% 
+  # arrange the data frame in order of PC1 loadings
+  arrange(PC1) %>% 
+  # set the factor levels so that all the traits appear in the same order
+  mutate(trait = fct_inorder(trait))
+
+pc1_plot_reduced <- ggplot(data = loadings_df_reduced, 
+                        aes(x = PC1,
+                            y = trait)) +
+  loadings_plot_aes +
+  loadings_plot_theme() +
+  labs(title = "PC1")
+
+pc2_plot_reduced <- ggplot(data = loadings_df_reduced, 
+                        aes(x = PC2,
+                            y = trait)) +
+  loadings_plot_aes +
+  loadings_plot_theme() +
+  labs(title = "PC2")
+
+loadings_plot_reduced <- pc1_plot_reduced / pc2_plot_reduced
+
+# ggsave(here::here(
+#   "figures",
+#   "ordination",
+#   paste0("loadings_scale_reduced-model_", today(), ".jpg")),
+#   loadings_plot_reduced,
+#   width = 12,
+#   height = 14,
+#   units = "cm",
+#   dpi = 300
+# )
+
+# ⟞ ⟞ iii. PCA plots ------------------------------------------------------
+
+# simple biplot (compare with ggplot output to make sure it's right)
+biplot(pca_reduced)
+
+# species points
+PCAscores_reduced <- scores(pca_reduced, 
+                         display = "sites", 
+                         choices = c(1, 2, 3)) %>% 
+  as.data.frame() %>% 
+  rownames_to_column("specimen_ID") %>% 
+  left_join(., metadata_ind, by = "specimen_ID") %>% 
+  left_join(., coarse_traits, by = "sp_code") %>% 
+  mutate(scientific_name = factor(scientific_name, 
+                                  levels = algae_proposal_sciname_factors)) %>% 
+  left_join(., fvfm_ind, by = "specimen_ID")
+
+# trait vectors
+PCAvect_reduced <- scores(pca_reduced, 
+                       display = "species", 
+                       choices = c(1, 2, 3)) %>% 
+  as.data.frame()
+
+# plot PCA
+plot_PCA_12_reduced <- ggplot() +
+  PCA_aesthetics +
+  geom_point(data = PCAscores_reduced, 
+             aes(x = PC1, 
+                 y = PC2),
+             shape = 21,
+             color = "darkgrey") +
+  geom_segment(data = PCAvect_reduced, 
+               aes(x = 0, 
+                   y = 0, 
+                   xend = PC1, 
+                   yend = PC2,
+                   color = rownames(PCAvect_reduced)), 
+               arrow = arrow(length = unit(0.2, "cm")), 
+               linewidth = 0.5) +
+  geom_label_repel(data = PCAvect_reduced, 
+                   aes(x = PC1, 
+                       y = PC2, 
+                       label = rownames(PCAvect_reduced),
+                       fill = rownames(PCAvect_reduced)), 
+                   size = 6, 
+                   alpha = 0.8,
+                   color = "black") +
+  # scale_x_continuous(limits = c(-1.75, 3.75)) +
+  # scale_y_continuous(limits = c(-2, 3.25)) +
+  PCA_theme() +
+  labs(x = paste0("PC1 (", prop_PC1_reduced, ")"),
+       y = paste0("PC2 (", prop_PC2_reduced, ")"),
+       title = "PC1 and PC2",
+       color = "Scientific name") 
+plot_PCA_12_reduced
+
+ggsave(here::here("figures",
+                  "ordination",
+                  paste("PCA-log_no-scale_reduced-model_", today(), ".jpg", sep = "")),
+       plot_PCA_12_reduced,
+       width = 12, height = 12, units = "cm", dpi = 300)
+
+# ⟞ ⟞ iv. trait contributions to axes -------------------------------------
+
+
+
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# ---------------------- 5. species collection table ----------------------
+# ---------------------- 6. species collection table ----------------------
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 total_sample_collection_table <- pca_mat %>% 
