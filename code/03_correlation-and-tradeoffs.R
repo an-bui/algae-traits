@@ -1138,10 +1138,10 @@ ggsave(here::here(
 # ⟞ ⟞ i. PCA --------------------------------------------------------------
 
 reduced_mat <- pca_mat_log %>% 
-  select(`Mass:height`, `Maximum height`, `SA:V`)
+  select(`Mass:height`, `Maximum height`, `SA:V`, STA)
 
 # trait by species PCA
-pca_reduced <- rda(reduced_mat)
+pca_reduced <- rda(reduced_mat, scale = TRUE)
 
 # create a screeplot to visualize axis contributions
 screeplot(pca_reduced, bstick = TRUE)
@@ -1150,8 +1150,8 @@ screeplot(pca_reduced, bstick = TRUE)
 summary(pca_reduced)
 
 # proportion variance explained for downstream figure making
-prop_PC1_reduced <- "65.1%"
-prop_PC2_reduced <- "29.7%"
+prop_PC1_reduced <- "50.5%"
+prop_PC2_reduced <- "31.8%"
 
 
 # ⟞ ⟞ ii. loadings --------------------------------------------------------
@@ -1302,15 +1302,17 @@ pc2_contrib_reduced <- varcoord_reduced %>%
 
 pc2_contrib_reduced
 
-contrib_together_reduced <- pc1_contrib_reduced / pc2_contrib_reduced
+# contrib_together_reduced <- pc1_contrib_reduced / pc2_contrib_reduced
+
+contrib_together_reduced <- plot_PCA_12_reduced + (pc1_contrib_reduced / pc2_contrib_reduced)
 
 # ggsave(here::here(
 #   "figures",
 #   "ordination",
-#   paste0("contributions_no-scale_reduced-model_", today(), ".jpg")),
+#   paste0("contributions_scale_reduced-model_", today(), ".jpg")),
 #   contrib_together_reduced,
-#   width = 14,
-#   height = 14,
+#   width = 18,
+#   height = 10,
 #   units = "cm",
 #   dpi = 300
 # )
