@@ -149,9 +149,20 @@ contrib_theme <- function() {
           plot.title = element_text(size = 22)) 
 }
 
-contrib_aesthetics <- list(
+contrib_aesthetics_full <- list(
   geom_col(color = "black"),
   geom_hline(yintercept = expected_average_full,
+             color = "#96a39e",
+             linetype = 2),
+  scale_fill_manual(values = trait_color_palette),
+  scale_y_continuous(expand = expansion(c(0, 0.05))),
+  labs(x = "Trait",
+       y = "% contribution to axis")
+)
+
+contrib_aesthetics_reduced <- list(
+  geom_col(color = "black"),
+  geom_hline(yintercept = expected_average_reduced,
              color = "#96a39e",
              linetype = 2),
   scale_fill_manual(values = trait_color_palette),
@@ -325,8 +336,13 @@ pairwise_sma <- function(model_formula, trait1, trait2, data) {
   plot <- ggplot(data = df,
                  aes(x = {{ trait1 }},
                      y = {{ trait2 }})) +
-    geom_point(alpha = 0.1) +
-    stat_ma_line(method = "SMA") +
+    geom_point(alpha = 0.3,
+               shape = 21,
+               color = "#7e97c0") +
+    stat_ma_line(method = "SMA",
+                 color = "#295396",
+                 fill = "#a9bad5",
+                 linewidth = 0.75) +
     # labs(title = model_formula) +
     theme_bw() +
     theme(panel.grid = element_blank())
@@ -336,6 +352,67 @@ pairwise_sma <- function(model_formula, trait1, trait2, data) {
   
   
 }
+
+pair_sta_sav <- pairwise_sma(
+  model_formula = "sta_mean ~ sav_mean", 
+  trait1 = sta_mean,
+  trait2 = sav_mean,
+  data = "log"
+)
+
+sta_sav_plot <- pair_sta_sav[[3]] +
+  labs(x = "Specific thallus area",
+       y = "Surface area:volume ratio")
+
+pair_sta_mh <- pairwise_sma(
+  model_formula = "sta_mean ~ mass_to_height", 
+  trait1 = sta_mean,
+  trait2 = mass_to_height,
+  data = "log"
+)
+
+sta_mh_plot <- pair_sta_mh[[3]] +
+  labs(x = "Specific thallus area",
+       y = "Mass:height")
+
+pair_mh_height <- lmodel2(mass_to_height ~ maximum_height,
+        data = log_ind_traits %>% 
+          drop_na(mass_to_height, maximum_height) %>% 
+          filter(mass_to_height > -Inf))
+# for each 1% increase in mass:height, you expect a 1.27% decrease in maximum height in log-log space
+
+sma(mass_to_height ~ maximum_height,
+        data = log_ind_traits %>% 
+          drop_na(mass_to_height, maximum_height) %>% 
+          filter(mass_to_height > -Inf))
+
+mh_height_plot <- log_ind_traits %>% 
+  drop_na(mass_to_height, maximum_height) %>% 
+  filter(mass_to_height > -Inf) %>% 
+  ggplot(aes(x = mass_to_height,
+             y = maximum_height)) +
+  geom_point(alpha = 0.3,
+             shape = 21,
+             color = "#7e97c0") +
+  stat_ma_line(method = "SMA",
+               color = "#295396",
+               fill = "#a9bad5",
+               linewidth = 0.75) +
+  # labs(title = model_formula) +
+  theme_bw() +
+  theme(panel.grid = element_blank()) +
+  labs(x = "Mass:height ratio",
+       y = "Maximum height")
+
+sma_together <- sta_sav_plot + sta_mh_plot + mh_height_plot
+
+ggsave(here::here("figures",
+                  "tradeoffs",
+                  paste0("sma_main-text_", today(), ".jpg")),
+       width = 12,
+       height = 4,
+       units = "cm",
+       dpi = 300)
 
 pair_sav_height <- pairwise_sma(
   model_formula = "sav_mean ~ maximum_height", 
@@ -414,19 +491,8 @@ pair_sta_height <- pairwise_sma(
   data = "log"
 )
 
-pair_sta_mh <- pairwise_sma(
-  model_formula = "sta_mean ~ mass_to_height", 
-  trait1 = sta_mean,
-  trait2 = mass_to_height,
-  data = "log"
-)
 
-pair_sta_sav <- pairwise_sma(
-  model_formula = "sta_mean ~ sav_mean", 
-  trait1 = sta_mean,
-  trait2 = sav_mean,
-  data = "log"
-)
+
 
 pair_sta_thickness <- pairwise_sma(
   model_formula = "sta_mean ~ thickness_mm_mean", 
@@ -1094,7 +1160,7 @@ prop_PC2_reduced <- "29.7%"
 loadings_df_reduced <- scores(pca_reduced, 
                               display = 'species', 
                               scaling = 0, 
-                              choices = c(1, 2, 3)) %>% 
+                              choices = c(1, 2)) %>% 
   as_tibble(rownames = NA) %>% 
   rownames_to_column("trait") %>% 
   # arrange the data frame in order of PC1 loadings
@@ -1121,7 +1187,7 @@ loadings_plot_reduced <- pc1_plot_reduced / pc2_plot_reduced
 # ggsave(here::here(
 #   "figures",
 #   "ordination",
-#   paste0("loadings_scale_reduced-model_", today(), ".jpg")),
+#   paste0("loadings_no-scale_reduced-model_", today(), ".jpg")),
 #   loadings_plot_reduced,
 #   width = 12,
 #   height = 14,
@@ -1137,7 +1203,7 @@ biplot(pca_reduced)
 # species points
 PCAscores_reduced <- scores(pca_reduced, 
                          display = "sites", 
-                         choices = c(1, 2, 3)) %>% 
+                         choices = c(1, 2)) %>% 
   as.data.frame() %>% 
   rownames_to_column("specimen_ID") %>% 
   left_join(., metadata_ind, by = "specimen_ID") %>% 
@@ -1149,7 +1215,7 @@ PCAscores_reduced <- scores(pca_reduced,
 # trait vectors
 PCAvect_reduced <- scores(pca_reduced, 
                        display = "species", 
-                       choices = c(1, 2, 3)) %>% 
+                       choices = c(1, 2)) %>% 
   as.data.frame()
 
 # plot PCA
@@ -1185,14 +1251,69 @@ plot_PCA_12_reduced <- ggplot() +
        color = "Scientific name") 
 plot_PCA_12_reduced
 
-ggsave(here::here("figures",
-                  "ordination",
-                  paste("PCA-log_no-scale_reduced-model_", today(), ".jpg", sep = "")),
-       plot_PCA_12_reduced,
-       width = 12, height = 12, units = "cm", dpi = 300)
+# ggsave(here::here("figures",
+#                   "ordination",
+#                   paste("PCA-log_no-scale_reduced-model_", today(), ".jpg", sep = "")),
+#        plot_PCA_12_reduced,
+#        width = 12, height = 12, units = "cm", dpi = 300)
 
 # ⟞ ⟞ iv. trait contributions to axes -------------------------------------
 
+varcoord_reduced <- PCAvect_reduced %>% 
+  rownames_to_column("trait") %>% 
+  mutate(quality_1 = PC1^2,
+         quality_2 = PC2^2) %>% 
+  select(trait, quality_1, quality_2) %>% 
+  pivot_longer(cols = quality_1:quality_2,
+               names_to = "axis",
+               values_to = "values") %>% 
+  mutate(axis = case_match(
+    axis,
+    "quality_1" ~ "PC1",
+    "quality_2" ~ "PC2"
+  )) %>% 
+  group_by(axis) %>% 
+  mutate(component_total = sum(values)) %>% 
+  ungroup() %>% 
+  mutate(contrib = (values/component_total)*100)
+
+# The red dashed line on the graph above indicates the expected average contribution. If the contribution of the variables were uniform, the expected value would be 1/length(variables) = 1/10 = 10%
+expected_average_reduced <- (1/length(unique(varcoord_reduced$trait)))*100
+
+pc1_contrib_reduced <- varcoord_reduced %>% 
+  filter(axis == "PC1") %>% 
+  ggplot(aes(x = reorder(trait, -contrib),
+             y = contrib, 
+             fill = trait)) +
+  contrib_aesthetics_reduced +
+  contrib_theme() +
+  labs(title = "Contributions to PC1")
+
+pc1_contrib_reduced
+
+pc2_contrib_reduced <- varcoord_reduced %>% 
+  filter(axis == "PC2") %>% 
+  ggplot(aes(x = reorder(trait, -contrib),
+             y = contrib, 
+             fill = trait)) +
+  contrib_aesthetics_reduced +
+  contrib_theme() +
+  labs(title = "Contributions to PC2")
+
+pc2_contrib_reduced
+
+contrib_together_reduced <- pc1_contrib_reduced / pc2_contrib_reduced
+
+# ggsave(here::here(
+#   "figures",
+#   "ordination",
+#   paste0("contributions_no-scale_reduced-model_", today(), ".jpg")),
+#   contrib_together_reduced,
+#   width = 14,
+#   height = 14,
+#   units = "cm",
+#   dpi = 300
+# )
 
 
 
