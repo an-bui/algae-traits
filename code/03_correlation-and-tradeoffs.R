@@ -347,7 +347,8 @@ pairwise_sma <- function(model_formula, trait1, trait2, data) {
                  linewidth = 0.75) +
     # labs(title = model_formula) +
     theme_bw() +
-    theme(panel.grid = element_blank())
+    theme(panel.grid = element_blank(),
+          text = element_text(size = 12))
   
   # return all
   return(list(lmodel2_obj, sma_obj, plot))
@@ -364,7 +365,9 @@ pair_sta_sav <- pairwise_sma(
 
 sta_sav_plot <- pair_sta_sav[[3]] +
   labs(x = "Specific thallus area",
-       y = "Surface area:volume ratio")
+       y = "Surface area:volume ratio",
+       title = "(a)") +
+  theme(plot.title.position = "plot")
 
 pair_sta_mh <- pairwise_sma(
   model_formula = "sta_mean ~ mass_to_height", 
@@ -375,7 +378,9 @@ pair_sta_mh <- pairwise_sma(
 
 sta_mh_plot <- pair_sta_mh[[3]] +
   labs(x = "Specific thallus area",
-       y = "Mass:height")
+       y = "Mass:height",
+       title = "(b)") +
+  theme(plot.title.position = "plot")
 
 pair_mh_height <- lmodel2(mass_to_height ~ maximum_height,
         data = log_ind_traits %>% 
@@ -402,16 +407,19 @@ mh_height_plot <- log_ind_traits %>%
                linewidth = 0.75) +
   # labs(title = model_formula) +
   theme_bw() +
-  theme(panel.grid = element_blank()) +
+  theme(panel.grid = element_blank(),
+        plot.title.position = "plot",
+        text = element_text(size = 12)) +
   labs(x = "Mass:height ratio",
-       y = "Maximum height")
+       y = "Maximum height",
+       title = "(c)")
 
 sma_together <- sta_sav_plot + sta_mh_plot + mh_height_plot
 
 ggsave(here::here("figures",
                   "tradeoffs",
                   paste0("sma_main-text_", today(), ".jpg")),
-       width = 12,
+       width = 10,
        height = 4,
        units = "cm",
        dpi = 300)
