@@ -251,33 +251,17 @@ cat_cluster2 <- "#1274CC"
 trait_color_palette <- c(
   # economic spectrum: cool
   # from rachele2113 on color-hex.com
-  `TDMC` = "#004c4c",
-  `Thickness` = "#006666",
-  `STA` = "#008080",
-  `SA:V` = "#66b2b2",
+  `TDMC` = "#BE5A47",
+  `Thickness` = "#BE5A47",
+  `STA` = "#BD973D",
+  `SA:V` = "#BD973D",
   `Fv/Fm` = "#b2d8d8",
   
   # competitive dominance: warm
-  `Maximum height` = "#ff6347",
-  `SA:P` = "#ff826b",
-  `Mass:height` = "#ffa190",
-  `Aspect ratio` = "#ffdfda"
-)
-
-trait_color_palette <- c(
-  # economic spectrum: cool
-  # from rachele2113 on color-hex.com
-  `TDMC` = "#006666",
-  `Thickness` = "#006666",
-  `STA` = "#006666",
-  `SA:V` = "#006666",
-  `Fv/Fm` = "#006666",
-  
-  # competitive dominance: warm
-  `Maximum height` = "#ff6347",
-  `SA:P` = "#ff6347",
-  `Mass:height` = "#ff6347",
-  `Aspect ratio` = "#ff6347"
+  `Maximum height` = "#4D5B75",
+  `SA:P` = "#CC7556",
+  `Mass:height` = "#4D5B75",
+  `Aspect ratio` = "#CC7556"
 )
       
     # gradient palette

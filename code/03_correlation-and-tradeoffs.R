@@ -31,7 +31,7 @@ pca_mat <- ind_traits %>%
   )) %>% 
   select(specimen_ID, 
          maximum_height, mass_to_height, sav_mean, thickness_mm_mean, 
-         tdmc_mean, sta_mean, sav_mean, sap_mean, fvfm_mean, 
+         tdmc_mean, sta_mean, sav_mean, sap_mean, # fvfm_mean, 
          aspect_ratio_mean) %>% 
   column_to_rownames("specimen_ID") %>% 
   drop_na() %>% 
@@ -43,7 +43,7 @@ pca_mat <- ind_traits %>%
          `STA` = sta_mean,
          `SA:V` = sav_mean,
          `SA:P` = sap_mean,
-         `Fv/Fm` = fvfm_mean,
+         # `Fv/Fm` = fvfm_mean,
          `Aspect ratio` = aspect_ratio_mean)  
   # select(!(`Fv/Fm`))
 
@@ -893,7 +893,7 @@ ggsave(filename = here::here(
 # ⟞ ⟞ i. PCA --------------------------------------------------------------
 
 # trait by species PCA
-pca_full <- rda(pca_mat_log)
+pca_full <- rda(pca_mat_log, scale = TRUE)
 
 # create a screeplot to visualize axis contributions
 screeplot(pca_full, bstick = TRUE)
@@ -902,9 +902,9 @@ screeplot(pca_full, bstick = TRUE)
 summary(pca_full)
 
 # proportion variance explained for downstream figure making
-prop_PC1_full <- "38.6%"
-prop_PC2_full <- "27.6%"
-# prop_PC3_full <- "15.7%"
+prop_PC1_full <- "40.2%"
+prop_PC2_full <- "27.2%"
+# prop_PC3_full <- "17.2%"
 
 # ⟞ ⟞ ii. loadings --------------------------------------------------------
 
@@ -927,14 +927,14 @@ pc1_plot_full <- ggplot(data = loadings_df_full,
   loadings_plot_theme() +
   labs(title = "PC1")
 
-pc2_plot_full <- ggplot(data = loadings_df, 
+pc2_plot_full <- ggplot(data = loadings_df_full, 
                    aes(x = PC2,
                        y = trait)) +
   loadings_plot_aes +
   loadings_plot_theme() +
   labs(title = "PC2")
 
-pc3_plot_full <- ggplot(data = loadings_df, 
+pc3_plot_full <- ggplot(data = loadings_df_full, 
                    aes(x = PC3,
                        y = trait)) +
   loadings_plot_aes +
@@ -946,7 +946,7 @@ loadings_plot_full <- pc1_plot_full / pc2_plot_full # / pc3_plot_full
 # ggsave(here::here(
 #   "figures",
 #   "ordination",
-#   paste0("loadings_scaled_full-model_", today(), ".jpg")),
+#   paste0("loadings_scale_full-model_", today(), ".jpg")),
 #   loadings_plot_full,
 #   width = 12,
 #   height = 14,
@@ -1092,7 +1092,7 @@ pc1_contrib_full <- varcoord_full %>%
   ggplot(aes(x = reorder(trait, -contrib),
              y = contrib, 
              fill = trait)) +
-  contrib_aesthetics +
+  contrib_aesthetics_full +
   contrib_theme() +
   labs(title = "Contributions to PC1")
 
@@ -1103,7 +1103,7 @@ pc2_contrib_full <- varcoord_full %>%
   ggplot(aes(x = reorder(trait, -contrib),
              y = contrib, 
              fill = trait)) +
-  contrib_aesthetics +
+  contrib_aesthetics_full +
   contrib_theme() +
   labs(title = "Contributions to PC2")
 
@@ -1114,18 +1114,18 @@ pc3_contrib_full <- varcoord_full %>%
   ggplot(aes(x = reorder(trait, -contrib),
              y = contrib, 
              fill = trait)) +
-  contrib_aesthetics +
+  contrib_aesthetics_full +
   contrib_theme() +
   labs(title = "Contributions to PC3")
 
 pc3_contrib_full
 
-contrib_together_full <- pc1_contrib_full / pc2_contrib_full / pc3_contrib_full
+contrib_together_full <- pc1_contrib_full / pc2_contrib_full # / pc3_contrib_full
 
 ggsave(here::here(
   "figures",
   "ordination",
-  paste0("contributions_no-scale_full-model_", today(), ".jpg")),
+  paste0("contributions_scale_full-model_", today(), ".jpg")),
   contrib_together_full,
   width = 14,
   height = 14,
@@ -1138,7 +1138,7 @@ ggsave(here::here(
 # ⟞ ⟞ i. PCA --------------------------------------------------------------
 
 reduced_mat <- pca_mat_log %>% 
-  select(`Mass:height`, `Maximum height`, `SA:V`, STA)
+  select(`Mass:height`, `Maximum height`, `SA:V`)
 
 # trait by species PCA
 pca_reduced <- rda(reduced_mat, scale = TRUE)
@@ -1150,8 +1150,8 @@ screeplot(pca_reduced, bstick = TRUE)
 summary(pca_reduced)
 
 # proportion variance explained for downstream figure making
-prop_PC1_reduced <- "50.5%"
-prop_PC2_reduced <- "31.8%"
+prop_PC1_reduced <- "43.9%"
+prop_PC2_reduced <- "38.5%"
 
 
 # ⟞ ⟞ ii. loadings --------------------------------------------------------
@@ -1187,7 +1187,7 @@ loadings_plot_reduced <- pc1_plot_reduced / pc2_plot_reduced
 # ggsave(here::here(
 #   "figures",
 #   "ordination",
-#   paste0("loadings_no-scale_reduced-model_", today(), ".jpg")),
+#   paste0("loadings_scale_reduced-model_", today(), ".jpg")),
 #   loadings_plot_reduced,
 #   width = 12,
 #   height = 14,
@@ -1253,7 +1253,7 @@ plot_PCA_12_reduced
 
 # ggsave(here::here("figures",
 #                   "ordination",
-#                   paste("PCA-log_no-scale_reduced-model_", today(), ".jpg", sep = "")),
+#                   paste("PCA-log_scale_reduced-model_", today(), ".jpg", sep = "")),
 #        plot_PCA_12_reduced,
 #        width = 12, height = 12, units = "cm", dpi = 300)
 
