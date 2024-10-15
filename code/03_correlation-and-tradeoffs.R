@@ -903,7 +903,7 @@ ggsave(filename = here::here(
 # ⟞ ⟞ i. PCA --------------------------------------------------------------
 
 # trait by species PCA
-pca_full <- rda(pca_mat_log, scale = TRUE)
+pca_full <- rda(pca_mat_log)
 
 # create a screeplot to visualize axis contributions
 screeplot(pca_full, bstick = TRUE)
@@ -912,9 +912,9 @@ screeplot(pca_full, bstick = TRUE)
 summary(pca_full)
 
 # proportion variance explained for downstream figure making
-prop_PC1_full <- "40.2%"
-prop_PC2_full <- "27.2%"
-# prop_PC3_full <- "17.2%"
+prop_PC1_full <- "41.6%"
+prop_PC2_full <- "25.2%"
+prop_PC3_full <- "17.2%"
 
 # ⟞ ⟞ ii. loadings --------------------------------------------------------
 
@@ -1028,20 +1028,20 @@ plot_PCA_13_full <- ggplot() +
   PCA_aesthetics +
   geom_point(data = PCAscores_full, 
              aes(x = PC1, 
-                 y = PC2),
+                 y = PC3),
              shape = 21,
              color = "darkgrey") +
   geom_segment(data = PCAvect_full, 
                aes(x = 0, 
                    y = 0, 
                    xend = PC1, 
-                   yend = PC2,
+                   yend = PC3,
                    color = rownames(PCAvect_full)), 
                arrow = arrow(length = unit(0.2, "cm")), 
                linewidth = 0.5) +
   geom_label_repel(data = PCAvect_full, 
                    aes(x = PC1, 
-                       y = PC2, 
+                       y = PC3, 
                        label = rownames(PCAvect_full),
                        fill = rownames(PCAvect_full)), 
                    size = 6, 
@@ -1130,6 +1130,7 @@ pc3_contrib_full <- varcoord_full %>%
 
 pc3_contrib_full
 
+# not scaled layout
 contrib_together_full <- (plot_PCA_12_full / plot_PCA_13_full) | ((pc1_contrib_full / pc2_contrib_full / pc3_contrib_full) + plot_layout(axis_titles = "collect")) 
 
 # scaled layout
@@ -1271,7 +1272,7 @@ plot_PCA_12_reduced <- ggplot() +
   PCA_theme() +
   labs(x = paste0("PC1 (", prop_PC1_reduced, ")"),
        y = paste0("PC2 (", prop_PC2_reduced, ")"),
-       title = "PC1 and PC2",
+       title = "(a) PC1 and PC2",
        color = "Scientific name") 
 plot_PCA_12_reduced
 
@@ -1311,7 +1312,7 @@ pc1_contrib_reduced <- varcoord_reduced %>%
              fill = trait)) +
   contrib_aesthetics_reduced +
   contrib_theme() +
-  labs(title = "Contributions to PC1")
+  labs(title = "(b) Contributions to PC1")
 
 pc1_contrib_reduced
 
@@ -1322,7 +1323,7 @@ pc2_contrib_reduced <- varcoord_reduced %>%
              fill = trait)) +
   contrib_aesthetics_reduced +
   contrib_theme() +
-  labs(title = "Contributions to PC2")
+  labs(title = "(c) Contributions to PC2")
 
 pc2_contrib_reduced
 
