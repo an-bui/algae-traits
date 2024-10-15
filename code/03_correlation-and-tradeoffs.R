@@ -131,6 +131,7 @@ PCA_aesthetics <- list(
 PCA_theme <- function() {
   theme_bw() +
     theme(legend.position = "none", 
+          plot.title.position = "plot",
           # legend.box = "vertical", 
           axis.title = element_text(size = 18),
           axis.text = element_text(size = 16),
@@ -143,6 +144,7 @@ PCA_theme <- function() {
 contrib_theme <- function() {
   theme_bw() +
     theme(legend.position = "none",
+          # plot.title.position = "plot",
           panel.grid = element_blank(),
           axis.text = element_text(size = 18),
           axis.title = element_text(size = 20),
@@ -1010,7 +1012,7 @@ plot_PCA_12_full <- ggplot() +
   PCA_theme() +
   labs(x = paste0("PC1 (", prop_PC1_full, ")"),
        y = paste0("PC2 (", prop_PC2_full, ")"),
-       title = "PC1 and PC2",
+       title = "(a) PC1 and PC2",
        color = "Scientific name") 
 plot_PCA_12_full
 
@@ -1042,7 +1044,7 @@ plot_PCA_13_full <- ggplot() +
   PCA_theme() +
   labs(x = paste0("PC1 (", prop_PC1_full, ")"),
        y = paste0("PC3 (", prop_PC3_full, ")"),
-       title = "PC1 and PC3",
+       title = "(b) PC1 and PC3",
        color = "Scientific name") 
 plot_PCA_13_full
 
@@ -1094,7 +1096,7 @@ pc1_contrib_full <- varcoord_full %>%
              fill = trait)) +
   contrib_aesthetics_full +
   contrib_theme() +
-  labs(title = "Contributions to PC1")
+  labs(title = "(b) Contributions to PC1")
 
 pc1_contrib_full
 
@@ -1105,7 +1107,7 @@ pc2_contrib_full <- varcoord_full %>%
              fill = trait)) +
   contrib_aesthetics_full +
   contrib_theme() +
-  labs(title = "Contributions to PC2")
+  labs(title = "(c) Contributions to PC2")
 
 pc2_contrib_full
 
@@ -1116,22 +1118,36 @@ pc3_contrib_full <- varcoord_full %>%
              fill = trait)) +
   contrib_aesthetics_full +
   contrib_theme() +
-  labs(title = "Contributions to PC3")
+  labs(title = "(e) Contributions to PC3")
 
 pc3_contrib_full
 
-contrib_together_full <- pc1_contrib_full / pc2_contrib_full # / pc3_contrib_full
+contrib_together_full <- (plot_PCA_12_full / plot_PCA_13_full) | ((pc1_contrib_full / pc2_contrib_full / pc3_contrib_full) + plot_layout(axis_titles = "collect")) 
 
-ggsave(here::here(
-  "figures",
-  "ordination",
-  paste0("contributions_scale_full-model_", today(), ".jpg")),
-  contrib_together_full,
-  width = 14,
-  height = 14,
-  units = "cm",
-  dpi = 300
-)
+# scaled layout
+contrib_together_full <- (plot_PCA_12_full) | ((pc1_contrib_full / pc2_contrib_full) + plot_layout(axis_titles = "collect")) 
+
+# ggsave(here::here(
+#   "figures",
+#   "ordination",
+#   paste0("contributions_no-scale_full-model_", today(), ".jpg")),
+#   contrib_together_full,
+#   width = 24,
+#   height = 18,
+#   units = "cm",
+#   dpi = 300
+# )
+
+# ggsave(here::here(
+#   "figures",
+#   "ordination",
+#   paste0("contributions_scale_full-model_", today(), ".jpg")),
+#   contrib_together_full,
+#   width = 24,
+#   height = 12,
+#   units = "cm",
+#   dpi = 300
+# )
 
 # ⟞ b. reduced model ------------------------------------------------------
 
