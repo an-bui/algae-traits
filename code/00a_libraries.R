@@ -231,6 +231,27 @@ algae_spcode_colors <- c(
   "DP" = "#E4C03B"
 )
 
+algae_spcode_full_names <- c(
+  # reds
+  "BF" = "Cryptopleura\nruprechtiana", 
+  "CC" = "Chondracanthus\nspp.", 
+  "GS" = "Gracilaria\nspp.", 
+  "CO" = "Corallina\nofficinalis", 
+  "BO" = "Bossiella\norbigniana", 
+  "POLA" = "Polyneura\nlatissima", 
+  "R" = "Rhodymenia\ncalifornica", 
+  "GR" = "Gelidium\nspp.", 
+  "Nandersoniana" = "Nienburgia\nandersoniana",
+  # browns
+  "PTCA" = "Pterygophora\ncalifornica", 
+  "CYOS" = "Stephanocystis\nosmundacea", 
+  "DL" = "Desmarestia\nligulata", 
+  "EGME" = "Egregia\nmenziesii", 
+  "LAFA" = "Laminaria\nfarlowii", 
+  "DU" = "Dictyopteris\nundulata", 
+  "DP" = "Dictyota\nspp."
+)
+
 
 
 # colors
@@ -251,7 +272,8 @@ cat_cluster2 <- "#1274CC"
 trait_color_palette <- c(
   # economic spectrum: cool
   # from rachele2113 on color-hex.com
-  `TDMC` = "#BE5A47",
+  `Frond DMC` = "#BE5A47",
+  `Total DMC` = "#BE5A47",
   `Thickness` = "#BE5A47",
   `STA` = "#BD973D",
   `SA:V` = "#BD973D",

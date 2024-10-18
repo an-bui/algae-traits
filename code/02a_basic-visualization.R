@@ -10,7 +10,9 @@ source(here::here("code", "01a_trait-cleaning.R"))
 basic_theme <- list(
     theme_bw(),
     theme(legend.position = "none",
-          panel.grid = element_blank())
+          panel.grid = element_blank(),
+          axis.text.x = element_text(size = 12),
+          axis.title = element_text(size = 14))
 )
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -28,8 +30,8 @@ boxplots <- ind_traits %>%
   select(specimen_ID, scientific_name, sp_code, pigment_type,
          fvfm_mean, thickness_mm_mean, total_volume,
          sap_mean, sav_mean, maximum_height, sta_mean, mass_to_height,
-         aspect_ratio_mean, chlA_mean, tdmc_mean) %>% 
-  pivot_longer(cols = fvfm_mean:tdmc_mean,
+         aspect_ratio_mean, chlA_mean, frond_dmc_mean, total_dmc) %>% 
+  pivot_longer(cols = fvfm_mean:total_dmc,
                names_to = "trait",
                values_to = "value") %>% 
   nest(.by = trait,
@@ -48,7 +50,8 @@ boxplots <- ind_traits %>%
       "mass_to_height" ~ "mass_to_height",
       "aspect_ratio_mean" ~ "aspect_ratio",
       "chlA_mean" ~ "chlA",
-      "tdmc_mean" ~ "tdmc"
+      "frond_dmc_mean" ~ "frond_dmc",
+      "total_dmc" ~ "total_dmc"
     )
   )) %>% 
   mutate(units = map(
@@ -65,13 +68,17 @@ boxplots <- ind_traits %>%
       "mass_to_height" ~ "Mass:height (dry mg/cm)",
       "aspect_ratio" ~ "Thallus length:width",
       "chlA" ~ "chlorophyll A concentration",
-      "tdmc" ~ "Thallus dry matter content"
+      "frond_dmc" ~ "Frond dry matter content",
+      "total_dmc" ~ "Thallus dry matter content"
     )
   )) %>% 
   mutate(boxplot = map2(
     data, units,
     ~ ggplot(data = .x,
-             aes(x = sp_code,
+             aes(x = reorder(x = scientific_name, 
+                             X = value,
+                             FUN = median,
+                             na.rm = TRUE),
                  y = value)) +
       geom_boxplot(aes(fill = sp_code),
                    outliers = FALSE) +
@@ -80,10 +87,11 @@ boxplots <- ind_traits %>%
                                             seed = 666),
                  shape = 21) +
       scale_fill_manual(values = algae_spcode_colors) +
-      facet_wrap(~ pigment_type, scales = "free_x") +
-      scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
+      facet_grid(cols = vars(pigment_type), 
+                 scales = "free_x") +
+      scale_x_discrete(labels = scales::label_wrap(10)) +
       labs(title = .y,
-           x = "Species code",
+           x = "Scientific name",
            y = .y) +
       basic_theme
   ))
@@ -118,15 +126,18 @@ pluck(boxplots, 4, 9)
 # chlorophyll A
 pluck(boxplots, 4, 10)
 
-# TDMC
+# frond dry matter content
 pluck(boxplots, 4, 11)
+
+# thallus dry matter content
+pluck(boxplots, 4, 12)
 
 # ⟞ b. saving outputs -----------------------------------------------------
 
 # traits in the boxplot data frame
 boxplot_traits <- c("fvfm", "thickness", "volume", "sap", "sav", 
                     "max_height", "sta", "mass_to_height", "aspect_ratio", 
-                    "chlA", "tdmc")
+                    "chlA", "frond_dmc", "total_dmc")
 
 # function to save boxplot
 save_boxplot <- function(trait, boxplot) {
@@ -135,8 +146,8 @@ save_boxplot <- function(trait, boxplot) {
               "boxplots",
               paste0("boxplot-", trait, "_", today(), ".jpg")),
          boxplot,
-         width = 12, height = 8, units = "cm",
-         dpi = 200)
+         width = 16, height = 10, units = "cm",
+         dpi = 300)
 }
 
 # for loop to save boxplots
@@ -168,10 +179,10 @@ for(i in 1:length(boxplot_traits)) {
 distributions <- ind_traits %>% 
   select(specimen_ID, scientific_name,
          maximum_height, mass_to_height, sav_mean, thickness_mm_mean, 
-         tdmc_mean, sta_mean, sav_mean, sap_mean, fvfm_mean, aspect_ratio_mean, 
+         frond_dmc_mean, sta_mean, sav_mean, sap_mean, fvfm_mean, aspect_ratio_mean, 
          frond_length_mean, frond_width_mean, total_wet, total_dry,
-         total_volume, chlA_mean) %>% 
-  pivot_longer(maximum_height:chlA_mean,
+         total_volume, chlA_mean, total_dmc) %>% 
+  pivot_longer(maximum_height:total_dmc,
                names_to = "trait",
                values_to = "value") %>% 
   nest(.by = "trait",
@@ -184,7 +195,7 @@ distributions <- ind_traits %>%
       "mass_to_height" ~ "mass_to_height",
       "sav_mean" ~ "sav",
       "thickness_mm_mean" ~ "thickness",
-      "tdmc_mean" ~ "TDMC",
+      "frond_dmc_mean" ~ "frond_dmc",
       "sta_mean" ~ "sta",
       "sap_mean" ~ "sap",
       "fvfm_mean" ~ "fvfm",
@@ -194,7 +205,8 @@ distributions <- ind_traits %>%
       "total_wet" ~ "weight_wet",
       "total_dry" ~ "weight_dry",
       "total_volume" ~ "volume",
-      "chlA_mean" ~ "chlA"
+      "chlA_mean" ~ "chlA",
+      "total_dmc" ~ "total_dmc"
     )
   )) %>% 
   mutate(length = map(
@@ -297,7 +309,7 @@ pluck(distributions, 9, 4)
 pluck(distributions, 7, 4)
 pluck(distributions, 10, 4)
 
-# TDMC
+# frond DMC
 pluck(distributions, 5, 5) # potentially bimodal
 pluck(distributions, 8, 5)
 pluck(distributions, 6, 5) 
@@ -372,9 +384,17 @@ pluck(distributions, 9, 13)
 pluck(distributions, 7, 13)
 pluck(distributions, 10, 13)
 
+# total DMC
+pluck(distributions, 5, 16)
+pluck(distributions, 8, 16)
+pluck(distributions, 6, 16) # log transform looks normal
+pluck(distributions, 9, 16)
+pluck(distributions, 7, 16)
+pluck(distributions, 10, 16)
+
 # traits to transform (potentially)
 # max height, mass to height, SAV, thickness, STA, SAP, aspect ratio, 
-# frond length, wet mass, dry mass
+# frond length, wet mass, dry mass, total DMC
 
 # ⟞ b. saving outputs -----------------------------------------------------
 
@@ -399,7 +419,7 @@ distributions_traits <- c("max_height",
                           "mass_to_height",
                           "sav",
                           "thickness",
-                          "TDMC",
+                          "frond_dmc",
                           "sta",
                           "sap",
                           "fvfm",
@@ -409,7 +429,8 @@ distributions_traits <- c("max_height",
                           "weight_wet",
                           "weight_dry",
                           "volume",
-                          "chlA")
+                          "chlA",
+                          "total_dmc")
 
 # function to save histograms
 save_hist_qq <- function(trait, 

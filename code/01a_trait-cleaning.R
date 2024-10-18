@@ -106,6 +106,7 @@ weight_ind <- weight %>%
   summarize(total_wet = sum(weight_wet_mg, na.rm = TRUE),
             total_dry = sum(weight_dry_mg, na.rm = TRUE)) %>% 
   ungroup() %>% 
+  mutate(total_dmc = total_dry/total_wet) %>% 
   mutate(total_dry = case_when(
     specimen_ID == pluck(egme_weight, 1, 1) ~ pluck(egme_weight, 4, 1),
     specimen_ID == pluck(egme_weight, 1, 2) ~ pluck(egme_weight, 4, 2),
@@ -266,8 +267,8 @@ av_leaf_values <- leaf_traits %>%
   group_by(specimen_ID) %>% 
   summarize(sta_mean = mean(sta_mm_mg, na.rm = TRUE),
             sta_se = se(sta_mm_mg),
-            tdmc_mean = mean(dmc, na.rm = TRUE),
-            tdmc_se = se(dmc),
+            frond_dmc_mean = mean(dmc, na.rm = TRUE),
+            frond_dmc_se = se(dmc),
             sav_mean = mean(sav_ratio, na.rm = TRUE),
             sav_se = se(sav_ratio),
             sap_mean = mean(sap_ratio, na.rm = TRUE),

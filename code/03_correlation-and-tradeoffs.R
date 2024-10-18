@@ -31,15 +31,17 @@ pca_mat <- ind_traits %>%
   )) %>% 
   select(specimen_ID, 
          maximum_height, mass_to_height, sav_mean, thickness_mm_mean, 
-         tdmc_mean, sta_mean, sav_mean, sap_mean, # fvfm_mean, 
-         aspect_ratio_mean) %>% 
+         frond_dmc_mean, 
+         sta_mean, sav_mean, sap_mean, # fvfm_mean, 
+         aspect_ratio_mean, total_dmc) %>% 
   column_to_rownames("specimen_ID") %>% 
   drop_na() %>% 
   rename(`Maximum height` = maximum_height,
          `Mass:height` = mass_to_height,
          `SA:V` = sav_mean,
          `Thickness` = thickness_mm_mean,
-         `TDMC` = tdmc_mean,
+         # `Frond DMC` = frond_dmc_mean,
+         `Total DMC` = total_dmc,
          `STA` = sta_mean,
          `SA:V` = sav_mean,
          `SA:P` = sap_mean,
@@ -52,7 +54,8 @@ pca_mat_scale <- scale(pca_mat)
 pca_mat_log <- pca_mat %>% 
   # only log transforming traits that were not normally distributed
   mutate(across(c(`Maximum height`, `Mass:height`, `SA:V`,
-                  `Thickness`, `STA`, `SA:P`, `Aspect ratio`), 
+                  `Thickness`, `STA`, `SA:P`, `Total DMC`,
+                  `Aspect ratio`), 
                 log))
 
 # reduced model: mass:height, max height, SA:V
@@ -60,30 +63,30 @@ pca_mat_log <- pca_mat %>%
 pca_mat_log_reduced <- pca_mat_log %>% 
   select(`Mass:height`, `Maximum height`, `SA:V`, STA)
 
-pca_mat_with_cn <- ind_traits %>% 
-  filter(sp_code %in% algae_proposal) %>% 
-  # weird Nienburgia?
-  filter(!(specimen_ID %in% c("20210721-BULL-023", "20210719-IVEE-009"))) %>% 
-  mutate(growth_form_num = case_when(
-    growth_form == "leathery_macrophyte" ~ 1,
-    growth_form == "corticated_macrophytes" ~ 2,
-    growth_form == "corticated_foliose" ~ 3
-  ), 
-  pigment_type_num = case_when(
-    pigment_type == "red" ~ 1,
-    pigment_type == "brown" ~ 2
-  ), 
-  longevity_num = case_when(
-    longevity == "annual" ~ 1,
-    longevity == "perennial" ~ 3,
-    longevity == "annual or perennial" ~ 2
-  )) %>% 
-  select(specimen_ID, 
-         maximum_height, total_volume, sav_mean, thickness_mm_mean, tdmc_mean, 
-         sta_mean, sav_mean, sap_mean, fvfm_mean, thickness_mm_mean, 
-         weight_percent_n_mean, weight_percent_c_mean) %>% 
-  column_to_rownames("specimen_ID") %>% 
-  drop_na()
+# pca_mat_with_cn <- ind_traits %>% 
+#   filter(sp_code %in% algae_proposal) %>% 
+#   # weird Nienburgia?
+#   filter(!(specimen_ID %in% c("20210721-BULL-023", "20210719-IVEE-009"))) %>% 
+#   mutate(growth_form_num = case_when(
+#     growth_form == "leathery_macrophyte" ~ 1,
+#     growth_form == "corticated_macrophytes" ~ 2,
+#     growth_form == "corticated_foliose" ~ 3
+#   ), 
+#   pigment_type_num = case_when(
+#     pigment_type == "red" ~ 1,
+#     pigment_type == "brown" ~ 2
+#   ), 
+#   longevity_num = case_when(
+#     longevity == "annual" ~ 1,
+#     longevity == "perennial" ~ 3,
+#     longevity == "annual or perennial" ~ 2
+#   )) %>% 
+#   select(specimen_ID, 
+#          maximum_height, total_volume, sav_mean, thickness_mm_mean, tdmc_mean, 
+#          sta_mean, sav_mean, sap_mean, fvfm_mean, thickness_mm_mean, 
+#          weight_percent_n_mean, weight_percent_c_mean) %>% 
+#   column_to_rownames("specimen_ID") %>% 
+#   drop_na()
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # --------------------------- 2. plot aesthetics --------------------------
@@ -903,7 +906,7 @@ ggsave(filename = here::here(
 # ⟞ ⟞ i. PCA --------------------------------------------------------------
 
 # trait by species PCA
-pca_full <- rda(pca_mat_log)
+pca_full <- rda(pca_mat_log, scale = TRUE)
 
 # create a screeplot to visualize axis contributions
 screeplot(pca_full, bstick = TRUE)
@@ -912,9 +915,8 @@ screeplot(pca_full, bstick = TRUE)
 summary(pca_full)
 
 # proportion variance explained for downstream figure making
-prop_PC1_full <- "41.6%"
-prop_PC2_full <- "25.2%"
-prop_PC3_full <- "17.2%"
+prop_PC1_full <- "44.8%"
+prop_PC2_full <- "24.4%"
 
 # ⟞ ⟞ ii. loadings --------------------------------------------------------
 
@@ -922,7 +924,7 @@ prop_PC3_full <- "17.2%"
 loadings_df_full <- scores(pca_full, 
                            display = 'species', 
                            scaling = 0, 
-                           choices = c(1, 2, 3)) %>% 
+                           choices = c(1, 2)) %>% 
   as_tibble(rownames = NA) %>% 
   rownames_to_column("trait") %>% 
   # arrange the data frame in order of PC1 loadings
@@ -944,14 +946,7 @@ pc2_plot_full <- ggplot(data = loadings_df_full,
   loadings_plot_theme() +
   labs(title = "PC2")
 
-pc3_plot_full <- ggplot(data = loadings_df_full, 
-                   aes(x = PC3,
-                       y = trait)) +
-  loadings_plot_aes +
-  loadings_plot_theme() +
-  labs(title = "PC3")
-
-loadings_plot_full <- pc1_plot_full / pc2_plot_full # / pc3_plot_full
+loadings_plot_full <- pc1_plot_full / pc2_plot_full 
 
 # ggsave(here::here(
 #   "figures",
@@ -972,7 +967,7 @@ biplot(pca_full)
 # species points
 PCAscores_full <- scores(pca_full, 
                     display = "sites", 
-                    choices = c(1, 2, 3)) %>% 
+                    choices = c(1, 2)) %>% 
   as.data.frame() %>% 
   rownames_to_column("specimen_ID") %>% 
   left_join(., metadata_ind, by = "specimen_ID") %>% 
@@ -984,7 +979,7 @@ PCAscores_full <- scores(pca_full,
 # trait vectors
 PCAvect_full <- scores(pca_full, 
                        display = "species", 
-                       choices = c(1, 2, 3)) %>% 
+                       choices = c(1, 2)) %>% 
   as.data.frame()
 
 # plot PCA
@@ -1024,52 +1019,11 @@ plot_PCA_12_full <- ggplot() +
        color = "Scientific name") 
 plot_PCA_12_full
 
-plot_PCA_13_full <- ggplot() +
-  PCA_aesthetics +
-  geom_point(data = PCAscores_full, 
-             aes(x = PC1, 
-                 y = PC3),
-             shape = 21,
-             color = "darkgrey") +
-  geom_segment(data = PCAvect_full, 
-               aes(x = 0, 
-                   y = 0, 
-                   xend = PC1, 
-                   yend = PC3,
-                   color = rownames(PCAvect_full)), 
-               arrow = arrow(length = unit(0.2, "cm")), 
-               linewidth = 0.5) +
-  geom_label_repel(data = PCAvect_full, 
-                   aes(x = PC1, 
-                       y = PC3, 
-                       label = rownames(PCAvect_full),
-                       fill = rownames(PCAvect_full)), 
-                   size = 6, 
-                   alpha = 0.8,
-                   color = "black") +
-  # scale_x_continuous(limits = c(-1.75, 3.75)) +
-  # scale_y_continuous(limits = c(-2, 3.25)) +
-  PCA_theme() +
-  labs(x = paste0("PC1 (", prop_PC1_full, ")"),
-       y = paste0("PC3 (", prop_PC3_full, ")"),
-       title = "(b) PC1 and PC3",
-       color = "Scientific name") 
-plot_PCA_13_full
-
-pca_together_full <- (plot_PCA_12_full | plot_PCA_13_full) +
-  plot_layout(ncol = 2, widths = c(1, 1)) 
-
 # ggsave(here::here("figures",
 #                   "ordination",
 #                   paste("PCA-log_scale_full-model_", today(), ".jpg", sep = "")),
 #        plot_PCA_12_full,
 #        width = 12, height = 12, units = "cm", dpi = 300)
-# 
-# ggsave(here::here("figures",
-#                   "ordination",
-#                   paste("PCA-log_no-scale_full-model_", today(), ".jpg", sep = "")),
-#        pca_together_full,
-#        width = 20, height = 8, units = "cm", dpi = 300)
 
 # ⟞ ⟞ iv. trait contributions to axes -------------------------------------
 
