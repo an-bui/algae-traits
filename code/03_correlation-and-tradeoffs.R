@@ -1339,12 +1339,14 @@ total_sample_collection_table
 total_samples_with_all_data <- ind_traits %>% 
   filter(sp_code %in% algae_proposal) %>% 
   select(scientific_name, site,
-         maximum_height, thickness_mm_mean, sta_mean, tdmc_mean,
+         maximum_height, thickness_mm_mean, sta_mean, frond_dmc_mean,
          sav_mean, sap_mean, aspect_ratio_mean, frond_length_mean,
-         frond_width_mean, fvfm_mean, total_wet, total_dry, total_volume) %>% 
-  drop_na(maximum_height, thickness_mm_mean, sta_mean, tdmc_mean,
+         frond_width_mean, fvfm_mean, total_wet, total_dry, total_volume,
+         total_dmc) %>% 
+  drop_na(maximum_height, thickness_mm_mean, sta_mean, frond_dmc_mean,
           sav_mean, sap_mean, aspect_ratio_mean, frond_length_mean,
-          frond_width_mean, fvfm_mean, total_wet, total_dry, total_volume) %>% 
+          frond_width_mean, fvfm_mean, total_wet, total_dry, total_volume,
+          total_dmc) %>% 
   select(scientific_name, site) %>% 
   group_by(scientific_name, site) %>% 
   count() %>% 
