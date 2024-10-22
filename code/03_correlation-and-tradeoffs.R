@@ -31,17 +31,17 @@ pca_mat <- ind_traits %>%
   )) %>% 
   select(specimen_ID, 
          maximum_height, mass_to_height, sav_mean, thickness_mm_mean, 
-         frond_dmc_mean, 
+         frond_dmc_mean, # total_dmc,
          sta_mean, sav_mean, sap_mean, # fvfm_mean, 
-         aspect_ratio_mean, total_dmc) %>% 
+         aspect_ratio_mean) %>% 
   column_to_rownames("specimen_ID") %>% 
   drop_na() %>% 
   rename(`Maximum height` = maximum_height,
          `Mass:height` = mass_to_height,
          `SA:V` = sav_mean,
          `Thickness` = thickness_mm_mean,
-         # `Frond DMC` = frond_dmc_mean,
-         `Total DMC` = total_dmc,
+         `Frond DMC` = frond_dmc_mean,
+         # `Total DMC` = total_dmc,
          `STA` = sta_mean,
          `SA:V` = sav_mean,
          `SA:P` = sap_mean,
@@ -54,7 +54,7 @@ pca_mat_scale <- scale(pca_mat)
 pca_mat_log <- pca_mat %>% 
   # only log transforming traits that were not normally distributed
   mutate(across(c(`Maximum height`, `Mass:height`, `SA:V`,
-                  `Thickness`, `STA`, `SA:P`, `Total DMC`,
+                  `Thickness`, `STA`, `SA:P`, # `Total DMC`,
                   `Aspect ratio`), 
                 log))
 
@@ -915,8 +915,8 @@ screeplot(pca_full, bstick = TRUE)
 summary(pca_full)
 
 # proportion variance explained for downstream figure making
-prop_PC1_full <- "44.8%"
-prop_PC2_full <- "24.4%"
+prop_PC1_full <- "41.4%"
+prop_PC2_full <- "26.6%"
 
 # ⟞ ⟞ ii. loadings --------------------------------------------------------
 
