@@ -144,7 +144,7 @@ pluck(boxplots, 4, 12)
 boxplot_multipanel <- (pluck(boxplots, 4, 7) + pluck(boxplots, 4, 5)) /
                       (pluck(boxplots, 4, 4) + pluck(boxplots, 4, 9)) /
                       (pluck(boxplots, 4, 11) + pluck(boxplots, 4, 2)) /
-                      (pluck(boxplots, 4, 6) + pluck(boxplots, 4, 8))
+                      (pluck(boxplots, 4, 8) + pluck(boxplots, 4, 6))
 
 # ⟞ c. saving outputs -----------------------------------------------------
 
@@ -483,7 +483,7 @@ distributions_multipanel <-
   (pluck(distributions, 8, 6) + pluck(distributions, 8, 3)) /
   (pluck(distributions, 8, 7) + pluck(distributions, 8, 9)) /
   (pluck(distributions, 7, 5) + pluck(distributions, 8, 4)) /
-  (pluck(distributions, 8, 1) + pluck(distributions, 8, 2)) 
+  (pluck(distributions, 8, 2) + pluck(distributions, 8, 1)) 
 
 # ⟞ c. saving outputs -----------------------------------------------------
 
