@@ -11,8 +11,10 @@ basic_theme <- list(
     theme_bw(),
     theme(legend.position = "none",
           panel.grid = element_blank(),
-          axis.text.x = element_text(size = 12),
-          axis.title = element_text(size = 14))
+          axis.title = element_text(size = 14),
+          axis.text = element_text(size = 18),
+          axis.title.x = element_text(size = 20),
+          plot.title = element_text(size = 24))
 )
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -74,11 +76,16 @@ boxplots <- ind_traits %>%
   )) %>% 
   mutate(boxplot = map2(
     data, units,
-    ~ ggplot(data = .x,
-             aes(x = reorder(x = scientific_name, 
-                             X = value,
-                             FUN = median,
-                             na.rm = TRUE),
+    ~ .x %>% 
+      mutate(sp_code_label = case_when(
+        sp_code == "Nandersoniana" ~ "NA",
+        TRUE ~ sp_code
+      ),
+      sp_code_label = fct_relevel(sp_code_label,
+                                     "BF", "CC", "GS", "CO", "BO", "POLA", 
+                                     "R", "GR", "NA", "PTCA", "CYOS", "DL", 
+                                     "EGME", "LAFA", "DU", "DP")) %>% 
+      ggplot(aes(x = sp_code_label,
                  y = value)) +
       geom_boxplot(aes(fill = sp_code),
                    outliers = FALSE) +
@@ -87,13 +94,13 @@ boxplots <- ind_traits %>%
                                             seed = 666),
                  shape = 21) +
       scale_fill_manual(values = algae_spcode_colors) +
-      facet_grid(cols = vars(pigment_type), 
-                 scales = "free_x") +
+      # facet_grid(cols = vars(pigment_type), 
+      #            scales = "free_x") +
       scale_x_discrete(labels = scales::label_wrap(10)) +
-      labs(title = .y,
-           x = "Scientific name",
-           y = .y) +
-      basic_theme
+      labs(title = .y) +
+      basic_theme +
+      theme(axis.title = element_blank(),
+            axis.title.x = element_blank())
   ))
 
 # FvFm
@@ -132,7 +139,15 @@ pluck(boxplots, 4, 11)
 # thallus dry matter content
 pluck(boxplots, 4, 12)
 
-# ⟞ b. saving outputs -----------------------------------------------------
+
+# ⟞ b. multipanel plot ----------------------------------------------------
+
+boxplot_multipanel <- (pluck(boxplots, 4, 7) + pluck(boxplots, 4, 5)) /
+                      (pluck(boxplots, 4, 4) + pluck(boxplots, 4, 9)) /
+                      (pluck(boxplots, 4, 11) + pluck(boxplots, 4, 2)) /
+                      (pluck(boxplots, 4, 6) + pluck(boxplots, 4, 8))
+
+# ⟞ c. saving outputs -----------------------------------------------------
 
 # traits in the boxplot data frame
 boxplot_traits <- c("fvfm", "thickness", "volume", "sap", "sav", 
@@ -163,6 +178,16 @@ for(i in 1:length(boxplot_traits)) {
                boxplot = boxplot)
   
 }
+
+ggsave(here("figures",
+            "basic-visualizations",
+            "boxplots",
+            paste0("multipanel_", today(), ".jpg")),
+       boxplot_multipanel,
+       width = 24,
+       height = 18,
+       units = "cm",
+       dpi = 300)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # ---------------------------- 2. distributions ---------------------------
@@ -396,7 +421,12 @@ pluck(distributions, 10, 16)
 # max height, mass to height, SAV, thickness, STA, SAP, aspect ratio, 
 # frond length, wet mass, dry mass, total DMC
 
-# ⟞ b. saving outputs -----------------------------------------------------
+
+# ⟞ b. multipanel plot ----------------------------------------------------
+
+
+
+# ⟞ c. saving outputs -----------------------------------------------------
 
 # traits in the distributions data frame
 
