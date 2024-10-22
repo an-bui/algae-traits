@@ -38,13 +38,13 @@ pca_mat <- ind_traits %>%
   drop_na() %>% 
   rename(`Maximum height` = maximum_height,
          `Mass:height` = mass_to_height,
-         `SA:V` = sav_mean,
+         `Surface area:volume` = sav_mean,
          `Thickness` = thickness_mm_mean,
-         `Frond DMC` = frond_dmc_mean,
+         `Frond dry matter content` = frond_dmc_mean,
          # `Total DMC` = total_dmc,
-         `STA` = sta_mean,
-         `SA:V` = sav_mean,
-         `SA:P` = sap_mean,
+         `Specific thallus area` = sta_mean,
+         `Surface area:volume` = sav_mean,
+         `Surface area:perimeter` = sap_mean,
          # `Fv/Fm` = fvfm_mean,
          `Aspect ratio` = aspect_ratio_mean)  
   # select(!(`Fv/Fm`))
@@ -53,15 +53,10 @@ pca_mat_scale <- scale(pca_mat)
 
 pca_mat_log <- pca_mat %>% 
   # only log transforming traits that were not normally distributed
-  mutate(across(c(`Maximum height`, `Mass:height`, `SA:V`,
-                  `Thickness`, `STA`, `SA:P`, # `Total DMC`,
+  mutate(across(c(`Maximum height`, `Mass:height`, `Surface area:volume`,
+                  `Thickness`, `Specific thallus area`, `Surface area:perimeter`, # `Total DMC`,
                   `Aspect ratio`), 
                 log))
-
-# reduced model: mass:height, max height, SA:V
-
-pca_mat_log_reduced <- pca_mat_log %>% 
-  select(`Mass:height`, `Maximum height`, `SA:V`, STA)
 
 # pca_mat_with_cn <- ind_traits %>% 
 #   filter(sp_code %in% algae_proposal) %>% 
@@ -104,8 +99,8 @@ loadings_plot_aes <- list(
            fill = "orange", 
            linewidth = 0.5),
   geom_vline(xintercept = 0),
-  scale_x_continuous(limits = c(-1, 1), 
-                     breaks = seq(from = -1, to = 1, by = 0.5))
+  scale_x_continuous(limits = c(-0.6, 0.6), 
+                     breaks = seq(from = -0.6, to = 0.6, by = 0.3))
 )
 
 # theme elements for the loadings plots
@@ -208,7 +203,7 @@ corr_traits <- corrplot(corr = M,
 jpeg(here::here("figures", 
                 "correlation",
                 paste0("corrplot_log_full-model_", today(), ".jpeg")),
-     width = 14, height = 14, units = "cm", res = 200)
+     width = 16, height = 16, units = "cm", res = 300)
 corrplot(corr = M, 
          p.mat = p$p,
          diag = FALSE,
@@ -1005,13 +1000,14 @@ plot_PCA_12_full <- ggplot() +
   geom_label_repel(data = PCAvect_full, 
                   aes(x = PC1, 
                       y = PC2, 
-                      label = rownames(PCAvect_full),
+                      label = str_wrap(rownames(PCAvect_full), 10),
                       fill = rownames(PCAvect_full)), 
                   size = 6, 
                   alpha = 0.8,
+                  seed = 666,
                   color = "black") +
-  # scale_x_continuous(limits = c(-1.75, 3.75)) +
-  # scale_y_continuous(limits = c(-2, 3.25)) +
+  scale_x_continuous(limits = c(-2.25, 2.25)) +
+  scale_y_continuous(limits = c(-2.25, 2.25)) +
   PCA_theme() +
   labs(x = paste0("PC1 (", prop_PC1_full, ")"),
        y = paste0("PC2 (", prop_PC2_full, ")"),
@@ -1031,17 +1027,15 @@ plot_PCA_12_full
 varcoord_full <- PCAvect_full %>% 
   rownames_to_column("trait") %>% 
   mutate(quality_1 = PC1^2,
-         quality_2 = PC2^2,
-         quality_3 = PC3^2) %>% 
-  select(trait, quality_1, quality_2, quality_3) %>% 
-  pivot_longer(cols = quality_1:quality_3,
+         quality_2 = PC2^2) %>% 
+  select(trait, quality_1, quality_2) %>% 
+  pivot_longer(cols = quality_1:quality_2,
                names_to = "axis",
                values_to = "values") %>% 
   mutate(axis = case_match(
     axis,
     "quality_1" ~ "PC1",
-    "quality_2" ~ "PC2",
-    "quality_3" ~ "PC3"
+    "quality_2" ~ "PC2"
   )) %>% 
   group_by(axis) %>% 
   mutate(component_total = sum(values)) %>% 
@@ -1073,33 +1067,8 @@ pc2_contrib_full <- varcoord_full %>%
 
 pc2_contrib_full
 
-pc3_contrib_full <- varcoord_full %>% 
-  filter(axis == "PC3") %>% 
-  ggplot(aes(x = reorder(trait, -contrib),
-             y = contrib, 
-             fill = trait)) +
-  contrib_aesthetics_full +
-  contrib_theme() +
-  labs(title = "(e) Contributions to PC3")
-
-pc3_contrib_full
-
-# not scaled layout
-contrib_together_full <- (plot_PCA_12_full / plot_PCA_13_full) | ((pc1_contrib_full / pc2_contrib_full / pc3_contrib_full) + plot_layout(axis_titles = "collect")) 
-
 # scaled layout
 contrib_together_full <- (plot_PCA_12_full) | ((pc1_contrib_full / pc2_contrib_full) + plot_layout(axis_titles = "collect")) 
-
-# ggsave(here::here(
-#   "figures",
-#   "ordination",
-#   paste0("contributions_no-scale_full-model_", today(), ".jpg")),
-#   contrib_together_full,
-#   width = 24,
-#   height = 18,
-#   units = "cm",
-#   dpi = 300
-# )
 
 # ggsave(here::here(
 #   "figures",
@@ -1129,8 +1098,8 @@ screeplot(pca_reduced, bstick = TRUE)
 summary(pca_reduced)
 
 # proportion variance explained for downstream figure making
-prop_PC1_reduced <- "43.9%"
-prop_PC2_reduced <- "38.5%"
+prop_PC1_reduced <- "44.4%"
+prop_PC2_reduced <- "38.4%"
 
 
 # ⟞ ⟞ ii. loadings --------------------------------------------------------
@@ -1151,6 +1120,8 @@ pc1_plot_reduced <- ggplot(data = loadings_df_reduced,
                         aes(x = PC1,
                             y = trait)) +
   loadings_plot_aes +
+  scale_x_continuous(limits = c(-1, 1), 
+                     breaks = seq(from = -1, to = 1, by = 0.25)) +
   loadings_plot_theme() +
   labs(title = "PC1")
 
@@ -1158,6 +1129,8 @@ pc2_plot_reduced <- ggplot(data = loadings_df_reduced,
                         aes(x = PC2,
                             y = trait)) +
   loadings_plot_aes +
+  scale_x_continuous(limits = c(-1, 1), 
+                     breaks = seq(from = -1, to = 1, by = 0.25)) +
   loadings_plot_theme() +
   labs(title = "PC2")
 
@@ -1198,6 +1171,7 @@ PCAvect_reduced <- scores(pca_reduced,
   as.data.frame()
 
 # plot PCA
+set.seed(666)
 plot_PCA_12_reduced <- ggplot() +
   PCA_aesthetics +
   geom_point(data = PCAscores_reduced, 
@@ -1212,17 +1186,17 @@ plot_PCA_12_reduced <- ggplot() +
                    yend = PC2,
                    color = rownames(PCAvect_reduced)), 
                arrow = arrow(length = unit(0.2, "cm")), 
-               linewidth = 0.5) +
+               linewidth = 1) +
   geom_label_repel(data = PCAvect_reduced, 
                    aes(x = PC1, 
                        y = PC2, 
                        label = rownames(PCAvect_reduced),
                        fill = rownames(PCAvect_reduced)), 
-                   size = 6, 
+                   size = 8, 
                    alpha = 0.8,
                    color = "black") +
-  # scale_x_continuous(limits = c(-1.75, 3.75)) +
-  # scale_y_continuous(limits = c(-2, 3.25)) +
+  scale_x_continuous(limits = c(-2.7, 2.7)) +
+  scale_y_continuous(limits = c(-2.7, 2.7)) +
   PCA_theme() +
   labs(x = paste0("PC1 (", prop_PC1_reduced, ")"),
        y = paste0("PC2 (", prop_PC2_reduced, ")"),

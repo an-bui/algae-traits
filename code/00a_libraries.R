@@ -279,16 +279,16 @@ volume_col <- "#BD973D"
 
 trait_color_palette <- c(
 
-  `Frond DMC` = frond_dmc_col,
+  `Frond dry matter content` = frond_dmc_col,
   `Total DMC` = total_dmc_col,
   `Thickness` = thickness_col,
-  `STA` = sta_col,
-  `SA:V` = sav_col,
+  `Specific thallus area` = sta_col,
+  `Surface area:volume` = sav_col,
   `Fv/Fm` = fvfm_col,
   
 
   `Maximum height` = max_height_col,
-  `SA:P` = sap_col,
+  `Surface area:perimeter` = sap_col,
   `Mass:height` = mass_to_height_col,
   `Aspect ratio` = aspect_ratio_col
 )
