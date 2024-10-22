@@ -185,10 +185,6 @@ algae_proposal_sciname_factors <- as_factor(
   )
 )
 
-# algae colors
-
-# "#7A2602" "#8A310B" "#9A3D15" "#AA481F" "#BA5429" "#CA6032" "#DA6B3C" "#EA7746" "#FB8350"
-
 algae_colors <- c(
   # reds
   "Cryptopleura ruprechtiana" = "#C68F76", 
@@ -269,16 +265,16 @@ cluster4 <- "#357777"
 cat_cluster1 <- "#CC8613"
 cat_cluster2 <- "#1274CC"
 
+sta_col <- "#BD973D"
+sav_col <- "#CC7556"
+sap_col <- "#CC7556"
+aspect_ratio_col <- "#CC7556"
 frond_dmc_col <- "#BE5A47"
 total_dmc_col <- "#BE5A47"
 thickness_col <- "#BE5A47"
-sta_col <- "#BD973D"
-sav_col <- "#BD973D"
-fvfm_col <- "#b2d8d8"
+mass_to_height_col <- "#6B6D9F"
 max_height_col <- "#4D5B75"
-sap_col <- "#CC7556"
-mass_to_height_col <- "#4D5B75"
-aspect_ratio_col <- "#CC7556"
+fvfm_col <- "#b2d8d8"
 volume_col <- "#BD973D"
 
 trait_color_palette <- c(
