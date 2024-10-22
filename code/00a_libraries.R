@@ -269,21 +269,32 @@ cluster4 <- "#357777"
 cat_cluster1 <- "#CC8613"
 cat_cluster2 <- "#1274CC"
 
+frond_dmc_col <- "#BE5A47"
+total_dmc_col <- "#BE5A47"
+thickness_col <- "#BE5A47"
+sta_col <- "#BD973D"
+sav_col <- "#BD973D"
+fvfm_col <- "#b2d8d8"
+max_height_col <- "#4D5B75"
+sap_col <- "#CC7556"
+mass_to_height_col <- "#4D5B75"
+aspect_ratio_col <- "#CC7556"
+volume_col <- "#BD973D"
+
 trait_color_palette <- c(
-  # economic spectrum: cool
-  # from rachele2113 on color-hex.com
-  `Frond DMC` = "#BE5A47",
-  `Total DMC` = "#BE5A47",
-  `Thickness` = "#BE5A47",
-  `STA` = "#BD973D",
-  `SA:V` = "#BD973D",
-  `Fv/Fm` = "#b2d8d8",
+
+  `Frond DMC` = frond_dmc_col,
+  `Total DMC` = total_dmc_col,
+  `Thickness` = thickness_col,
+  `STA` = sta_col,
+  `SA:V` = sav_col,
+  `Fv/Fm` = fvfm_col,
   
-  # competitive dominance: warm
-  `Maximum height` = "#4D5B75",
-  `SA:P` = "#CC7556",
-  `Mass:height` = "#4D5B75",
-  `Aspect ratio` = "#CC7556"
+
+  `Maximum height` = max_height_col,
+  `SA:P` = sap_col,
+  `Mass:height` = mass_to_height_col,
+  `Aspect ratio` = aspect_ratio_col
 )
       
     # gradient palette

@@ -11,9 +11,8 @@ basic_theme <- list(
     theme_bw(),
     theme(legend.position = "none",
           panel.grid = element_blank(),
-          axis.title = element_text(size = 14),
+          axis.title = element_text(size = 20),
           axis.text = element_text(size = 18),
-          axis.title.x = element_text(size = 20),
           plot.title = element_text(size = 24))
 )
 
@@ -179,15 +178,15 @@ for(i in 1:length(boxplot_traits)) {
   
 }
 
-ggsave(here("figures",
-            "basic-visualizations",
-            "boxplots",
-            paste0("multipanel_", today(), ".jpg")),
-       boxplot_multipanel,
-       width = 24,
-       height = 18,
-       units = "cm",
-       dpi = 300)
+# ggsave(here("figures",
+#             "basic-visualizations",
+#             "boxplots",
+#             paste0("multipanel_boxplots_", today(), ".jpg")),
+#        boxplot_multipanel,
+#        width = 24,
+#        height = 18,
+#        units = "cm",
+#        dpi = 300)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # ---------------------------- 2. distributions ---------------------------
@@ -212,6 +211,7 @@ distributions <- ind_traits %>%
                values_to = "value") %>% 
   nest(.by = "trait",
        data = everything()) %>% 
+  # shortening trait names
   mutate(trait = map(
     trait,
     ~ case_match(
@@ -225,13 +225,36 @@ distributions <- ind_traits %>%
       "sap_mean" ~ "sap",
       "fvfm_mean" ~ "fvfm",
       "aspect_ratio_mean" ~ "aspect_ratio",
-      "frond_length_mean" ~ "thallus_length",
-      "frond_width_mean" ~ "thallus_width",
+      "frond_length_mean" ~ "frond_length",
+      "frond_width_mean" ~ "frond_width",
       "total_wet" ~ "weight_wet",
       "total_dry" ~ "weight_dry",
       "total_volume" ~ "volume",
       "chlA_mean" ~ "chlA",
       "total_dmc" ~ "total_dmc"
+    )
+  )) %>% 
+  # full names of traits
+  mutate(trait_name = map(
+    trait,
+    ~ case_match(
+      .x,
+      "fvfm" ~ "Fv/Fm",
+      "thickness" ~ "Mean thickness (mm)",
+      "volume" ~ "Volume (mL)",
+      "sap" ~ "Surface area:perimeter (mm\U00B2/mm)",
+      "sav" ~ "Surface area:volume (mm\U00B2/mL)",
+      "max_height" ~ "Maximum height (cm)",
+      "sta" ~ "Specific thallus area (mm\U00B2/dry mg)",
+      "mass_to_height" ~ "Mass:height (dry mg/cm)",
+      "aspect_ratio" ~ "Thallus length:width",
+      "chlA" ~ "chlorophyll A concentration",
+      "frond_dmc" ~ "Frond dry matter content",
+      "total_dmc" ~ "Thallus dry matter content",
+      "frond_length" ~ "Frond length (mm)",
+      "frond_width" ~ "Frond width (mm)",
+      "weight_wet" ~ "Wet weight (mg)",
+      "weight_dry" ~ "Dry weight (mg)"
     )
   )) %>% 
   mutate(length = map(
@@ -244,35 +267,67 @@ distributions <- ind_traits %>%
     length,
     ~ round((.x^(1/3))*2)
   )) %>% 
+  # colors for figures
+  mutate(colors = map(
+    trait,
+    ~ case_match(
+      .x,
+      "max_height" ~ max_height_col,
+      "mass_to_height" ~ mass_to_height_col,
+      "sav" ~ sav_col,
+      "thickness" ~ thickness_col,
+      "frond_dmc" ~ frond_dmc_col,
+      "sta" ~ sta_col,
+      "sap" ~ sap_col,
+      "fvfm" ~ fvfm_col,
+      "aspect_ratio" ~ aspect_ratio_col,
+      "frond_length" ~ aspect_ratio_col,
+      "frond_width" ~ aspect_ratio_col,
+      "weight_wet" ~ total_dmc_col,
+      "weight_dry" ~ total_dmc_col,
+      "volume" ~ volume_col,
+      "chlA" ~ fvfm_col,
+      "total_dmc" ~ total_dmc_col
+    )
+  )) %>% 
   mutate(distribution_plot = pmap(
-    list(x = data, y = trait, z = bins),
-    function(x, y, z) ggplot(data = x,
+    list(w = data, x = bins, y = colors, z = trait_name),
+    function(w, x, y, z) ggplot(data = w,
                              aes(x = value)) +
-      geom_histogram(bins = z,
-                     fill = "lightgrey",
+      geom_histogram(bins = x,
+                     fill = y,
                      color = "black") +
-      labs(title = paste0(y, " (no transformation)")) +
-      basic_theme
+      labs(title = paste0(z, " (no transformation)"),
+           sample = "Value",
+           y = "Count") +
+      scale_y_continuous(expand = expansion(mult = c(0, 0.05))) +
+      basic_theme 
   )) %>% 
   mutate(distribution_plot_log = pmap(
-    list(x = data, y = trait, z = bins),
-    function(x, y, z) ggplot(data = x,
+    list(w = data, x = bins, y = colors, z = trait_name),
+    function(w, x, y, z) ggplot(data = w,
                              aes(x = log(value))) +
-      geom_histogram(bins = z,
-                     fill = "lightgrey",
+      geom_histogram(bins = x,
+                     fill = y,
                      color = "black") +
-      labs(title = paste0(y, " (natural log transform)")) +
-      basic_theme
+      labs(title = paste0(z, " (natural log transform)"),
+           sample = "natural log(value)",
+           y = "Count") +
+      scale_y_continuous(expand = expansion(mult = c(0, 0.05))) +
+      basic_theme 
   )) %>% 
   mutate(distribution_plot_sqrt = pmap(
-    list(x = data, y = trait, z = bins),
-    function(x, y, z) ggplot(data = x,
+    list(w = data, x = bins, y = colors, z = trait_name),
+    function(w, x, y, z) ggplot(data = w,
                              aes(x = sqrt(value))) +
-      geom_histogram(bins = z,
-                     fill = "lightgrey",
+      geom_histogram(bins = x,
+                     fill = y,
                      color = "black") +
-      labs(title = paste0(y, " (square root transform)")) +
-      basic_theme
+      labs(title = paste0(z, " (square root transform)"),
+           sample = "square root (value)",
+           y = "Count") +
+      scale_y_continuous(expand = expansion(mult = c(0, 0.05))) +
+      basic_theme 
   )) %>% 
   mutate(qq = pmap(
     list(x = data, y = trait),
@@ -303,119 +358,119 @@ distributions <- ind_traits %>%
   ))
 
 # maximum height
-pluck(distributions, 5, 1) # right skewed
-pluck(distributions, 8, 1)
-pluck(distributions, 6, 1) # log transform looks normal (ish)
-pluck(distributions, 9, 1)
-pluck(distributions, 7, 1)
+pluck(distributions, 7, 1) # right skewed
 pluck(distributions, 10, 1)
+pluck(distributions, 8, 1) # log transform looks normal (ish)
+pluck(distributions, 11, 1)
+pluck(distributions, 9, 1)
+pluck(distributions, 12, 1)
 
 # mass to height
-pluck(distributions, 5, 2) # right skewed
-pluck(distributions, 8, 2)
-pluck(distributions, 6, 2) # log transform looks normal
-pluck(distributions, 9, 2)
-pluck(distributions, 7, 2)
+pluck(distributions, 7, 2) # right skewed
 pluck(distributions, 10, 2)
+pluck(distributions, 8, 2) # log transform looks normal
+pluck(distributions, 11, 2)
+pluck(distributions, 9, 2)
+pluck(distributions, 12, 2)
 
 # surface area to volume
-pluck(distributions, 5, 3) # normal ish
-pluck(distributions, 8, 3)
-pluck(distributions, 6, 3) # log transform looks normal
-pluck(distributions, 9, 3)
-pluck(distributions, 7, 3)
+pluck(distributions, 7, 3) # normal ish
 pluck(distributions, 10, 3)
+pluck(distributions, 8, 3) # log transform looks normal
+pluck(distributions, 11, 3)
+pluck(distributions, 9, 3)
+pluck(distributions, 12, 3)
 
 # thickness
-pluck(distributions, 5, 4) # right skewed
-pluck(distributions, 8, 4)
-pluck(distributions, 6, 4) # log transform looks normal
-pluck(distributions, 9, 4)
-pluck(distributions, 7, 4)
+pluck(distributions, 7, 4) # right skewed
 pluck(distributions, 10, 4)
+pluck(distributions, 8, 4) # log transform looks normal
+pluck(distributions, 11, 4)
+pluck(distributions, 9, 4)
+pluck(distributions, 12, 4)
 
 # frond DMC
-pluck(distributions, 5, 5) # potentially bimodal
-pluck(distributions, 8, 5)
-pluck(distributions, 6, 5) 
-pluck(distributions, 9, 5)
-pluck(distributions, 7, 5)
+pluck(distributions, 7, 5) # potentially bimodal
 pluck(distributions, 10, 5)
+pluck(distributions, 8, 5) 
+pluck(distributions, 11, 5)
+pluck(distributions, 9, 5)
+pluck(distributions, 12, 5)
 # no transformations look good
 
 # STA
-pluck(distributions, 5, 6) # right skewed
-pluck(distributions, 8, 6)
-pluck(distributions, 6, 6) 
-pluck(distributions, 9, 6) # log transform is better?
-pluck(distributions, 7, 6)
+pluck(distributions, 7, 6) # right skewed
 pluck(distributions, 10, 6)
+pluck(distributions, 8, 6) 
+pluck(distributions, 11, 6) # log transform is better?
+pluck(distributions, 9, 6)
+pluck(distributions, 12, 6)
 
 # SA:P
-pluck(distributions, 5, 7) # right skewed
-pluck(distributions, 8, 7)
-pluck(distributions, 6, 7) 
-pluck(distributions, 9, 7) # log transform is better?
-pluck(distributions, 7, 7)
+pluck(distributions, 7, 7) # right skewed
 pluck(distributions, 10, 7)
+pluck(distributions, 8, 7) 
+pluck(distributions, 11, 7) # log transform is better?
+pluck(distributions, 9, 7)
+pluck(distributions, 12, 7)
 
 # FvFm
-pluck(distributions, 5, 8) # bimodal
-pluck(distributions, 8, 8)
-pluck(distributions, 6, 8) 
-pluck(distributions, 9, 8)
-pluck(distributions, 7, 8)
+pluck(distributions, 7, 8) # bimodal
 pluck(distributions, 10, 8)
+pluck(distributions, 8, 8) 
+pluck(distributions, 11, 8)
+pluck(distributions, 9, 8)
+pluck(distributions, 12, 8)
 # no transformations look good
 
 # aspect ratio
-pluck(distributions, 5, 9) # right skewed
-pluck(distributions, 8, 9)
-pluck(distributions, 6, 9) 
-pluck(distributions, 9, 9) # log transformation looks better?
-pluck(distributions, 7, 9)
+pluck(distributions, 7, 9) # right skewed
 pluck(distributions, 10, 9)
+pluck(distributions, 8, 9) 
+pluck(distributions, 11, 9) # log transformation looks better?
+pluck(distributions, 9, 9)
+pluck(distributions, 12, 9)
 
 # frond length
-pluck(distributions, 5, 10) # right skewed
-pluck(distributions, 8, 10)
-pluck(distributions, 6, 10) 
-pluck(distributions, 9, 10) # log transformation looks better
-pluck(distributions, 7, 10)
+pluck(distributions, 7, 10) # right skewed
 pluck(distributions, 10, 10)
+pluck(distributions, 8, 10) 
+pluck(distributions, 11, 10) # log transformation looks better
+pluck(distributions, 9, 10)
+pluck(distributions, 12, 10)
 
 # frond width
-pluck(distributions, 5, 11) # right skewed
-pluck(distributions, 8, 11)
-pluck(distributions, 6, 11) 
-pluck(distributions, 9, 11)
-pluck(distributions, 7, 11)
+pluck(distributions, 7, 11) # right skewed
 pluck(distributions, 10, 11)
+pluck(distributions, 8, 11) 
+pluck(distributions, 11, 11)
+pluck(distributions, 9, 11)
+pluck(distributions, 12, 11)
 # no transformations look good
 
 # total wet mass
-pluck(distributions, 5, 12) # right skewed
-pluck(distributions, 8, 12)
-pluck(distributions, 6, 12) # log transform looks normal
-pluck(distributions, 9, 12)
-pluck(distributions, 7, 12)
+pluck(distributions, 7, 12) # right skewed
 pluck(distributions, 10, 12)
+pluck(distributions, 8, 12) # log transform looks normal
+pluck(distributions, 11, 12)
+pluck(distributions, 9, 12)
+pluck(distributions, 12, 12)
 
 # total dry mass
-pluck(distributions, 5, 13) # right skewed
-pluck(distributions, 8, 13)
-pluck(distributions, 6, 13) # log transform looks normal
-pluck(distributions, 9, 13)
-pluck(distributions, 7, 13)
+pluck(distributions, 7, 13) # right skewed
 pluck(distributions, 10, 13)
+pluck(distributions, 8, 13) # log transform looks normal
+pluck(distributions, 11, 13)
+pluck(distributions, 9, 13)
+pluck(distributions, 12, 13)
 
 # total DMC
-pluck(distributions, 5, 16)
-pluck(distributions, 8, 16)
-pluck(distributions, 6, 16) # log transform looks normal
-pluck(distributions, 9, 16)
 pluck(distributions, 7, 16)
 pluck(distributions, 10, 16)
+pluck(distributions, 8, 16) # log transform looks normal
+pluck(distributions, 11, 16)
+pluck(distributions, 9, 16)
+pluck(distributions, 12, 16)
 
 # traits to transform (potentially)
 # max height, mass to height, SAV, thickness, STA, SAP, aspect ratio, 
@@ -424,7 +479,11 @@ pluck(distributions, 10, 16)
 
 # ⟞ b. multipanel plot ----------------------------------------------------
 
-
+distributions_multipanel <- 
+  (pluck(distributions, 8, 6) + pluck(distributions, 8, 3)) /
+  (pluck(distributions, 8, 7) + pluck(distributions, 8, 9)) /
+  (pluck(distributions, 7, 5) + pluck(distributions, 8, 4)) /
+  (pluck(distributions, 8, 1) + pluck(distributions, 8, 2)) 
 
 # ⟞ c. saving outputs -----------------------------------------------------
 
@@ -544,3 +603,12 @@ for(i in 1:length(distributions_traits)) {
   
 }
 
+# ggsave(here("figures",
+#             "basic-visualizations",
+#             "distributions",
+#             paste0("multipanel_hist_", today(), ".jpg")),
+#        distributions_multipanel,
+#        width = 24,
+#        height = 18,
+#        units = "cm",
+#        dpi = 300)
