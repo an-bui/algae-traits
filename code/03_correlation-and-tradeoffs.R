@@ -32,19 +32,20 @@ pca_mat <- ind_traits %>%
   select(specimen_ID, 
          maximum_height, mass_to_height, sav_mean, thickness_mm_mean, 
          frond_dmc_mean, # total_dmc,
-         sta_mean, sav_mean, sap_mean, # fvfm_mean, 
+         sta_mean, sav_mean, sap_mean, # fvfm_mean, total_volume
          aspect_ratio_mean) %>% 
   column_to_rownames("specimen_ID") %>% 
   drop_na() %>% 
   rename(`Maximum height` = maximum_height,
          `Mass:height` = mass_to_height,
-         `Surface area:volume` = sav_mean,
+         `SA:V` = sav_mean,
          `Thickness` = thickness_mm_mean,
-         `Frond dry matter content` = frond_dmc_mean,
+         `Frond DMC` = frond_dmc_mean,
          # `Total DMC` = total_dmc,
-         `Specific thallus area` = sta_mean,
-         `Surface area:volume` = sav_mean,
-         `Surface area:perimeter` = sap_mean,
+         `STA` = sta_mean,
+         `SA:V` = sav_mean,
+         `SA:P` = sap_mean,
+         # `Total volume` = total_volume,
          # `Fv/Fm` = fvfm_mean,
          `Aspect ratio` = aspect_ratio_mean)  
   # select(!(`Fv/Fm`))
@@ -53,8 +54,8 @@ pca_mat_scale <- scale(pca_mat)
 
 pca_mat_log <- pca_mat %>% 
   # only log transforming traits that were not normally distributed
-  mutate(across(c(`Maximum height`, `Mass:height`, `Surface area:volume`,
-                  `Thickness`, `Specific thallus area`, `Surface area:perimeter`, # `Total DMC`,
+  mutate(across(c(`Maximum height`, `Mass:height`, `SA:V`,
+                  `Thickness`, `STA`, `SA:P`, # `Total DMC`, `Total volume`
                   `Aspect ratio`), 
                 log))
 
@@ -1000,7 +1001,7 @@ plot_PCA_12_full <- ggplot() +
   geom_label_repel(data = PCAvect_full, 
                   aes(x = PC1, 
                       y = PC2, 
-                      label = str_wrap(rownames(PCAvect_full), 10),
+                      label = rownames(PCAvect_full),
                       fill = rownames(PCAvect_full)), 
                   size = 6, 
                   alpha = 0.8,

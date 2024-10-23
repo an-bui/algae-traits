@@ -472,9 +472,17 @@ pluck(distributions, 11, 16)
 pluck(distributions, 9, 16)
 pluck(distributions, 12, 16)
 
+# total volume
+pluck(distributions, 7, 14)
+pluck(distributions, 10, 14)
+pluck(distributions, 8, 14) # log transform looks normal
+pluck(distributions, 11, 14)
+pluck(distributions, 9, 14)
+pluck(distributions, 12, 14)
+
 # traits to transform (potentially)
 # max height, mass to height, SAV, thickness, STA, SAP, aspect ratio, 
-# frond length, wet mass, dry mass, total DMC
+# frond length, wet mass, dry mass, total DMC, total_volume
 
 
 # ⟞ b. multipanel plot ----------------------------------------------------
