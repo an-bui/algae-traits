@@ -278,7 +278,17 @@ av_leaf_values <- leaf_traits %>%
             frond_length_mean = mean(length, na.rm = TRUE),
             frond_length_se = se(length),
             frond_width_mean = mean(width, na.rm = TRUE), 
-            frond_width_se = se(width))
+            frond_width_se = se(width),
+            frond_area_mean = mean(area_total, na.rm = TRUE),
+            frond_area_se = se(area_total),
+            frond_peri_mean = mean(peri_total, na.rm = TRUE),
+            frond_peri_se = se(peri_total),
+            frond_ww_mean = mean(weight_wet_mg, na.rm = TRUE),
+            frond_ww_se = se(weight_wet_mg),
+            frond_dw_mean = mean(weight_dry_mg, na.rm = TRUE),
+            frond_dw_se = se(weight_dry_mg),
+            frond_volume_mean = mean(volume_total_mL, na.rm = TRUE),
+            frond_volume_se = se(volume_total_mL))
 
 # ⊣ b. individual values ------------------------------------
 
@@ -294,11 +304,26 @@ ind_traits <- ct_prep %>%
   left_join(., isotopes_ind, by = "specimen_ID") %>% 
   mutate(mass_to_height = total_dry/maximum_height) %>% 
   left_join(., (metadata_ind %>% select(specimen_ID, date_collected, site)), by = "specimen_ID") %>% 
+  filter(sp_code != "EGME") %>% 
   filter(!(sp_code == "PTCA" & lifestage == "recruit")) %>% 
   filter(!(specimen_ID %in% c("20220726-BULL-016",
                               "20220726-BULL-024"))) %>% 
   mutate(date_collected = ymd(date_collected)) %>% 
-  mutate(year = year(date_collected))
+  mutate(year = year(date_collected)) %>% 
+  mutate(thickness_scaled = thickness_mm_mean*total_dry,
+         sta_scaled = sta_mean*total_dry,
+         frond_area_scaled = frond_area_mean*total_dry,
+         frond_dw_scaled = frond_dw_mean*total_dry,
+         frond_dmc_scaled = frond_dmc_mean*total_dry,
+         frond_ww_scaled = frond_ww_mean*total_dry,
+         sav_scaled = sav_mean*total_dry,
+         frond_volume_scaled = frond_volume_mean*total_dry,
+         sap_scaled = sap_mean*total_dry,
+         frond_peri_scaled = frond_peri_mean*total_dry,
+         aspect_ratio_scaled = aspect_ratio_mean*total_dry,
+         frond_length_scaled = frond_length_mean*total_dry,
+         frond_width_scaled = frond_width_mean*total_dry,
+         fvfm_scaled = fvfm_mean*total_dry)
 
 # ⊣ c. trait by species matrix ------------------------------
 

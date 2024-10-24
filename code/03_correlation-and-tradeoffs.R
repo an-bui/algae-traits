@@ -14,7 +14,7 @@ pca_mat <- ind_traits %>%
   filter(sp_code %in% algae_proposal) %>% 
   # weird Nienburgia?
   filter(!(specimen_ID %in% c("20210721-BULL-023", "20210719-IVEE-009"))) %>% 
-  # filter(sp_code != "EGME") %>% 
+  filter(sp_code != "EGME") %>% 
   mutate(growth_form_num = case_when(
     growth_form == "leathery_macrophyte" ~ 1,
     growth_form == "corticated_macrophytes" ~ 2,
@@ -30,33 +30,44 @@ pca_mat <- ind_traits %>%
     longevity == "annual or perennial" ~ 2
   )) %>% 
   select(specimen_ID, 
-         maximum_height, mass_to_height, sav_mean, thickness_mm_mean, 
-         frond_dmc_mean, # total_dmc,
-         sta_mean, sav_mean, sap_mean, # fvfm_mean, total_volume
-         aspect_ratio_mean) %>% 
+         maximum_height, 
+         mass_to_height, total_dry,
+         total_dmc, total_wet,
+         sav_mean, frond_area_scaled, frond_volume_scaled,
+         thickness_scaled, 
+         frond_dmc_mean, frond_dw_scaled, frond_ww_scaled,
+         sta_mean, 
+         sap_mean, frond_peri_scaled,
+         aspect_ratio_mean, frond_length_scaled, frond_width_scaled
+         ) %>% 
   column_to_rownames("specimen_ID") %>% 
   drop_na() %>% 
   rename(`Maximum height` = maximum_height,
          `Mass:height` = mass_to_height,
+         `Total dry weight` = total_dry,
+         `Thallus DMC` = total_dmc,
+         `Total wet weight` = total_wet,
          `SA:V` = sav_mean,
-         `Thickness` = thickness_mm_mean,
-         `Frond DMC` = frond_dmc_mean,
-         # `Total DMC` = total_dmc,
+         `Surface area (SA)` = frond_area_scaled,
+         `Volume (V)` = frond_volume_scaled,
+         `Thickness` = thickness_scaled,
+         `Frond dry matter content (DMC)` = frond_dmc_mean,
+         `Frond dry weight` = frond_dw_scaled,
+         `Frond wet weight` = frond_ww_scaled,
          `STA` = sta_mean,
-         `SA:V` = sav_mean,
          `SA:P` = sap_mean,
-         # `Total volume` = total_volume,
-         # `Fv/Fm` = fvfm_mean,
-         `Aspect ratio` = aspect_ratio_mean)  
+         `Perimeter (P)` = frond_peri_scaled,
+         `Aspect ratio` = aspect_ratio_mean,
+         `Frond length` = frond_length_scaled,
+         `Frond width` = frond_width_scaled
+         )  
   # select(!(`Fv/Fm`))
 
 pca_mat_scale <- scale(pca_mat)
 
 pca_mat_log <- pca_mat %>% 
   # only log transforming traits that were not normally distributed
-  mutate(across(c(`Maximum height`, `Mass:height`, `SA:V`,
-                  `Thickness`, `STA`, `SA:P`, # `Total DMC`, `Total volume`
-                  `Aspect ratio`), 
+  mutate(across(where(is.numeric), 
                 log))
 
 # pca_mat_with_cn <- ind_traits %>% 
@@ -204,7 +215,7 @@ corr_traits <- corrplot(corr = M,
 jpeg(here::here("figures", 
                 "correlation",
                 paste0("corrplot_log_full-model_", today(), ".jpeg")),
-     width = 16, height = 16, units = "cm", res = 300)
+     width = 24, height = 24, units = "cm", res = 300)
 corrplot(corr = M, 
          p.mat = p$p,
          diag = FALSE,
@@ -911,8 +922,8 @@ screeplot(pca_full, bstick = TRUE)
 summary(pca_full)
 
 # proportion variance explained for downstream figure making
-prop_PC1_full <- "41.4%"
-prop_PC2_full <- "26.6%"
+prop_PC1_full <- "58.3%"
+prop_PC2_full <- "22.4%"
 
 # ⟞ ⟞ ii. loadings --------------------------------------------------------
 
@@ -1099,8 +1110,8 @@ screeplot(pca_reduced, bstick = TRUE)
 summary(pca_reduced)
 
 # proportion variance explained for downstream figure making
-prop_PC1_reduced <- "44.4%"
-prop_PC2_reduced <- "38.4%"
+prop_PC1_reduced <- "65.2%"
+prop_PC2_reduced <- "32.5%"
 
 
 # ⟞ ⟞ ii. loadings --------------------------------------------------------
@@ -1196,8 +1207,8 @@ plot_PCA_12_reduced <- ggplot() +
                    size = 8, 
                    alpha = 0.8,
                    color = "black") +
-  scale_x_continuous(limits = c(-2.7, 2.7)) +
-  scale_y_continuous(limits = c(-2.7, 2.7)) +
+  # scale_x_continuous(limits = c(-2.7, 2.7)) +
+  # scale_y_continuous(limits = c(-2.7, 2.7)) +
   PCA_theme() +
   labs(x = paste0("PC1 (", prop_PC1_reduced, ")"),
        y = paste0("PC2 (", prop_PC2_reduced, ")"),

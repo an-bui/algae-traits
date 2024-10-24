@@ -277,21 +277,41 @@ max_height_col <- "#4D5B75"
 fvfm_col <- "#b2d8d8"
 volume_col <- "#BD973D"
 
+# "fvfm" ~ fvfm_col,
+# "max_height" ~ max_height_col,
+# "mass_to_height" ~ mass_to_height_col,
+# "total_dry" ~ mass_to_height_col,
+# "sav" ~ sav_col,
+# "area" ~ sav_col, 
+# "volume" ~ sav_col,
+# "thickness" ~ thickness_col,
+# "frond_dmc" ~ frond_dmc_col, 
+# "dw" ~ frond_dmc_col, 
+# "ww" ~ frond_dmc_col,
+# "sta" ~ sta_col,
+# "sap" ~ sap_col,
+# "peri" ~ sap_col,
+# "aspect_ratio" ~ aspect_ratio_col,
+# "length" ~ aspect_ratio_col, 
+# "width" ~ aspect_ratio_col
+
 trait_color_palette <- c(
-
-  `Frond DMC` = frond_dmc_col,
-  `Total DMC` = total_dmc_col,
-  `Thickness` = thickness_col,
-  `STA` = sta_col,
-  `SA:V` = sav_col,
-  `Fv/Fm` = fvfm_col,
-  
-
   `Maximum height` = max_height_col,
-  `SA:P` = sap_col,
   `Mass:height` = mass_to_height_col,
+  `Total dry weight` = mass_to_height_col,
+  `SA:V` = sav_col,
+  `Surface area (SA)` = sav_col,
+  `Volume (V)` = sav_col,
+  `Thickness` = thickness_col,
+  `Frond dry matter content (DMC)` = frond_dmc_col,
+  `Frond dry weight` = frond_dmc_col,
+  `Frond wet weight` = frond_dmc_col,
+  `STA` = sta_col,
+  `SA:P` = sap_col,
+  `Perimeter (P)` = sap_col,
   `Aspect ratio` = aspect_ratio_col,
-  `Total volume` = volume_col
+  `Frond length` = aspect_ratio_col,
+  `Frond width` = aspect_ratio_col
 )
       
     # gradient palette
