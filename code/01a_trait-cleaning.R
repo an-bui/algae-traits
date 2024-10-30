@@ -63,14 +63,14 @@ fvfm_ind <- fvfm_raw %>%
 
 # ⊣ b. thickness --------------------------------------------
 
-stipes_holdfasts <- metadata_sub %>% 
-  filter(type %in% c("stipe", "holdfast")) %>% 
+holdfasts <- metadata_sub %>% 
+  filter(type %in% c("holdfast")) %>% 
   pull(subsample_ID)
 
 # subsample
 thickness_sub <- thickness %>% 
   # take out stipes and holdfasts
-  filter(!(subsample_ID %in% c(stipes_holdfasts))) %>% 
+  filter(!(subsample_ID %in% c(holdfasts))) %>% 
   pivot_longer(cols = thickness_01:thickness_10, names_to = "measurement_n", values_to = "thickness_mm") %>% 
   group_by(subsample_ID) %>% 
   summarize(thickness_mm_mean = mean(thickness_mm, na.rm = TRUE),
@@ -79,7 +79,7 @@ thickness_sub <- thickness %>%
 # individual
 thickness_ind <- thickness %>% 
   # take out stipes and holdfasts
-  filter(!(subsample_ID %in% c(stipes_holdfasts))) %>% 
+  filter(!(subsample_ID %in% c(holdfasts))) %>% 
   pivot_longer(cols = thickness_01:thickness_10, names_to = "measurement_n", values_to = "thickness_mm") %>% 
   group_by(specimen_ID) %>% 
   summarize(thickness_mm_mean = mean(thickness_mm, na.rm = TRUE),
@@ -307,23 +307,16 @@ ind_traits <- ct_prep %>%
   filter(sp_code != "EGME") %>% 
   filter(!(sp_code == "PTCA" & lifestage == "recruit")) %>% 
   filter(!(specimen_ID %in% c("20220726-BULL-016",
-                              "20220726-BULL-024"))) %>% 
+                              "20220726-BULL-024",
+                              "20220421-AQUE-005"))) %>% 
   mutate(date_collected = ymd(date_collected)) %>% 
   mutate(year = year(date_collected)) %>% 
-  mutate(thickness_scaled = thickness_mm_mean*total_dry,
+  mutate(sav_scaled = sav_mean*total_volume,
+         frond_area_scaled = frond_area_mean*total_wet,
          sta_scaled = sta_mean*total_dry,
-         frond_area_scaled = frond_area_mean*total_dry,
-         frond_dw_scaled = frond_dw_mean*total_dry,
-         frond_dmc_scaled = frond_dmc_mean*total_dry,
-         frond_ww_scaled = frond_ww_mean*total_dry,
-         sav_scaled = sav_mean*total_dry,
-         frond_volume_scaled = frond_volume_mean*total_dry,
-         sap_scaled = sap_mean*total_dry,
-         frond_peri_scaled = frond_peri_mean*total_dry,
-         aspect_ratio_scaled = aspect_ratio_mean*total_dry,
-         frond_length_scaled = frond_length_mean*total_dry,
-         frond_width_scaled = frond_width_mean*total_dry,
-         fvfm_scaled = fvfm_mean*total_dry)
+         frond_peri_scaled = frond_peri_mean*total_wet,
+         frond_length_scaled = frond_length_mean*total_wet,
+         frond_width_scaled = frond_width_mean*total_wet)
 
 # ⊣ c. trait by species matrix ------------------------------
 

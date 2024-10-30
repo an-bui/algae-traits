@@ -31,35 +31,32 @@ pca_mat <- ind_traits %>%
   )) %>% 
   select(specimen_ID, 
          maximum_height, 
-         mass_to_height, total_dry,
+         mass_to_height, total_dry, 
          total_dmc, total_wet,
-         sav_mean, frond_area_scaled, frond_volume_scaled,
-         thickness_scaled, 
-         frond_dmc_mean, frond_dw_scaled, frond_ww_scaled,
-         sta_mean, 
-         sap_mean, frond_peri_scaled,
-         aspect_ratio_mean, frond_length_scaled, frond_width_scaled
+         total_volume,
+         sav_scaled, frond_area_scaled,
+         thickness_mm_mean, 
+         sta_scaled,
+         sap_mean, frond_peri_scaled # ,
+         # aspect_ratio_mean, frond_length_scaled, frond_width_scaled
          ) %>% 
   column_to_rownames("specimen_ID") %>% 
   drop_na() %>% 
-  rename(`Maximum height` = maximum_height,
-         `Mass:height` = mass_to_height,
-         `Total dry weight` = total_dry,
-         `Thallus DMC` = total_dmc,
-         `Total wet weight` = total_wet,
-         `SA:V` = sav_mean,
-         `Surface area (SA)` = frond_area_scaled,
-         `Volume (V)` = frond_volume_scaled,
-         `Thickness` = thickness_scaled,
-         `Frond dry matter content (DMC)` = frond_dmc_mean,
-         `Frond dry weight` = frond_dw_scaled,
-         `Frond wet weight` = frond_ww_scaled,
-         `STA` = sta_mean,
-         `SA:P` = sap_mean,
-         `Perimeter (P)` = frond_peri_scaled,
-         `Aspect ratio` = aspect_ratio_mean,
-         `Frond length` = frond_length_scaled,
-         `Frond width` = frond_width_scaled
+  rename(`Surface area:dry weight` = sta_scaled,
+         `Surface area:volume` = sav_scaled,
+         `Surface area` = frond_area_scaled,
+         `Volume` = total_volume,
+         `Surface area:perimeter` = sap_mean,
+         `Perimeter` = frond_peri_scaled,
+         # `Aspect ratio` = aspect_ratio_mean,
+         # `Length` = frond_length_scaled,
+         # `Width` = frond_width_scaled,
+         `Dry:wet weight` = total_dmc,
+         `Dry weight` = total_dry,
+         `Wet weight` = total_wet,
+         `Thickness` = thickness_mm_mean,
+         `Dry weight:height` = mass_to_height,
+         `Height` = maximum_height,
          )  
   # select(!(`Fv/Fm`))
 
@@ -154,33 +151,32 @@ PCA_theme <- function() {
 contrib_theme <- function() {
   theme_bw() +
     theme(legend.position = "none",
-          # plot.title.position = "plot",
+          plot.title.position = "plot",
           panel.grid = element_blank(),
           axis.text = element_text(size = 18),
-          axis.title = element_text(size = 20),
-          plot.title = element_text(size = 22)) 
+          # axis.title = element_text(size = 20),
+          plot.title = element_text(size = 22),
+          axis.title = element_blank())
 }
 
 contrib_aesthetics_full <- list(
   geom_col(color = "black"),
-  geom_hline(yintercept = expected_average_full,
+  geom_vline(xintercept = expected_average_full,
              color = "#96a39e",
              linetype = 2),
   scale_fill_manual(values = trait_color_palette),
-  scale_y_continuous(expand = expansion(c(0, 0.05))),
-  labs(x = "Trait",
-       y = "% contribution to axis")
+  scale_x_continuous(expand = expansion(c(0, 0.05)),
+                     position = "top")
 )
 
 contrib_aesthetics_reduced <- list(
   geom_col(color = "black"),
-  geom_hline(yintercept = expected_average_reduced,
+  geom_vline(xintercept = expected_average_reduced,
              color = "#96a39e",
              linetype = 2),
   scale_fill_manual(values = trait_color_palette),
-  scale_y_continuous(expand = expansion(c(0, 0.05))),
-  labs(x = "Trait",
-       y = "% contribution to axis")
+  scale_x_continuous(expand = expansion(c(0, 0.05)),
+                     position = "top")
 )
 
 
@@ -922,8 +918,8 @@ screeplot(pca_full, bstick = TRUE)
 summary(pca_full)
 
 # proportion variance explained for downstream figure making
-prop_PC1_full <- "58.3%"
-prop_PC2_full <- "22.4%"
+prop_PC1_full <- "65.0%"
+prop_PC2_full <- "19.6%"
 
 # ⟞ ⟞ ii. loadings --------------------------------------------------------
 
@@ -1018,8 +1014,8 @@ plot_PCA_12_full <- ggplot() +
                   alpha = 0.8,
                   seed = 666,
                   color = "black") +
-  scale_x_continuous(limits = c(-2.25, 2.25)) +
-  scale_y_continuous(limits = c(-2.25, 2.25)) +
+  scale_x_continuous(limits = c(-2, 3)) +
+  scale_y_continuous(limits = c(-2.75, 2.25)) +
   PCA_theme() +
   labs(x = paste0("PC1 (", prop_PC1_full, ")"),
        y = paste0("PC2 (", prop_PC2_full, ")"),
@@ -1027,11 +1023,11 @@ plot_PCA_12_full <- ggplot() +
        color = "Scientific name") 
 plot_PCA_12_full
 
-# ggsave(here::here("figures",
-#                   "ordination",
-#                   paste("PCA-log_scale_full-model_", today(), ".jpg", sep = "")),
-#        plot_PCA_12_full,
-#        width = 12, height = 12, units = "cm", dpi = 300)
+ggsave(here::here("figures",
+                  "ordination",
+                  paste("PCA-log_scale_full-model_", today(), ".jpg", sep = "")),
+       plot_PCA_12_full,
+       width = 12, height = 12, units = "cm", dpi = 300)
 
 # ⟞ ⟞ iv. trait contributions to axes -------------------------------------
 
@@ -1059,46 +1055,53 @@ expected_average_full <- (1/length(unique(varcoord_full$trait)))*100
 
 pc1_contrib_full <- varcoord_full %>% 
   filter(axis == "PC1") %>% 
-  ggplot(aes(x = reorder(trait, -contrib),
-             y = contrib, 
+  ggplot(aes(y = reorder(trait, contrib),
+             x = contrib, 
              fill = trait)) +
   contrib_aesthetics_full +
   contrib_theme() +
-  labs(title = "(b) Contributions to PC1")
+  labs(title = "(b) Trait % contributions to PC1")
 
 pc1_contrib_full
 
 pc2_contrib_full <- varcoord_full %>% 
   filter(axis == "PC2") %>% 
-  ggplot(aes(x = reorder(trait, -contrib),
-             y = contrib, 
+  ggplot(aes(y = reorder(trait, contrib),
+             x = contrib, 
              fill = trait)) +
   contrib_aesthetics_full +
   contrib_theme() +
-  labs(title = "(c) Contributions to PC2")
+  labs(title = "(c) Trait % contributions to PC2")
 
 pc2_contrib_full
 
 # scaled layout
 contrib_together_full <- (plot_PCA_12_full) | ((pc1_contrib_full / pc2_contrib_full) + plot_layout(axis_titles = "collect")) 
 
-# ggsave(here::here(
-#   "figures",
-#   "ordination",
-#   paste0("contributions_scale_full-model_", today(), ".jpg")),
-#   contrib_together_full,
-#   width = 24,
-#   height = 12,
-#   units = "cm",
-#   dpi = 300
-# )
+contrib_together_full <- (free(plot_PCA_12_full) / 
+                            (free(pc1_contrib_full) | free(pc2_contrib_full))) + 
+  plot_layout(heights = c(1, 0.8))
+
+# contrib_together_full <- ((free(plot_PCA_12_full) / (free(pc1_contrib_full)) | (free(pc2_contrib_full) / plot_spacer()))) + 
+#   plot_layout(heights = c(1, 0.5, 0.5))
+
+ggsave(here::here(
+  "figures",
+  "ordination",
+  paste0("contributions_scale_full-model_", today(), ".jpg")),
+  contrib_together_full,
+  width = 14,
+  height = 22,
+  units = "cm",
+  dpi = 300
+)
 
 # ⟞ b. reduced model ------------------------------------------------------
 
 # ⟞ ⟞ i. PCA --------------------------------------------------------------
 
 reduced_mat <- pca_mat_log %>% 
-  select(`Mass:height`, `Maximum height`, `SA:V`)
+  select(`Dry:wet weight`, `Dry weight:height`, `Volume`, `Height`)
 
 # trait by species PCA
 pca_reduced <- rda(reduced_mat, scale = TRUE)
@@ -1110,8 +1113,8 @@ screeplot(pca_reduced, bstick = TRUE)
 summary(pca_reduced)
 
 # proportion variance explained for downstream figure making
-prop_PC1_reduced <- "65.2%"
-prop_PC2_reduced <- "32.5%"
+prop_PC1_reduced <- "52.0%"
+prop_PC2_reduced <- "41.8%"
 
 
 # ⟞ ⟞ ii. loadings --------------------------------------------------------
@@ -1247,23 +1250,23 @@ expected_average_reduced <- (1/length(unique(varcoord_reduced$trait)))*100
 
 pc1_contrib_reduced <- varcoord_reduced %>% 
   filter(axis == "PC1") %>% 
-  ggplot(aes(x = reorder(trait, -contrib),
-             y = contrib, 
+  ggplot(aes(y = reorder(trait, contrib),
+             x = contrib, 
              fill = trait)) +
   contrib_aesthetics_reduced +
   contrib_theme() +
-  labs(title = "(b) Contributions to PC1")
+  labs(title = "(b) Trait % contributions to PC1")
 
 pc1_contrib_reduced
 
 pc2_contrib_reduced <- varcoord_reduced %>% 
   filter(axis == "PC2") %>% 
-  ggplot(aes(x = reorder(trait, -contrib),
-             y = contrib, 
+  ggplot(aes(y = reorder(trait, contrib),
+             x = contrib, 
              fill = trait)) +
   contrib_aesthetics_reduced +
   contrib_theme() +
-  labs(title = "(c) Contributions to PC2")
+  labs(title = "(c) Trait % contributions to PC2")
 
 pc2_contrib_reduced
 
@@ -1271,16 +1274,16 @@ pc2_contrib_reduced
 
 contrib_together_reduced <- plot_PCA_12_reduced + (pc1_contrib_reduced / pc2_contrib_reduced)
 
-# ggsave(here::here(
-#   "figures",
-#   "ordination",
-#   paste0("contributions_scale_reduced-model_", today(), ".jpg")),
-#   contrib_together_reduced,
-#   width = 18,
-#   height = 10,
-#   units = "cm",
-#   dpi = 300
-# )
+ggsave(here::here(
+  "figures",
+  "ordination",
+  paste0("contributions_scale_reduced-model_", today(), ".jpg")),
+  contrib_together_reduced,
+  width = 18,
+  height = 10,
+  units = "cm",
+  dpi = 300
+)
 
 
 
