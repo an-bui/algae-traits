@@ -67,6 +67,10 @@ holdfasts <- metadata_sub %>%
   filter(type %in% c("holdfast")) %>% 
   pull(subsample_ID)
 
+stipes_holdfasts <- metadata_sub %>% 
+  filter(type %in% c("stipe", "holdfast")) %>% 
+  pull(subsample_ID)
+
 # subsample
 thickness_sub <- thickness %>% 
   # take out stipes and holdfasts

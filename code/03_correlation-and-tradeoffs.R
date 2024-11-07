@@ -159,25 +159,7 @@ contrib_theme <- function() {
           axis.title = element_blank())
 }
 
-contrib_aesthetics_full <- list(
-  geom_col(color = "black"),
-  geom_vline(xintercept = expected_average_full,
-             color = "#96a39e",
-             linetype = 2),
-  scale_fill_manual(values = trait_color_palette),
-  scale_x_continuous(expand = expansion(c(0, 0.05)),
-                     position = "top")
-)
 
-contrib_aesthetics_reduced <- list(
-  geom_col(color = "black"),
-  geom_vline(xintercept = expected_average_reduced,
-             color = "#96a39e",
-             linetype = 2),
-  scale_fill_manual(values = trait_color_palette),
-  scale_x_continuous(expand = expansion(c(0, 0.05)),
-                     position = "top")
-)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -285,7 +267,7 @@ pairwise_comparisons <- p_df %>%
   mutate(across(where(is.numeric), 
                 ~ case_when(. < 0.05 ~ ., TRUE ~ NA))) %>% 
   # make the data frame longer and turn the column names into "trait2" or the second trait in the comparison
-  pivot_longer(cols = `Maximum height`:`Aspect ratio`,
+  pivot_longer(cols = 2:length(colnames(.)),
                names_to = "trait2",
                values_to = "corr") %>%
   # drop any NAs in the p-values (the upper triangle of the matrix)
@@ -294,34 +276,44 @@ pairwise_comparisons <- p_df %>%
   filter(corr > 0) %>% 
   mutate(trait1_column = case_match(
     trait1,
-    "Mass:height" ~ "mass_to_height",
-    "SA:V" ~ "sav_mean",
+    "Height" ~ "maximum_height",
+    "Dry weight:height" ~ "mass_to_height",
+    "Dry weight" ~ "total_dry",
+    "Dry:wet weight" ~ "total_dmc",
+    "Wet weight" ~ "total_wet",
+    "Volume" ~ "total_volume",
+    "Surface area:volume" ~ "sav_scaled",
+    "Surface area" ~ "frond_area_scaled",
     "Thickness" ~ "thickness_mm_mean",
-    "TDMC" ~ "tdmc_mean",
-    "STA" ~ "sta_mean",
-    "SA:P" ~ "sap_mean",
-    "Fv/Fm" ~ "fvfm_mean",
-    "Aspect ratio" ~ "aspect_ratio_mean"
+    "Surface area:dry weight" ~ "sta_scaled",
+    "Surface area:perimeter" ~ "sap_mean",
+    "Perimeter" ~ "frond_peri_scaled"
   )) %>% 
   mutate(trait2_column = case_match(
     trait2,
-    "Maximum height" ~ "maximum_height",
-    "Mass:height" ~ "mass_to_height",
-    "SA:V" ~ "sav_mean",
+    "Height" ~ "maximum_height",
+    "Dry weight:height" ~ "mass_to_height",
+    "Dry weight" ~ "total_dry",
+    "Dry:wet weight" ~ "total_dmc",
+    "Wet weight" ~ "total_wet",
+    "Volume" ~ "total_volume",
+    "Surface area:volume" ~ "sav_scaled",
+    "Surface area" ~ "frond_area_scaled",
     "Thickness" ~ "thickness_mm_mean",
-    "TDMC" ~ "tdmc_mean",
-    "STA" ~ "sta_mean",
-    "SA:P" ~ "sap_mean",
-    "Fv/Fm" ~ "fvfm_mean"
+    "Surface area:dry weight" ~ "sta_scaled",
+    "Surface area:perimeter" ~ "sap_mean"
   )) %>% 
-  mutate(formula = paste(trait1_column, "~", trait2_column, sep = " "))
+  mutate(formula = paste(trait1_column, "~", trait2_column, sep = " ")) 
 
 log_ind_traits <- ind_traits %>% 
-  mutate(across(c(maximum_height, mass_to_height, sav_mean,
-                  thickness_mm_mean, sta_mean, sap_mean, aspect_ratio_mean), 
+  mutate(across(c(maximum_height, mass_to_height, total_dry, 
+                  total_dmc, total_wet, total_volume, 
+                  sav_scaled, frond_area_scaled,
+                  thickness_mm_mean,
+                  sta_scaled, sap_mean, frond_peri_scaled), 
                 log))
 
-scaled_ind_traits <- ind_traits_filtered %>% 
+scaled_ind_traits <- ind_traits %>% 
   mutate(across(where(is.numeric), scale))
 
 pairwise_sma <- function(model_formula, trait1, trait2, data) {
@@ -363,64 +355,45 @@ pairwise_sma <- function(model_formula, trait1, trait2, data) {
 }
 
 pair_sta_sav <- pairwise_sma(
-  model_formula = "sta_mean ~ sav_mean", 
-  trait1 = sta_mean,
-  trait2 = sav_mean,
+  model_formula = "sta_scaled ~ sav_scaled", 
+  trait1 = sta_scaled,
+  trait2 = sav_scaled,
   data = "log"
 )
 
 sta_sav_plot <- pair_sta_sav[[3]] +
-  labs(x = "Specific thallus area",
+  labs(x = "Surface area:dry weight",
        y = "Surface area:volume ratio",
        title = "(a)") +
   theme(plot.title.position = "plot")
 
 pair_sta_mh <- pairwise_sma(
-  model_formula = "sta_mean ~ mass_to_height", 
-  trait1 = sta_mean,
+  model_formula = "sta_scaled ~ mass_to_height", 
+  trait1 = sta_scaled,
   trait2 = mass_to_height,
   data = "log"
 )
 
 sta_mh_plot <- pair_sta_mh[[3]] +
-  labs(x = "Specific thallus area",
+  labs(x = "Surface area:dry weight",
        y = "Mass:height",
        title = "(b)") +
   theme(plot.title.position = "plot")
 
-pair_mh_height <- lmodel2(mass_to_height ~ maximum_height,
-        data = log_ind_traits %>% 
-          drop_na(mass_to_height, maximum_height) %>% 
-          filter(mass_to_height > -Inf))
-# for each 1% increase in mass:height, you expect a 1.27% decrease in maximum height in log-log space
+pair_dmc_height <- pairwise_sma(
+  model_formula = "total_dmc ~ maximum_height", 
+  trait1 = total_dmc,
+  trait2 = maximum_height,
+  data = "log"
+)
 
-sma(mass_to_height ~ maximum_height,
-        data = log_ind_traits %>% 
-          drop_na(mass_to_height, maximum_height) %>% 
-          filter(mass_to_height > -Inf))
+dmc_height_plot <- pair_dmc_height[[3]] +
+  labs(x = "Dry:wet weight",
+       y = "Height",
+       title = "(c)") +
+  theme(plot.title.position = "plot")
 
-mh_height_plot <- log_ind_traits %>% 
-  drop_na(mass_to_height, maximum_height) %>% 
-  filter(mass_to_height > -Inf) %>% 
-  ggplot(aes(x = mass_to_height,
-             y = maximum_height)) +
-  geom_point(alpha = 0.3,
-             shape = 21,
-             color = "#7e97c0") +
-  stat_ma_line(method = "SMA",
-               color = "#295396",
-               fill = "#a9bad5",
-               linewidth = 0.75) +
-  # labs(title = model_formula) +
-  theme_bw() +
-  theme(panel.grid = element_blank(),
-        plot.title.position = "plot",
-        text = element_text(size = 12)) +
-  labs(x = "Mass:height ratio",
-       y = "Maximum height",
-       title = "(c)")
-
-sma_together <- sta_sav_plot + sta_mh_plot + mh_height_plot
+sma_together <- sta_sav_plot + sta_mh_plot + dmc_height_plot
 
 ggsave(here::here("figures",
                   "tradeoffs",
@@ -430,468 +403,468 @@ ggsave(here::here("figures",
        units = "cm",
        dpi = 300)
 
-pair_sav_height <- pairwise_sma(
-  model_formula = "sav_mean ~ maximum_height", 
-  trait1 = sav_mean,
-  trait2 = maximum_height,
-  data = "log"
-)
-
-pair_sav_mh <- pairwise_sma(
-  model_formula = "sav_mean ~ mass_to_height", 
-  trait1 = sav_mean,
-  trait2 = mass_to_height,
-  data = "log"
-)
-
-# fix this later with new mass data entry, though not sure why things worked with 
-# other models...
-pair_thickness_mh <- pairwise_sma(
-  model_formula = "thickness_mm_mean ~ mass_to_height",
-  trait1 = thickness_mm_mean,
-  trait2 = mass_to_height,
-  data = "log"
-)
-
-sma(mass_to_height ~ thickness_mm_mean,
-    data = log_ind_traits %>% 
-      filter(mass_to_height != "-Inf"))
-
-ggplot(data = log_ind_traits %>% 
-         filter(mass_to_height != "-Inf"),
-       aes(x = mass_to_height,
-           y = thickness_mm_mean)) +
-  geom_point(alpha = 0.5,
-             shape = 21) +
-  stat_ma_line(method = "SMA") +
-  # labs(title = model_formula) +
-  theme_bw() +
-  theme(panel.grid = element_blank()) +
-  labs(x = "log mass:height ratio",
-       y = "log thickness") +
-  coord_cartesian(ylim = c(-2.5, 0.6)) +
-  annotate(geom = "text", x = -1.5, y = -2.5, label = "R\U00B2 = 0.20, p < 0.001")
-
-pair_thickness_sav <- pairwise_sma(
-  model_formula = "thickness_mm_mean ~ sav_mean", 
-  trait1 = thickness_mm_mean,
-  trait2 = sav_mean,
-  data = "log"
-)
-
-pair_tdmc_height <- pairwise_sma(
-  model_formula = "tdmc_mean ~ maximum_height", 
-  trait1 = tdmc_mean,
-  trait2 = maximum_height,
-  data = "log"
-)
-
-pair_tdmc_mh <- pairwise_sma(
-  model_formula = "tdmc_mean ~ mass_to_height", 
-  trait1 = tdmc_mean,
-  trait2 = mass_to_height,
-  data = "log"
-)
-
-pair_tdmc_thickness <- pairwise_sma(
-  model_formula = "tdmc_mean ~ thickness_mm_mean", 
-  trait1 = tdmc_mean,
-  trait2 = thickness_mm_mean,
-  data = "log"
-)
-
-pair_sta_height <- pairwise_sma(
-  model_formula = "sta_mean ~ maximum_height", 
-  trait1 = sta_mean,
-  trait2 = maximum_height,
-  data = "log"
-)
-
-
-
-
-pair_sta_thickness <- pairwise_sma(
-  model_formula = "sta_mean ~ thickness_mm_mean", 
-  trait1 = sta_mean,
-  trait2 = thickness_mm_mean,
-  data = "log"
-)
-
-pair_sta_tdmc <- pairwise_sma(
-  model_formula = "sta_mean ~ tdmc_mean", 
-  trait1 = sta_mean,
-  trait2 = tdmc_mean,
-  data = "log"
-)
-
-pair_sap_height <- pairwise_sma(
-  model_formula = "sap_mean ~ maximum_height", 
-  trait1 = sap_mean,
-  trait2 = maximum_height,
-  data = "log"
-)
-
-pair_sap_sav <- pairwise_sma(
-  model_formula = "sap_mean ~ sav_mean", 
-  trait1 = sap_mean,
-  trait2 = sav_mean,
-  data = "log"
-)
-
-pair_sap_thickness <- pairwise_sma(
-  model_formula = "sap_mean ~ thickness_mm_mean", 
-  trait1 = sap_mean,
-  trait2 = thickness_mm_mean,
-  data = "log"
-)
-
-pair_sap_tdmc <- pairwise_sma(
-  model_formula = "sap_mean ~ tdmc_mean", 
-  trait1 = sap_mean,
-  trait2 = tdmc_mean,
-  data = "log"
-)
-
-pair_sap_sta <- pairwise_sma(
-  model_formula = "sap_mean ~ sta_mean", 
-  trait1 = sap_mean,
-  trait2 = sta_mean,
-  data = "log"
-)     
-
-sma(mass_to_height ~ sav_mean,
-        data = log_ind_traits)
-
-ggplot(data = log_ind_traits,
-       aes(x = mass_to_height,
-           y = sav_mean)) +
-  geom_point(alpha = 0.5,
-             shape = 21) +
-  stat_ma_line(method = "SMA") +
-  # labs(title = model_formula) +
-  theme_bw() +
-  theme(panel.grid = element_blank()) +
-  labs(x = "log mass:height ratio",
-       y = "log surface area:volume ratio") +
-  coord_cartesian(ylim = c(4, 9.5)) +
-  annotate(geom = "text", x = -1.5, y = 4, label = "R\U00B2 = 0.049, p < 0.001")
-
-pair_fvfm_height <- pairwise_sma(
-  model_formula = "fvfm_mean ~ maximum_height", 
-  trait1 = fvfm_mean,
-  trait2 = maximum_height,
-  data = "log"
-)     
-
-pair_fvfm_sav <- pairwise_sma(
-  model_formula = "fvfm_mean ~ sav_mean", 
-  trait1 = fvfm_mean,
-  trait2 = sav_mean,
-  data = "log"
-)    
-
-pair_fvfm_tdmc <- pairwise_sma(
-  model_formula = "fvfm_mean ~ tdmc_mean", 
-  trait1 = fvfm_mean,
-  trait2 = tdmc_mean,
-  data = "log"
-)
-
-pair_fvfm_sta <- pairwise_sma(
-  model_formula = "fvfm_mean ~ sta_mean", 
-  trait1 = fvfm_mean,
-  trait2 = sta_mean,
-  data = "log"
-)
-
-pair_fvfm_sap <- pairwise_sma(
-  model_formula = "fvfm_mean ~ sap_mean", 
-  trait1 = fvfm_mean,
-  trait2 = sap_mean,
-  data = "log"
-)
-
-pair_ar_height <- pairwise_sma(
-  model_formula = "aspect_ratio_mean ~ maximum_height", 
-  trait1 = aspect_ratio_mean,
-  trait2 = maximum_height,
-  data = "log"
-)
-
-# this also doesn't work!
-# pair_ar_mh <- pairwise_sma(
-#   model_formula = "aspect_ratio_mean ~ mass_to_height",
-#   trait1 = aspect_ratio_mean,
+# pair_sav_height <- pairwise_sma(
+#   model_formula = "sav_mean ~ maximum_height", 
+#   trait1 = sav_mean,
+#   trait2 = maximum_height,
+#   data = "log"
+# )
+# 
+# pair_sav_mh <- pairwise_sma(
+#   model_formula = "sav_mean ~ mass_to_height", 
+#   trait1 = sav_mean,
 #   trait2 = mass_to_height,
 #   data = "log"
 # )
-
-pair_ar_sav <- pairwise_sma(
-  model_formula = "aspect_ratio_mean ~ sav_mean", 
-  trait1 = aspect_ratio_mean,
-  trait2 = sav_mean,
-  data = "log"
-)
-
-pair_ar_thickness <- pairwise_sma(
-  model_formula = "aspect_ratio_mean ~ thickness_mm_mean", 
-  trait1 = aspect_ratio_mean,
-  trait2 = thickness_mm_mean,
-  data = "log"
-)
-
-pair_ar_tdmc <- pairwise_sma(
-  model_formula = "aspect_ratio_mean ~ tdmc_mean", 
-  trait1 = aspect_ratio_mean,
-  trait2 = tdmc_mean,
-  data = "log"
-)
-
-pair_ar_fvfm <- pairwise_sma(
-  model_formula = "aspect_ratio_mean ~ fvfm_mean", 
-  trait1 = aspect_ratio_mean,
-  trait2 = fvfm_mean,
-  data = "log"
-)
-
-ar_plots <- (pair_ar_height[[3]] | pair_ar_fvfm[[3]] | pair_ar_sav[[3]] | pair_ar_tdmc[[3]] | pair_ar_thickness[[3]]) 
-
-fvfm_plots <- 
-  (pair_fvfm_height[[3]] | pair_fvfm_sap[[3]] | pair_fvfm_sav[[3]] | pair_fvfm_tdmc[[3]] | pair_fvfm_sta[[3]] ) 
-
-ar_plots/fvfm_plots
-
-mh_row_scaled <- plot_grid(
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  nrow = 1
-)
-
-mh_row <- plot_grid(
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  nrow = 1
-)
-
-sav_row_scaled <- plot_grid(
-  NULL,
-  pair_sav_mh[[3]],
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  nrow = 1
-)
-
-sav_row <- plot_grid(
-  pair_sav_height[[3]],
-  pair_sav_mh[[3]],
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  nrow = 1
-)
-
-
-
-thickness_row_scaled <- plot_grid(
-  NULL,
-  pair_thickness_mh[[3]],
-  pair_thickness_sav[[3]],
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  nrow = 1
-)
-
-thickness_row <- plot_grid(
-  NULL,
-  NULL,
-  pair_thickness_sav[[3]],
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  nrow = 1
-)
-
-tdmc_row_scaled <- plot_grid(
-  NULL,
-  pair_tdmc_mh[[3]],
-  NULL,
-  pair_tdmc_thickness[[3]],
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  nrow = 1
-)
-
-tdmc_row <- plot_grid(
-  pair_tdmc_height[[3]],
-  pair_tdmc_mh[[3]],
-  NULL,
-  pair_tdmc_thickness[[3]],
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  nrow = 1
-)
-
-sta_row_scaled <- plot_grid(
-  NULL,
-  pair_sta_mh[[3]],
-  pair_sta_sav[[3]],
-  pair_sta_thickness[[3]],
-  pair_sta_tdmc[[3]],
-  NULL,
-  NULL,
-  NULL,
-  nrow = 1
-)
-
-sta_row <- plot_grid(
-  pair_sta_height[[3]],
-  pair_sta_mh[[3]],
-  pair_sta_sav[[3]],
-  pair_sta_thickness[[3]],
-  pair_sta_tdmc[[3]],
-  NULL,
-  NULL,
-  NULL,
-  nrow = 1
-)
-
-sap_row_scaled <- plot_grid(
-  NULL,
-  NULL,
-  pair_sap_sav[[3]],
-  pair_sap_thickness[[3]],
-  pair_sap_tdmc[[3]],
-  pair_sap_sta[[3]],
-  NULL,
-  NULL,
-  nrow = 1
-)
-
-sap_row <- plot_grid(
-  pair_sap_height[[3]],
-  NULL,
-  pair_sap_sav[[3]],
-  NULL,
-  pair_sap_tdmc[[3]],
-  pair_sap_sta[[3]],
-  NULL,
-  NULL,
-  nrow = 1
-)
-
-fvfm_row_scaled <- plot_grid(
-  pair_fvfm_height[[3]],
-  NULL,
-  pair_fvfm_sav[[3]],
-  NULL,
-  pair_fvfm_tdmc[[3]],
-  pair_fvfm_sta[[3]],
-  pair_fvfm_sap[[3]],
-  NULL,
-  nrow = 1
-)
-
-fvfm_row <- plot_grid(
-  pair_fvfm_height[[3]],
-  NULL,
-  pair_fvfm_sav[[3]],
-  NULL,
-  pair_fvfm_tdmc[[3]],
-  pair_fvfm_sta[[3]],
-  pair_fvfm_sap[[3]],
-  NULL,
-  nrow = 1
-)
-
-ar_row_scaled <- plot_grid(
-  NULL,
-  NULL,
-  pair_ar_sav[[3]], 
-  pair_ar_thickness[[3]],
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  nrow = 1
-)
-
-ar_row <- plot_grid(
-  pair_ar_height[[3]],
-  NULL,
-  pair_ar_sav[[3]], 
-  pair_ar_thickness[[3]],
-  pair_ar_tdmc[[3]],
-  NULL,
-  NULL,
-  pair_ar_fvfm[[3]],
-  nrow = 1
-)
-
-sma_grid_scaled <- plot_grid(mh_row_scaled,
-                             sav_row_scaled,
-                             thickness_row_scaled,
-                             tdmc_row_scaled,
-                             sta_row_scaled,
-                             sap_row_scaled,
-                             fvfm_row_scaled,
-                             ar_row_scaled,
-                             nrow = 8)
-
-sma_grid <- plot_grid(mh_row,
-                      sav_row,
-                      thickness_row,
-                      tdmc_row,
-                      sta_row,
-                      sap_row,
-                      fvfm_row,
-                      ar_row,
-                      nrow = 8)
-
-cowplot::save_plot(here::here(
-  "figures",
-  "tradeoffs",
-  paste0("sma-grid_", today(), ".jpg")),
-  base_height = 10,
-  sma_grid_scaled)
-
-ggsave(filename = here::here(
-  "figures",
-  "tradeoffs",
-  paste0("sma-grid_", today(), ".jpg")),
-  plot = sma_grid,
-  width = 18,
-  height = 18,
-  units = "cm",
-  dpi = 300
-)
+# 
+# # fix this later with new mass data entry, though not sure why things worked with 
+# # other models...
+# pair_thickness_mh <- pairwise_sma(
+#   model_formula = "thickness_mm_mean ~ mass_to_height",
+#   trait1 = thickness_mm_mean,
+#   trait2 = mass_to_height,
+#   data = "log"
+# )
+# 
+# sma(mass_to_height ~ thickness_mm_mean,
+#     data = log_ind_traits %>% 
+#       filter(mass_to_height != "-Inf"))
+# 
+# ggplot(data = log_ind_traits %>% 
+#          filter(mass_to_height != "-Inf"),
+#        aes(x = mass_to_height,
+#            y = thickness_mm_mean)) +
+#   geom_point(alpha = 0.5,
+#              shape = 21) +
+#   stat_ma_line(method = "SMA") +
+#   # labs(title = model_formula) +
+#   theme_bw() +
+#   theme(panel.grid = element_blank()) +
+#   labs(x = "log mass:height ratio",
+#        y = "log thickness") +
+#   coord_cartesian(ylim = c(-2.5, 0.6)) +
+#   annotate(geom = "text", x = -1.5, y = -2.5, label = "R\U00B2 = 0.20, p < 0.001")
+# 
+# pair_thickness_sav <- pairwise_sma(
+#   model_formula = "thickness_mm_mean ~ sav_mean", 
+#   trait1 = thickness_mm_mean,
+#   trait2 = sav_mean,
+#   data = "log"
+# )
+# 
+# pair_tdmc_height <- pairwise_sma(
+#   model_formula = "tdmc_mean ~ maximum_height", 
+#   trait1 = tdmc_mean,
+#   trait2 = maximum_height,
+#   data = "log"
+# )
+# 
+# pair_tdmc_mh <- pairwise_sma(
+#   model_formula = "tdmc_mean ~ mass_to_height", 
+#   trait1 = tdmc_mean,
+#   trait2 = mass_to_height,
+#   data = "log"
+# )
+# 
+# pair_tdmc_thickness <- pairwise_sma(
+#   model_formula = "tdmc_mean ~ thickness_mm_mean", 
+#   trait1 = tdmc_mean,
+#   trait2 = thickness_mm_mean,
+#   data = "log"
+# )
+# 
+# pair_sta_height <- pairwise_sma(
+#   model_formula = "sta_mean ~ maximum_height", 
+#   trait1 = sta_mean,
+#   trait2 = maximum_height,
+#   data = "log"
+# )
+# 
+# 
+# 
+# 
+# pair_sta_thickness <- pairwise_sma(
+#   model_formula = "sta_mean ~ thickness_mm_mean", 
+#   trait1 = sta_mean,
+#   trait2 = thickness_mm_mean,
+#   data = "log"
+# )
+# 
+# pair_sta_tdmc <- pairwise_sma(
+#   model_formula = "sta_mean ~ tdmc_mean", 
+#   trait1 = sta_mean,
+#   trait2 = tdmc_mean,
+#   data = "log"
+# )
+# 
+# pair_sap_height <- pairwise_sma(
+#   model_formula = "sap_mean ~ maximum_height", 
+#   trait1 = sap_mean,
+#   trait2 = maximum_height,
+#   data = "log"
+# )
+# 
+# pair_sap_sav <- pairwise_sma(
+#   model_formula = "sap_mean ~ sav_mean", 
+#   trait1 = sap_mean,
+#   trait2 = sav_mean,
+#   data = "log"
+# )
+# 
+# pair_sap_thickness <- pairwise_sma(
+#   model_formula = "sap_mean ~ thickness_mm_mean", 
+#   trait1 = sap_mean,
+#   trait2 = thickness_mm_mean,
+#   data = "log"
+# )
+# 
+# pair_sap_tdmc <- pairwise_sma(
+#   model_formula = "sap_mean ~ tdmc_mean", 
+#   trait1 = sap_mean,
+#   trait2 = tdmc_mean,
+#   data = "log"
+# )
+# 
+# pair_sap_sta <- pairwise_sma(
+#   model_formula = "sap_mean ~ sta_mean", 
+#   trait1 = sap_mean,
+#   trait2 = sta_mean,
+#   data = "log"
+# )     
+# 
+# sma(mass_to_height ~ sav_mean,
+#         data = log_ind_traits)
+# 
+# ggplot(data = log_ind_traits,
+#        aes(x = mass_to_height,
+#            y = sav_mean)) +
+#   geom_point(alpha = 0.5,
+#              shape = 21) +
+#   stat_ma_line(method = "SMA") +
+#   # labs(title = model_formula) +
+#   theme_bw() +
+#   theme(panel.grid = element_blank()) +
+#   labs(x = "log mass:height ratio",
+#        y = "log surface area:volume ratio") +
+#   coord_cartesian(ylim = c(4, 9.5)) +
+#   annotate(geom = "text", x = -1.5, y = 4, label = "R\U00B2 = 0.049, p < 0.001")
+# 
+# pair_fvfm_height <- pairwise_sma(
+#   model_formula = "fvfm_mean ~ maximum_height", 
+#   trait1 = fvfm_mean,
+#   trait2 = maximum_height,
+#   data = "log"
+# )     
+# 
+# pair_fvfm_sav <- pairwise_sma(
+#   model_formula = "fvfm_mean ~ sav_mean", 
+#   trait1 = fvfm_mean,
+#   trait2 = sav_mean,
+#   data = "log"
+# )    
+# 
+# pair_fvfm_tdmc <- pairwise_sma(
+#   model_formula = "fvfm_mean ~ tdmc_mean", 
+#   trait1 = fvfm_mean,
+#   trait2 = tdmc_mean,
+#   data = "log"
+# )
+# 
+# pair_fvfm_sta <- pairwise_sma(
+#   model_formula = "fvfm_mean ~ sta_mean", 
+#   trait1 = fvfm_mean,
+#   trait2 = sta_mean,
+#   data = "log"
+# )
+# 
+# pair_fvfm_sap <- pairwise_sma(
+#   model_formula = "fvfm_mean ~ sap_mean", 
+#   trait1 = fvfm_mean,
+#   trait2 = sap_mean,
+#   data = "log"
+# )
+# 
+# pair_ar_height <- pairwise_sma(
+#   model_formula = "aspect_ratio_mean ~ maximum_height", 
+#   trait1 = aspect_ratio_mean,
+#   trait2 = maximum_height,
+#   data = "log"
+# )
+# 
+# # this also doesn't work!
+# # pair_ar_mh <- pairwise_sma(
+# #   model_formula = "aspect_ratio_mean ~ mass_to_height",
+# #   trait1 = aspect_ratio_mean,
+# #   trait2 = mass_to_height,
+# #   data = "log"
+# # )
+# 
+# pair_ar_sav <- pairwise_sma(
+#   model_formula = "aspect_ratio_mean ~ sav_mean", 
+#   trait1 = aspect_ratio_mean,
+#   trait2 = sav_mean,
+#   data = "log"
+# )
+# 
+# pair_ar_thickness <- pairwise_sma(
+#   model_formula = "aspect_ratio_mean ~ thickness_mm_mean", 
+#   trait1 = aspect_ratio_mean,
+#   trait2 = thickness_mm_mean,
+#   data = "log"
+# )
+# 
+# pair_ar_tdmc <- pairwise_sma(
+#   model_formula = "aspect_ratio_mean ~ tdmc_mean", 
+#   trait1 = aspect_ratio_mean,
+#   trait2 = tdmc_mean,
+#   data = "log"
+# )
+# 
+# pair_ar_fvfm <- pairwise_sma(
+#   model_formula = "aspect_ratio_mean ~ fvfm_mean", 
+#   trait1 = aspect_ratio_mean,
+#   trait2 = fvfm_mean,
+#   data = "log"
+# )
+# 
+# ar_plots <- (pair_ar_height[[3]] | pair_ar_fvfm[[3]] | pair_ar_sav[[3]] | pair_ar_tdmc[[3]] | pair_ar_thickness[[3]]) 
+# 
+# fvfm_plots <- 
+#   (pair_fvfm_height[[3]] | pair_fvfm_sap[[3]] | pair_fvfm_sav[[3]] | pair_fvfm_tdmc[[3]] | pair_fvfm_sta[[3]] ) 
+# 
+# ar_plots/fvfm_plots
+# 
+# mh_row_scaled <- plot_grid(
+#   NULL,
+#   NULL,
+#   NULL,
+#   NULL,
+#   NULL,
+#   NULL,
+#   NULL,
+#   NULL,
+#   nrow = 1
+# )
+# 
+# mh_row <- plot_grid(
+#   NULL,
+#   NULL,
+#   NULL,
+#   NULL,
+#   NULL,
+#   NULL,
+#   NULL,
+#   NULL,
+#   nrow = 1
+# )
+# 
+# sav_row_scaled <- plot_grid(
+#   NULL,
+#   pair_sav_mh[[3]],
+#   NULL,
+#   NULL,
+#   NULL,
+#   NULL,
+#   NULL,
+#   NULL,
+#   nrow = 1
+# )
+# 
+# sav_row <- plot_grid(
+#   pair_sav_height[[3]],
+#   pair_sav_mh[[3]],
+#   NULL,
+#   NULL,
+#   NULL,
+#   NULL,
+#   NULL,
+#   NULL,
+#   nrow = 1
+# )
+# 
+# 
+# 
+# thickness_row_scaled <- plot_grid(
+#   NULL,
+#   pair_thickness_mh[[3]],
+#   pair_thickness_sav[[3]],
+#   NULL,
+#   NULL,
+#   NULL,
+#   NULL,
+#   NULL,
+#   nrow = 1
+# )
+# 
+# thickness_row <- plot_grid(
+#   NULL,
+#   NULL,
+#   pair_thickness_sav[[3]],
+#   NULL,
+#   NULL,
+#   NULL,
+#   NULL,
+#   NULL,
+#   nrow = 1
+# )
+# 
+# tdmc_row_scaled <- plot_grid(
+#   NULL,
+#   pair_tdmc_mh[[3]],
+#   NULL,
+#   pair_tdmc_thickness[[3]],
+#   NULL,
+#   NULL,
+#   NULL,
+#   NULL,
+#   nrow = 1
+# )
+# 
+# tdmc_row <- plot_grid(
+#   pair_tdmc_height[[3]],
+#   pair_tdmc_mh[[3]],
+#   NULL,
+#   pair_tdmc_thickness[[3]],
+#   NULL,
+#   NULL,
+#   NULL,
+#   NULL,
+#   nrow = 1
+# )
+# 
+# sta_row_scaled <- plot_grid(
+#   NULL,
+#   pair_sta_mh[[3]],
+#   pair_sta_sav[[3]],
+#   pair_sta_thickness[[3]],
+#   pair_sta_tdmc[[3]],
+#   NULL,
+#   NULL,
+#   NULL,
+#   nrow = 1
+# )
+# 
+# sta_row <- plot_grid(
+#   pair_sta_height[[3]],
+#   pair_sta_mh[[3]],
+#   pair_sta_sav[[3]],
+#   pair_sta_thickness[[3]],
+#   pair_sta_tdmc[[3]],
+#   NULL,
+#   NULL,
+#   NULL,
+#   nrow = 1
+# )
+# 
+# sap_row_scaled <- plot_grid(
+#   NULL,
+#   NULL,
+#   pair_sap_sav[[3]],
+#   pair_sap_thickness[[3]],
+#   pair_sap_tdmc[[3]],
+#   pair_sap_sta[[3]],
+#   NULL,
+#   NULL,
+#   nrow = 1
+# )
+# 
+# sap_row <- plot_grid(
+#   pair_sap_height[[3]],
+#   NULL,
+#   pair_sap_sav[[3]],
+#   NULL,
+#   pair_sap_tdmc[[3]],
+#   pair_sap_sta[[3]],
+#   NULL,
+#   NULL,
+#   nrow = 1
+# )
+# 
+# fvfm_row_scaled <- plot_grid(
+#   pair_fvfm_height[[3]],
+#   NULL,
+#   pair_fvfm_sav[[3]],
+#   NULL,
+#   pair_fvfm_tdmc[[3]],
+#   pair_fvfm_sta[[3]],
+#   pair_fvfm_sap[[3]],
+#   NULL,
+#   nrow = 1
+# )
+# 
+# fvfm_row <- plot_grid(
+#   pair_fvfm_height[[3]],
+#   NULL,
+#   pair_fvfm_sav[[3]],
+#   NULL,
+#   pair_fvfm_tdmc[[3]],
+#   pair_fvfm_sta[[3]],
+#   pair_fvfm_sap[[3]],
+#   NULL,
+#   nrow = 1
+# )
+# 
+# ar_row_scaled <- plot_grid(
+#   NULL,
+#   NULL,
+#   pair_ar_sav[[3]], 
+#   pair_ar_thickness[[3]],
+#   NULL,
+#   NULL,
+#   NULL,
+#   NULL,
+#   nrow = 1
+# )
+# 
+# ar_row <- plot_grid(
+#   pair_ar_height[[3]],
+#   NULL,
+#   pair_ar_sav[[3]], 
+#   pair_ar_thickness[[3]],
+#   pair_ar_tdmc[[3]],
+#   NULL,
+#   NULL,
+#   pair_ar_fvfm[[3]],
+#   nrow = 1
+# )
+# 
+# sma_grid_scaled <- plot_grid(mh_row_scaled,
+#                              sav_row_scaled,
+#                              thickness_row_scaled,
+#                              tdmc_row_scaled,
+#                              sta_row_scaled,
+#                              sap_row_scaled,
+#                              fvfm_row_scaled,
+#                              ar_row_scaled,
+#                              nrow = 8)
+# 
+# sma_grid <- plot_grid(mh_row,
+#                       sav_row,
+#                       thickness_row,
+#                       tdmc_row,
+#                       sta_row,
+#                       sap_row,
+#                       fvfm_row,
+#                       ar_row,
+#                       nrow = 8)
+# 
+# cowplot::save_plot(here::here(
+#   "figures",
+#   "tradeoffs",
+#   paste0("sma-grid_", today(), ".jpg")),
+#   base_height = 10,
+#   sma_grid_scaled)
+# 
+# ggsave(filename = here::here(
+#   "figures",
+#   "tradeoffs",
+#   paste0("sma-grid_", today(), ".jpg")),
+#   plot = sma_grid,
+#   width = 18,
+#   height = 18,
+#   units = "cm",
+#   dpi = 300
+# )
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # -------------------- 5. Principal Components Analysis -------------------
@@ -1053,6 +1026,16 @@ varcoord_full <- PCAvect_full %>%
 # The red dashed line on the graph above indicates the expected average contribution. If the contribution of the variables were uniform, the expected value would be 1/length(variables) = 1/10 = 10%
 expected_average_full <- (1/length(unique(varcoord_full$trait)))*100
 
+contrib_aesthetics_full <- list(
+  geom_col(color = "black"),
+  geom_vline(xintercept = expected_average_full,
+             color = "#96a39e",
+             linetype = 2),
+  scale_fill_manual(values = trait_color_palette),
+  scale_x_continuous(expand = expansion(c(0, 0.05)),
+                     position = "top")
+)
+
 pc1_contrib_full <- varcoord_full %>% 
   filter(axis == "PC1") %>% 
   ggplot(aes(y = reorder(trait, contrib),
@@ -1101,7 +1084,7 @@ ggsave(here::here(
 # ⟞ ⟞ i. PCA --------------------------------------------------------------
 
 reduced_mat <- pca_mat_log %>% 
-  select(`Dry:wet weight`, `Dry weight:height`, `Volume`, `Height`)
+  select(`Dry:wet weight`, `Dry weight:height`, `Surface area:volume`, `Height`)
 
 # trait by species PCA
 pca_reduced <- rda(reduced_mat, scale = TRUE)
@@ -1114,7 +1097,7 @@ summary(pca_reduced)
 
 # proportion variance explained for downstream figure making
 prop_PC1_reduced <- "52.0%"
-prop_PC2_reduced <- "41.8%"
+prop_PC2_reduced <- "40.6%"
 
 
 # ⟞ ⟞ ii. loadings --------------------------------------------------------
@@ -1219,11 +1202,11 @@ plot_PCA_12_reduced <- ggplot() +
        color = "Scientific name") 
 plot_PCA_12_reduced
 
-# ggsave(here::here("figures",
-#                   "ordination",
-#                   paste("PCA-log_scale_reduced-model_", today(), ".jpg", sep = "")),
-#        plot_PCA_12_reduced,
-#        width = 12, height = 12, units = "cm", dpi = 300)
+ggsave(here::here("figures",
+                  "ordination",
+                  paste("PCA-log_scale_reduced-model_", today(), ".jpg", sep = "")),
+       plot_PCA_12_reduced,
+       width = 12, height = 12, units = "cm", dpi = 300)
 
 # ⟞ ⟞ iv. trait contributions to axes -------------------------------------
 
@@ -1247,6 +1230,16 @@ varcoord_reduced <- PCAvect_reduced %>%
 
 # The red dashed line on the graph above indicates the expected average contribution. If the contribution of the variables were uniform, the expected value would be 1/length(variables) = 1/10 = 10%
 expected_average_reduced <- (1/length(unique(varcoord_reduced$trait)))*100
+
+contrib_aesthetics_reduced <- list(
+  geom_col(color = "black"),
+  geom_vline(xintercept = expected_average_reduced,
+             color = "#96a39e",
+             linetype = 2),
+  scale_fill_manual(values = trait_color_palette),
+  scale_x_continuous(expand = expansion(c(0, 0.05)),
+                     position = "top")
+)
 
 pc1_contrib_reduced <- varcoord_reduced %>% 
   filter(axis == "PC1") %>% 
@@ -1287,7 +1280,6 @@ ggsave(here::here(
 
 
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # ---------------------- 6. species collection table ----------------------
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
