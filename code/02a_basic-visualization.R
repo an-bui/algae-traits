@@ -36,7 +36,7 @@ distribution_theme <- list(
 # ⟞ a. generating plots ---------------------------------------------------
 
 boxplots <- ind_traits %>% 
-  filter(sp_code %in% algae_proposal) %>% 
+  filter(sp_code %in% c("BO", "CC", "BF", "DP", "LAFA", "PTCA", "R", "CYOS")) %>% 
   select(specimen_ID, scientific_name, sp_code, pigment_type,
          fvfm_mean,
          maximum_height, 
@@ -100,14 +100,13 @@ boxplots <- ind_traits %>%
   mutate(boxplot = map2(
     data, units,
     ~ .x %>% 
-      mutate(sp_code_label = case_when(
+      mutate( 
+      sp_code_label = case_when(
         sp_code == "Nandersoniana" ~ "NA",
         TRUE ~ sp_code
       ),
       sp_code_label = fct_relevel(sp_code_label,
-                                     "BF", "CC", "GS", "CO", "BO", "POLA", 
-                                     "R", "GR", "NA", "PTCA", "CYOS", "DL", 
-                                     "LAFA", "DU", "DP")) %>% 
+                                  "R", "BO", "CC", "BF", "DP", "LAFA", "PTCA", "CYOS")) %>% 
       ggplot(aes(x = sp_code_label,
                  y = value)) +
       geom_boxplot(aes(fill = sp_code),
@@ -121,7 +120,7 @@ boxplots <- ind_traits %>%
       #            scales = "free_x") +
       scale_x_discrete(labels = scales::label_wrap(10)) +
       labs(title = .y) +
-      basic_theme +
+      boxplot_theme +
       theme(axis.title = element_blank(),
             axis.title.x = element_blank())
   ))
@@ -244,7 +243,7 @@ for(i in 1:length(boxplot_traits)) {
 # ⟞ a. generating plots ---------------------------------------------------
 
 distributions <- ind_traits %>% 
-  filter(sp_code %in% algae_proposal) %>% 
+  filter(sp_code %in% c("BO", "CC", "BF", "DP", "LAFA", "PTCA", "R", "CYOS")) %>% 
   select(specimen_ID, scientific_name, sp_code, pigment_type,
          fvfm_mean,
          maximum_height, 

@@ -11,10 +11,10 @@ source(here::here("code", "01a_trait-cleaning.R"))
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 pca_mat <- ind_traits %>% 
-  filter(sp_code %in% algae_proposal) %>% 
+  # filter(sp_code %in% algae_proposal) %>% 
   # weird Nienburgia?
   filter(!(specimen_ID %in% c("20210721-BULL-023", "20210719-IVEE-009"))) %>% 
-  filter(sp_code != "EGME") %>% 
+  filter(sp_code %in% c("BO", "CC", "CO", "BF", "DP", "GR", "LAFA", "PTCA", "R", "CYOS")) %>% 
   mutate(growth_form_num = case_when(
     growth_form == "leathery_macrophyte" ~ 1,
     growth_form == "corticated_macrophytes" ~ 2,
@@ -891,8 +891,8 @@ screeplot(pca_full, bstick = TRUE)
 summary(pca_full)
 
 # proportion variance explained for downstream figure making
-prop_PC1_full <- "65.0%"
-prop_PC2_full <- "19.6%"
+prop_PC1_full <- "67.5%"
+prop_PC2_full <- "19.8%"
 
 # ⟞ ⟞ ii. loadings --------------------------------------------------------
 
@@ -963,13 +963,15 @@ plot_PCA_12_full <- ggplot() +
   PCA_aesthetics +
   geom_point(data = PCAscores_full, 
              aes(x = PC1, 
-                 y = PC2, 
+                 y = PC2#, 
                  # color = scientific_name, 
+                 # shape = scientific_name,
                  # size = fvfm_mean
-                 ),
-             # alpha = 0.7,
+                 ) ,
+             alpha = 0.7,
              shape = 21,
-             color = "darkgrey") +
+             color = "darkgrey"
+             ) +
   geom_segment(data = PCAvect_full, 
                aes(x = 0, 
                    y = 0, 
@@ -993,6 +995,7 @@ plot_PCA_12_full <- ggplot() +
   labs(x = paste0("PC1 (", prop_PC1_full, ")"),
        y = paste0("PC2 (", prop_PC2_full, ")"),
        title = "(a) PC1 and PC2",
+       subtitle = "BO, CC, CO, BF, DP, GR, LAFA, PTCA, R, CYOS", 
        color = "Scientific name") 
 plot_PCA_12_full
 
@@ -1084,7 +1087,7 @@ ggsave(here::here(
 # ⟞ ⟞ i. PCA --------------------------------------------------------------
 
 reduced_mat <- pca_mat_log %>% 
-  select(`Dry:wet weight`, `Dry weight:height`, `Surface area:volume`, `Height`)
+  select(`Dry:wet weight`, `Thickness`, `Height`)
 
 # trait by species PCA
 pca_reduced <- rda(reduced_mat, scale = TRUE)
@@ -1096,8 +1099,8 @@ screeplot(pca_reduced, bstick = TRUE)
 summary(pca_reduced)
 
 # proportion variance explained for downstream figure making
-prop_PC1_reduced <- "52.0%"
-prop_PC2_reduced <- "40.6%"
+prop_PC1_reduced <- "50.8%"
+prop_PC2_reduced <- "41.5%"
 
 
 # ⟞ ⟞ ii. loadings --------------------------------------------------------
@@ -1134,16 +1137,16 @@ pc2_plot_reduced <- ggplot(data = loadings_df_reduced,
 
 loadings_plot_reduced <- pc1_plot_reduced / pc2_plot_reduced
 
-# ggsave(here::here(
-#   "figures",
-#   "ordination",
-#   paste0("loadings_scale_reduced-model_", today(), ".jpg")),
-#   loadings_plot_reduced,
-#   width = 12,
-#   height = 14,
-#   units = "cm",
-#   dpi = 300
-# )
+ggsave(here::here(
+  "figures",
+  "ordination",
+  paste0("loadings_scale_reduced-model_", today(), ".jpg")),
+  loadings_plot_reduced,
+  width = 12,
+  height = 14,
+  units = "cm",
+  dpi = 300
+)
 
 # ⟞ ⟞ iii. PCA plots ------------------------------------------------------
 
@@ -1199,6 +1202,7 @@ plot_PCA_12_reduced <- ggplot() +
   labs(x = paste0("PC1 (", prop_PC1_reduced, ")"),
        y = paste0("PC2 (", prop_PC2_reduced, ")"),
        title = "(a) PC1 and PC2",
+       subtitle = "BO, CC, BF, DP, LAFA, PTCA, R, CYOS", 
        color = "Scientific name") 
 plot_PCA_12_reduced
 
@@ -1279,7 +1283,7 @@ ggsave(here::here(
 )
 
 
-
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # ---------------------- 6. species collection table ----------------------
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -1349,9 +1353,9 @@ total_samples_with_all_data <- ind_traits %>%
 
 total_samples_with_all_data 
 
-# total_samples_with_all_data %>%
-#   save_as_docx(path = here::here(
-#     "tables",
-#     "sample-tables",
-#     paste0("total-samples_all-data_", today(), ".docx")
-#     ))
+total_samples_with_all_data %>%
+  save_as_docx(path = here::here(
+    "tables",
+    "sample-tables",
+    paste0("total-samples_all-data_", today(), ".docx")
+    ))
