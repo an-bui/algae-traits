@@ -306,7 +306,8 @@ ind_traits <- ct_prep %>%
   left_join(., volume_ind, by = "specimen_ID") %>% 
   left_join(., chlA_ind, by = "specimen_ID") %>% 
   left_join(., isotopes_ind, by = "specimen_ID") %>% 
-  mutate(mass_to_height = total_dry/maximum_height) %>% 
+  mutate(mass_to_height = total_dry/maximum_height,
+         height_ww = maximum_height/total_wet) %>% 
   left_join(., (metadata_ind %>% select(specimen_ID, date_collected, site)), by = "specimen_ID") %>% 
   filter(sp_code != "EGME") %>% 
   filter(!(sp_code == "PTCA" & lifestage == "recruit")) %>% 

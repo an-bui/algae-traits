@@ -77,7 +77,7 @@ egme_weight <- read_csv(here::here("data", "google-sheet-traits", "egme_weight_s
 
 # ⊣ g. surface area and perimeter ---------------------------
 
-sa_peri <- read_csv(here::here("data", "google-sheet-traits", "sa_peri_sheet_2024-11-14.csv"))
+sa_peri <- read_csv(here::here("data", "google-sheet-traits", "sa_peri_sheet_2024-11-16.csv"))
 
 # ⊣ h. branching order (still need to clean up) -------------
 

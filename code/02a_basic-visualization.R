@@ -36,10 +36,10 @@ distribution_theme <- list(
 # ⟞ a. generating plots ---------------------------------------------------
 
 boxplots <- ind_traits %>% 
-  filter(sp_code %in% c("BO", "CC", "BF", "DP", "LAFA", "PTCA", "R", "CYOS")) %>% 
+  filter(sp_code %in% c("BO", "CC", "CO", "BF", "DP", "GR", "LAFA", "PTCA", "R", "CYOS")) %>% 
   select(specimen_ID, scientific_name, sp_code, pigment_type,
          fvfm_mean,
-         maximum_height, 
+         maximum_height, height_ww,
          mass_to_height, total_dry, 
          total_dmc, total_wet,
          total_volume,
@@ -59,6 +59,7 @@ boxplots <- ind_traits %>%
       .x, 
       "fvfm_mean" ~ "fvfm",
       "maximum_height" ~ "max_height", 
+      "height_ww" ~ "height_ww",
       "mass_to_height" ~ "mass_to_height", 
       "total_dry" ~ "total_dry",
       "total_dmc" ~ "total_dmc",
@@ -81,6 +82,7 @@ boxplots <- ind_traits %>%
       .x,
       "fvfm" ~ "Fv/Fm",
       "max_height" ~ "Maximum height (cm)",
+      "height_ww" ~ "Height:Wet weight (cm/wet mg)",
       "mass_to_height" ~ "Dry weight:height (dry mg/cm)",
       "total_dry" ~ "Individual dry weight (mg)",
       "total_dmc" ~ "Individual dry:wet weight",
@@ -106,7 +108,7 @@ boxplots <- ind_traits %>%
         TRUE ~ sp_code
       ),
       sp_code_label = fct_relevel(sp_code_label,
-                                  "R", "BO", "CC", "BF", "DP", "LAFA", "PTCA", "CYOS")) %>% 
+                                  "R", "BO", "CO", "CC", "BF", "GR", "DP", "LAFA", "PTCA", "CYOS")) %>% 
       ggplot(aes(x = sp_code_label,
                  y = value)) +
       geom_boxplot(aes(fill = sp_code),
@@ -243,10 +245,10 @@ for(i in 1:length(boxplot_traits)) {
 # ⟞ a. generating plots ---------------------------------------------------
 
 distributions <- ind_traits %>% 
-  filter(sp_code %in% c("BO", "CC", "BF", "DP", "LAFA", "PTCA", "R", "CYOS")) %>% 
+  filter(sp_code %in% c("BO", "CC", "CO", "BF", "DP", "GR", "LAFA", "PTCA", "R", "CYOS")) %>% 
   select(specimen_ID, scientific_name, sp_code, pigment_type,
          fvfm_mean,
-         maximum_height, 
+         maximum_height, height_ww,
          mass_to_height, total_dry, 
          total_dmc, total_wet,
          total_volume,
@@ -267,6 +269,7 @@ distributions <- ind_traits %>%
       .x,
       "fvfm_mean" ~ "fvfm",
       "maximum_height" ~ "max_height", 
+      "height_ww" ~ "height_ww",
       "mass_to_height" ~ "mass_to_height", 
       "total_dry" ~ "total_dry",
       "total_dmc" ~ "total_dmc",
@@ -290,6 +293,7 @@ distributions <- ind_traits %>%
       .x,
       "fvfm" ~ "Fv/Fm",
       "max_height" ~ "Maximum height (cm)",
+      "height_ww" ~ "Height:wet weight (cm/wet mg)",
       "mass_to_height" ~ "Dry weight:height (dry mg/cm)",
       "total_dry" ~ "Individual dry weight (mg)",
       "total_dmc" ~ "Individual dry:wet weight",
@@ -335,6 +339,7 @@ distributions <- ind_traits %>%
       # volume_col <- "#BD973D"
       "fvfm" ~ fvfm_col,
       "max_height" ~ max_height_col,
+      "height_ww" ~ mass_to_height_col,
       "mass_to_height" ~ mass_to_height_col,
       "total_dry" ~ total_dmc_col,
       "total_dmc" ~ total_dmc_col,
@@ -434,7 +439,7 @@ pluck(distributions, 11, 2)
 pluck(distributions, 9, 2)
 pluck(distributions, 12, 2)
 
-# dry weight:height
+# height:wet weight
 pluck(distributions, 7, 3) # right skewed
 pluck(distributions, 10, 3)
 pluck(distributions, 8, 3) # log transform looks normal
@@ -442,7 +447,8 @@ pluck(distributions, 11, 3)
 pluck(distributions, 9, 3)
 pluck(distributions, 12, 3)
 
-# total dry weight
+
+# dry weight:height
 pluck(distributions, 7, 4) # right skewed
 pluck(distributions, 10, 4)
 pluck(distributions, 8, 4) # log transform looks normal
@@ -450,7 +456,8 @@ pluck(distributions, 11, 4)
 pluck(distributions, 9, 4)
 pluck(distributions, 12, 4)
 
-# dry:wet weight
+
+# total dry weight
 pluck(distributions, 7, 5) # right skewed
 pluck(distributions, 10, 5)
 pluck(distributions, 8, 5) # log transform looks better
@@ -458,7 +465,8 @@ pluck(distributions, 11, 5)
 pluck(distributions, 9, 5)
 pluck(distributions, 12, 5)
 
-# total wet weight
+
+# dry:wet weight
 pluck(distributions, 7, 6) # right skewed
 pluck(distributions, 10, 6)
 pluck(distributions, 8, 6) # log transform is normal
@@ -466,7 +474,8 @@ pluck(distributions, 11, 6)
 pluck(distributions, 9, 6)
 pluck(distributions, 12, 6)
 
-# individual volume
+
+# total wet weight
 pluck(distributions, 7, 7) # right skewed
 pluck(distributions, 10, 7)
 pluck(distributions, 8, 7) 
@@ -474,7 +483,8 @@ pluck(distributions, 11, 7) # log transform is normal
 pluck(distributions, 9, 7)
 pluck(distributions, 12, 7)
 
-# surface area:volume
+
+# individual volume
 pluck(distributions, 7, 8) 
 pluck(distributions, 10, 8)
 pluck(distributions, 8, 8) # log transform is normal
@@ -483,7 +493,8 @@ pluck(distributions, 9, 8)
 pluck(distributions, 12, 8)
 # no transformations look good
 
-# surface area
+
+# surface area:volume
 pluck(distributions, 7, 9) 
 pluck(distributions, 10, 9)
 pluck(distributions, 8, 9) 
@@ -491,7 +502,8 @@ pluck(distributions, 11, 9) # normal
 pluck(distributions, 9, 9)
 pluck(distributions, 12, 9)
 
-# thickness
+
+# surface area
 pluck(distributions, 7, 10) # right skewed
 pluck(distributions, 10, 10)
 pluck(distributions, 8, 10) 
@@ -499,7 +511,8 @@ pluck(distributions, 11, 10) # log transformation looks better
 pluck(distributions, 9, 10)
 pluck(distributions, 12, 10)
 
-# frond DMC
+
+# thickness
 pluck(distributions, 7, 11) # right skewed
 pluck(distributions, 10, 11)
 pluck(distributions, 8, 11) # log transform looks normal
@@ -508,7 +521,8 @@ pluck(distributions, 9, 11)
 pluck(distributions, 12, 11)
 # no transformations look good
 
-# surface area:perimeter
+
+# frond DMC
 pluck(distributions, 7, 12) # right skewed
 pluck(distributions, 10, 12)
 pluck(distributions, 8, 12) # log transform looks normal
@@ -516,7 +530,8 @@ pluck(distributions, 11, 12)
 pluck(distributions, 9, 12)
 pluck(distributions, 12, 12)
 
-# perimeter
+
+# surface area:perimeter
 pluck(distributions, 7, 13) # right skewed
 pluck(distributions, 10, 13)
 pluck(distributions, 8, 13) # log transform looks normalish
@@ -524,7 +539,8 @@ pluck(distributions, 11, 13)
 pluck(distributions, 9, 13)
 pluck(distributions, 12, 13)
 
-# aspect ratio
+
+# perimeter
 pluck(distributions, 7, 14)
 pluck(distributions, 10, 14)
 pluck(distributions, 8, 14) # log transform looks normal
@@ -532,7 +548,8 @@ pluck(distributions, 11, 14)
 pluck(distributions, 9, 14)
 pluck(distributions, 12, 14)
 
-# length
+
+# aspect ratio
 pluck(distributions, 7, 15) # right skewed
 pluck(distributions, 10, 15)
 pluck(distributions, 8, 15) # log transform looks normal
@@ -540,13 +557,22 @@ pluck(distributions, 11, 15)
 pluck(distributions, 9, 15)
 pluck(distributions, 12, 15)
 
-# width
+
+# length
 pluck(distributions, 7, 16) # right skewed
 pluck(distributions, 10, 16)
 pluck(distributions, 8, 16) # log transform looks normal
 pluck(distributions, 11, 16)
 pluck(distributions, 9, 16)
 pluck(distributions, 12, 16)
+
+# width
+pluck(distributions, 7, 17) # right skewed
+pluck(distributions, 10, 17)
+pluck(distributions, 8, 17) # log transform looks normal
+pluck(distributions, 11, 17)
+pluck(distributions, 9, 17)
+pluck(distributions, 12, 17)
 
 # transform all traits
 

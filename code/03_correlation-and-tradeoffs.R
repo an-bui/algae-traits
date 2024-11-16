@@ -889,10 +889,11 @@ screeplot(pca_full, bstick = TRUE)
 
 # look at the summary
 summary(pca_full)
+prcomp(pca_mat_log, scale. = TRUE) %>% summary()
 
 # proportion variance explained for downstream figure making
-prop_PC1_full <- "67.5%"
-prop_PC2_full <- "19.8%"
+prop_PC1_full <- "68.2%"
+prop_PC2_full <- "19.4%"
 
 # ⟞ ⟞ ii. loadings --------------------------------------------------------
 
