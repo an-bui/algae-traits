@@ -35,81 +35,34 @@ distribution_theme <- list(
 
 # ⟞ a. generating plots ---------------------------------------------------
 
-boxplots <- ind_traits %>% 
-  filter(sp_code %in% c("BO", "CC", "CO", "BF", "DP", "GR", "LAFA", "PTCA", "R", "CYOS")) %>% 
-  select(specimen_ID, scientific_name, sp_code, pigment_type,
-         fvfm_mean,
-         maximum_height, height_ww,
-         mass_to_height, total_dry, 
-         total_dmc, total_wet,
-         total_volume,
-         sav_scaled, frond_area_scaled,
-         thickness_mm_mean, 
-         sta_scaled,
-         sap_mean, frond_peri_scaled,
-         aspect_ratio_mean, frond_length_scaled, frond_width_scaled) %>% 
-  pivot_longer(cols = fvfm_mean:frond_width_scaled,
+boxplots <- ind_traits_filtered %>% 
+  pivot_longer(cols = maximum_height:sap_mean,
                names_to = "trait",
                values_to = "value") %>% 
   nest(.by = trait,
        data = everything()) %>% 
-  mutate(trait = map(
-    trait,
-    ~ case_match(
-      .x, 
-      "fvfm_mean" ~ "fvfm",
-      "maximum_height" ~ "max_height", 
-      "height_ww" ~ "height_ww",
-      "mass_to_height" ~ "mass_to_height", 
-      "total_dry" ~ "total_dry",
-      "total_dmc" ~ "total_dmc",
-      "total_wet" ~ "total_wet",
-      "total_volume" ~ "total_volume",
-      "sav_scaled" ~ "sav", 
-      "frond_area_scaled" ~ "area", 
-      "thickness_mm_mean" ~ "thickness", 
-      "sta_scaled" ~ "sta", 
-      "sap_mean" ~ "sap", 
-      "frond_peri_scaled" ~ "peri",
-      "aspect_ratio_mean" ~ "aspect_ratio", 
-      "frond_length_scaled" ~ "length", 
-      "frond_width_scaled" ~ "width"
-    )
-  )) %>% 
   mutate(units = map(
     trait,
     ~ case_match(
       .x,
-      "fvfm" ~ "Fv/Fm",
-      "max_height" ~ "Maximum height (cm)",
+      "maximum_height" ~ "Maximum height (cm)", 
+      "thickness_mm_mean" ~ "Thickness (mm)", 
+      "frond_area_scaled" ~ "Surface area (mm\U00B2)",
       "height_ww" ~ "Height:Wet weight (cm/wet mg)",
-      "mass_to_height" ~ "Dry weight:height (dry mg/cm)",
-      "total_dry" ~ "Individual dry weight (mg)",
-      "total_dmc" ~ "Individual dry:wet weight",
-      "total_wet" ~ "Individual wet weight (mg)",
-      "total_volume" ~ "Volume (mL)",
-      "sav" ~ "Surface area:volume ratio (mm\U00B2/mL)",
-      "area" ~ "Surface area (mm\U00B2)", 
-      "thickness" ~ "Thickness (mm)",
-      "sta" ~ "Surface area:dry weight ratio (mm\U00B2/dry mg)",
-      "sap" ~ "Surface area:perimeter ratio (mm\U00B2/mm)",
-      "peri" ~ "Perimeter (mm)",
-      "aspect_ratio" ~ "Aspect ratio",
-      "length" ~ "Length (cm)", 
-      "width" ~ "Width (cm)"
+      "total_dmc" ~ "Dry:wet weight", 
+      "height_vol" ~ "Height:volume (cm/mL)",
+      "sav_scaled" ~ "Surface area:volume (mm\U00B2/mL)", 
+      "sta_scaled" ~ "Surface area:dry weight (mm\U00B2/dry mg)",
+      "sap_mean" ~ "Surface area:perimeter (mm\U00B2/mm)"
     )
   )) %>% 
   mutate(boxplot = map2(
     data, units,
     ~ .x %>% 
       mutate( 
-      sp_code_label = case_when(
-        sp_code == "Nandersoniana" ~ "NA",
-        TRUE ~ sp_code
-      ),
-      sp_code_label = fct_relevel(sp_code_label,
-                                  "R", "BO", "CO", "CC", "BF", "GR", "DP", "LAFA", "PTCA", "CYOS")) %>% 
-      ggplot(aes(x = sp_code_label,
+      sp_code = fct_relevel(sp_code,
+                                  "R", "BO", "CO", "CC", "BF", "DP", "LAFA", "PTCA", "CYOS")) %>% 
+      ggplot(aes(x = sp_code,
                  y = value)) +
       geom_boxplot(aes(fill = sp_code),
                    outliers = FALSE) +
@@ -127,68 +80,40 @@ boxplots <- ind_traits %>%
             axis.title.x = element_blank())
   ))
 
-# FvFm
+# maximum height
 pluck(boxplots, 4, 1)
 
-# maximum height
+# thickness
 pluck(boxplots, 4, 2)
 
-# mass:height
+# surface area
 pluck(boxplots, 4, 3)
 
-# individual dry weight
+# height:wet weight
 pluck(boxplots, 4, 4)
 
-# individual dry matter content
+# dry:wet weight
 pluck(boxplots, 4, 5)
 
-# individual wet weight
+# height:volume
 pluck(boxplots, 4, 6)
 
-# individual volume
+# SA:V
 pluck(boxplots, 4, 7)
 
-# SA:V
+# surface area:dry weight
 pluck(boxplots, 4, 8)
 
-# surface area
+# SA:P
 pluck(boxplots, 4, 9)
-
-# Thickness
-pluck(boxplots, 4, 10)
-
-# surface area:dry mass
-pluck(boxplots, 4, 11)
-
-# sa:p
-pluck(boxplots, 4, 12)
-
-# perimeter
-pluck(boxplots, 4, 13)
-
-# aspect ratio
-pluck(boxplots, 4, 14)
-
-# frond length
-pluck(boxplots, 4, 15)
-
-# frond width
-pluck(boxplots, 4, 16)
 
 
 # ⟞ b. multipanel plot ----------------------------------------------------
 
 boxplot_multipanel <- 
-  # sa:dw, sa:V, SA
-  (pluck(boxplots, 4, 11) + pluck(boxplots, 4, 8) + pluck(boxplots, 4, 9)) /
-  # v, sa:p, p
-  (pluck(boxplots, 4, 7) + pluck(boxplots, 4, 12) + pluck(boxplots, 4, 13)) /
-  # aspect, l, w
-  # (pluck(boxplots, 4, 14) + pluck(boxplots, 4, 15) + pluck(boxplots, 4, 16)) /
-  # dw:ww, dw, ww
-  (pluck(boxplots, 4, 5) + pluck(boxplots, 4, 4) + pluck(boxplots, 4, 6)) /
-  # thickness, dw:h, max height
-  (pluck(boxplots, 4, 10) + pluck(boxplots, 4, 3) + pluck(boxplots, 4, 2))
+  (pluck(boxplots, 4, 1) + pluck(boxplots, 4, 2) + pluck(boxplots, 4, 3)) /
+  (pluck(boxplots, 4, 4) + pluck(boxplots, 4, 5) + pluck(boxplots, 4, 6)) /
+  (pluck(boxplots, 4, 7) + pluck(boxplots, 4, 8) + pluck(boxplots, 4, 9)) 
 
 # ⟞ c. saving outputs -----------------------------------------------------
 
@@ -244,70 +169,25 @@ for(i in 1:length(boxplot_traits)) {
 
 # ⟞ a. generating plots ---------------------------------------------------
 
-distributions <- ind_traits %>% 
-  filter(sp_code %in% c("BO", "CC", "CO", "BF", "DP", "GR", "LAFA", "PTCA", "R", "CYOS")) %>% 
-  select(specimen_ID, scientific_name, sp_code, pigment_type,
-         fvfm_mean,
-         maximum_height, height_ww,
-         mass_to_height, total_dry, 
-         total_dmc, total_wet,
-         total_volume,
-         sav_scaled, frond_area_scaled,
-         thickness_mm_mean, 
-         sta_scaled,
-         sap_mean, frond_peri_scaled,
-         aspect_ratio_mean, frond_length_scaled, frond_width_scaled) %>% 
-  pivot_longer(fvfm_mean:frond_width_scaled,
+distributions <- ind_traits_filtered %>% 
+  pivot_longer(cols = maximum_height:sap_mean,
                names_to = "trait",
                values_to = "value") %>% 
-  nest(.by = "trait",
+  nest(.by = trait,
        data = everything()) %>% 
-  # shortening trait names
-  mutate(trait = map(
+  mutate(units = map(
     trait,
     ~ case_match(
       .x,
-      "fvfm_mean" ~ "fvfm",
-      "maximum_height" ~ "max_height", 
-      "height_ww" ~ "height_ww",
-      "mass_to_height" ~ "mass_to_height", 
-      "total_dry" ~ "total_dry",
-      "total_dmc" ~ "total_dmc",
-      "total_wet" ~ "total_wet",
-      "total_volume" ~ "total_volume",
-      "sav_scaled" ~ "sav", 
-      "frond_area_scaled" ~ "area", 
-      "thickness_mm_mean" ~ "thickness", 
-      "sta_scaled" ~ "sta", 
-      "sap_mean" ~ "sap", 
-      "frond_peri_scaled" ~ "peri",
-      "aspect_ratio_mean" ~ "aspect_ratio", 
-      "frond_length_scaled" ~ "length", 
-      "frond_width_scaled" ~ "width"
-    )
-  )) %>% 
-  # full names of traits
-  mutate(trait_name = map(
-    trait,
-    ~ case_match(
-      .x,
-      "fvfm" ~ "Fv/Fm",
-      "max_height" ~ "Maximum height (cm)",
-      "height_ww" ~ "Height:wet weight (cm/wet mg)",
-      "mass_to_height" ~ "Dry weight:height (dry mg/cm)",
-      "total_dry" ~ "Individual dry weight (mg)",
-      "total_dmc" ~ "Individual dry:wet weight",
-      "total_wet" ~ "Individual wet weight (mg)",
-      "total_volume" ~ "Volume (mL)",
-      "sav" ~ "Surface area:volume ratio (mm\U00B2/mL)",
-      "area" ~ "Surface area (mm\U00B2)", 
-      "thickness" ~ "Thickness (mm)",
-      "sta" ~ "Surface area:dry weight ratio (mm\U00B2/dry mg)",
-      "sap" ~ "Surface area:perimeter ratio (mm\U00B2/mm)",
-      "peri" ~ "Perimeter (mm)",
-      "aspect_ratio" ~ "Aspect ratio",
-      "length" ~ "Length (cm)", 
-      "width" ~ "Width (cm)"
+      "maximum_height" ~ "Maximum height (cm)", 
+      "thickness_mm_mean" ~ "Thickness (mm)", 
+      "frond_area_scaled" ~ "Surface area (mm\U00B2)",
+      "height_ww" ~ "Height:Wet weight (cm/wet mg)",
+      "total_dmc" ~ "Dry:wet weight", 
+      "height_vol" ~ "Height:volume (cm/mL)",
+      "sav_scaled" ~ "Surface area:volume (mm\U00B2/mL)", 
+      "sta_scaled" ~ "Surface area:dry weight (mm\U00B2/dry mg)",
+      "sap_mean" ~ "Surface area:perimeter (mm\U00B2/mm)"
     )
   )) %>% 
   mutate(length = map(
@@ -325,39 +205,19 @@ distributions <- ind_traits %>%
     trait,
     ~ case_match(
       .x,
-      # 
-      # sta_col <- "#BD973D"
-      # sav_col <- "#CC7556"
-      # sap_col <- "#CC7556"
-      # aspect_ratio_col <- "#CC7556"
-      # frond_dmc_col <- "#BE5A47"
-      # total_dmc_col <- "#BE5A47"
-      # thickness_col <- "#BE5A47"
-      # mass_to_height_col <- "#6B6D9F"
-      # max_height_col <- "#4D5B75"
-      # fvfm_col <- "#b2d8d8"
-      # volume_col <- "#BD973D"
-      "fvfm" ~ fvfm_col,
-      "max_height" ~ max_height_col,
+      "maximum_height" ~ max_height_col, 
+      "thickness_mm_mean" ~ thickness_col, 
+      "frond_area_scaled" ~ sta_col,
       "height_ww" ~ mass_to_height_col,
-      "mass_to_height" ~ mass_to_height_col,
-      "total_dry" ~ total_dmc_col,
-      "total_dmc" ~ total_dmc_col,
-      "total_wet" ~ total_dmc_col,
-      "total_volume" ~ volume_col,
-      "sav" ~ sav_col,
-      "area" ~ sav_col, 
-      "thickness" ~ thickness_col,
-      "sta" ~ sta_col,
-      "sap" ~ sap_col,
-      "peri" ~ sap_col,
-      "aspect_ratio" ~ aspect_ratio_col,
-      "length" ~ aspect_ratio_col, 
-      "width" ~ aspect_ratio_col
+      "total_dmc" ~ total_dmc_col, 
+      "height_vol" ~ mass_to_height_col,
+      "sav_scaled" ~ sav_col, 
+      "sta_scaled" ~ sta_col,
+      "sap_mean" ~ sap_col
     )
   )) %>% 
   mutate(distribution_plot = pmap(
-    list(w = data, x = bins, y = colors, z = trait_name),
+    list(w = data, x = bins, y = colors, z = units),
     function(w, x, y, z) ggplot(data = w,
                              aes(x = value)) +
       geom_histogram(bins = x,
@@ -370,7 +230,7 @@ distributions <- ind_traits %>%
       distribution_theme
   )) %>% 
   mutate(distribution_plot_log = pmap(
-    list(w = data, x = bins, y = colors, z = trait_name),
+    list(w = data, x = bins, y = colors, z = units),
     function(w, x, y, z) ggplot(data = w,
                              aes(x = log(value))) +
       geom_histogram(bins = x,
@@ -383,7 +243,7 @@ distributions <- ind_traits %>%
       distribution_theme
   )) %>% 
   mutate(distribution_plot_sqrt = pmap(
-    list(w = data, x = bins, y = colors, z = trait_name),
+    list(w = data, x = bins, y = colors, z = units),
     function(w, x, y, z) ggplot(data = w,
                              aes(x = sqrt(value))) +
       geom_histogram(bins = x,
@@ -396,7 +256,7 @@ distributions <- ind_traits %>%
       distribution_theme
   )) %>% 
   mutate(qq = pmap(
-    list(x = data, y = trait),
+    list(x = data, y = units),
     function(x, y) ggplot(data = x,
                           aes(sample = value)) +
       geom_qq_line(color = "darkgrey") +
@@ -405,7 +265,7 @@ distributions <- ind_traits %>%
       distribution_theme
   )) %>% 
   mutate(qq_log = pmap(
-    list(x = data, y = trait),
+    list(x = data, y = units),
     function(x, y) ggplot(data = x,
                           aes(sample = log(value))) +
       geom_qq_line(color = "darkgrey") +
@@ -414,7 +274,7 @@ distributions <- ind_traits %>%
       distribution_theme
   )) %>% 
   mutate(qq_sqrt = pmap(
-    list(x = data, y = trait),
+    list(x = data, y = units),
     function(x, y) ggplot(data = x,
                           aes(sample = sqrt(value))) +
       geom_qq_line(color = "darkgrey") +
@@ -423,7 +283,7 @@ distributions <- ind_traits %>%
       distribution_theme
   ))
 
-# fvfm
+# max height
 pluck(distributions, 7, 1) # right skewed
 pluck(distributions, 10, 1)
 pluck(distributions, 8, 1) # log transform looks normal (ish)
@@ -431,7 +291,7 @@ pluck(distributions, 11, 1)
 pluck(distributions, 9, 1)
 pluck(distributions, 12, 1)
 
-# max height
+# thickness
 pluck(distributions, 7, 2) # right skewed
 pluck(distributions, 10, 2)
 pluck(distributions, 8, 2) # log transform looks normal
@@ -439,7 +299,7 @@ pluck(distributions, 11, 2)
 pluck(distributions, 9, 2)
 pluck(distributions, 12, 2)
 
-# height:wet weight
+# surface area
 pluck(distributions, 7, 3) # right skewed
 pluck(distributions, 10, 3)
 pluck(distributions, 8, 3) # log transform looks normal
@@ -448,7 +308,7 @@ pluck(distributions, 9, 3)
 pluck(distributions, 12, 3)
 
 
-# dry weight:height
+# height:wet weight
 pluck(distributions, 7, 4) # right skewed
 pluck(distributions, 10, 4)
 pluck(distributions, 8, 4) # log transform looks normal
@@ -457,7 +317,7 @@ pluck(distributions, 9, 4)
 pluck(distributions, 12, 4)
 
 
-# total dry weight
+# dry:wet weight
 pluck(distributions, 7, 5) # right skewed
 pluck(distributions, 10, 5)
 pluck(distributions, 8, 5) # log transform looks better
@@ -465,8 +325,7 @@ pluck(distributions, 11, 5)
 pluck(distributions, 9, 5)
 pluck(distributions, 12, 5)
 
-
-# dry:wet weight
+# height:volume
 pluck(distributions, 7, 6) # right skewed
 pluck(distributions, 10, 6)
 pluck(distributions, 8, 6) # log transform is normal
@@ -475,7 +334,7 @@ pluck(distributions, 9, 6)
 pluck(distributions, 12, 6)
 
 
-# total wet weight
+# surface area:volume
 pluck(distributions, 7, 7) # right skewed
 pluck(distributions, 10, 7)
 pluck(distributions, 8, 7) 
@@ -484,17 +343,16 @@ pluck(distributions, 9, 7)
 pluck(distributions, 12, 7)
 
 
-# individual volume
+# surface area:dry weight
 pluck(distributions, 7, 8) 
 pluck(distributions, 10, 8)
 pluck(distributions, 8, 8) # log transform is normal
 pluck(distributions, 11, 8)
 pluck(distributions, 9, 8)
 pluck(distributions, 12, 8)
-# no transformations look good
 
 
-# surface area:volume
+# surface area:perimeter
 pluck(distributions, 7, 9) 
 pluck(distributions, 10, 9)
 pluck(distributions, 8, 9) 
@@ -502,94 +360,15 @@ pluck(distributions, 11, 9) # normal
 pluck(distributions, 9, 9)
 pluck(distributions, 12, 9)
 
-
-# surface area
-pluck(distributions, 7, 10) # right skewed
-pluck(distributions, 10, 10)
-pluck(distributions, 8, 10) 
-pluck(distributions, 11, 10) # log transformation looks better
-pluck(distributions, 9, 10)
-pluck(distributions, 12, 10)
-
-
-# thickness
-pluck(distributions, 7, 11) # right skewed
-pluck(distributions, 10, 11)
-pluck(distributions, 8, 11) # log transform looks normal
-pluck(distributions, 11, 11)
-pluck(distributions, 9, 11)
-pluck(distributions, 12, 11)
-# no transformations look good
-
-
-# frond DMC
-pluck(distributions, 7, 12) # right skewed
-pluck(distributions, 10, 12)
-pluck(distributions, 8, 12) # log transform looks normal
-pluck(distributions, 11, 12)
-pluck(distributions, 9, 12)
-pluck(distributions, 12, 12)
-
-
-# surface area:perimeter
-pluck(distributions, 7, 13) # right skewed
-pluck(distributions, 10, 13)
-pluck(distributions, 8, 13) # log transform looks normalish
-pluck(distributions, 11, 13)
-pluck(distributions, 9, 13)
-pluck(distributions, 12, 13)
-
-
-# perimeter
-pluck(distributions, 7, 14)
-pluck(distributions, 10, 14)
-pluck(distributions, 8, 14) # log transform looks normal
-pluck(distributions, 11, 14)
-pluck(distributions, 9, 14)
-pluck(distributions, 12, 14)
-
-
-# aspect ratio
-pluck(distributions, 7, 15) # right skewed
-pluck(distributions, 10, 15)
-pluck(distributions, 8, 15) # log transform looks normal
-pluck(distributions, 11, 15)
-pluck(distributions, 9, 15)
-pluck(distributions, 12, 15)
-
-
-# length
-pluck(distributions, 7, 16) # right skewed
-pluck(distributions, 10, 16)
-pluck(distributions, 8, 16) # log transform looks normal
-pluck(distributions, 11, 16)
-pluck(distributions, 9, 16)
-pluck(distributions, 12, 16)
-
-# width
-pluck(distributions, 7, 17) # right skewed
-pluck(distributions, 10, 17)
-pluck(distributions, 8, 17) # log transform looks normal
-pluck(distributions, 11, 17)
-pluck(distributions, 9, 17)
-pluck(distributions, 12, 17)
-
 # transform all traits
 
 
 # ⟞ b. multipanel plot ----------------------------------------------------
 
 distributions_multipanel <- 
-  # sa:dw, sa:V, SA
-  (pluck(distributions, 8, 11) + pluck(distributions, 8, 8) + pluck(distributions, 8, 9)) /
-  # v, sa:p, p
-  (pluck(distributions, 8, 7) + pluck(distributions, 8, 12) + pluck(distributions, 8, 13)) /
-  # aspect, l, w
-  # (pluck(distributions, 8, 14) + pluck(distributions, 8, 15) + pluck(distributions, 8, 16)) /
-  # dw:ww, dw, ww
-  (pluck(distributions, 8, 5) + pluck(distributions, 8, 4) + pluck(distributions, 8, 6)) /
-  # thickness, dw:h, max height
-  (pluck(distributions, 8, 10) + pluck(distributions, 8, 3) + pluck(distributions, 8, 2))
+  (pluck(distributions, 8, 1) + pluck(distributions, 8, 2) + pluck(distributions, 8, 3)) /
+  (pluck(distributions, 8, 4) + pluck(distributions, 8, 5) + pluck(distributions, 8, 6)) /
+  (pluck(distributions, 8, 7) + pluck(distributions, 8, 8) + pluck(distributions, 8, 9))
 
 # ⟞ c. saving outputs -----------------------------------------------------
 

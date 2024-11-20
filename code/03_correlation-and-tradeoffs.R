@@ -10,11 +10,7 @@ source(here::here("code", "01a_trait-cleaning.R"))
 # ------------------------------ 1. wrangling -----------------------------
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-pca_mat <- ind_traits %>% 
-  # filter(sp_code %in% algae_proposal) %>% 
-  # weird Nienburgia?
-  filter(!(specimen_ID %in% c("20210721-BULL-023", "20210719-IVEE-009"))) %>% 
-  filter(sp_code %in% c("BO", "CC", "CO", "BF", "DP", "GR", "LAFA", "PTCA", "R", "CYOS")) %>% 
+pca_mat <- ind_traits_filtered %>% 
   mutate(growth_form_num = case_when(
     growth_form == "leathery_macrophyte" ~ 1,
     growth_form == "corticated_macrophytes" ~ 2,
@@ -29,34 +25,29 @@ pca_mat <- ind_traits %>%
     longevity == "perennial" ~ 3,
     longevity == "annual or perennial" ~ 2
   )) %>% 
+  # H, T, SA, H:WW, DW:WW, H:V, SA:V, SA:DW, and SA:P
   select(specimen_ID, 
          maximum_height, 
-         mass_to_height, total_dry, 
-         total_dmc, total_wet,
-         total_volume,
-         sav_scaled, frond_area_scaled,
          thickness_mm_mean, 
+         frond_area_scaled,
+         height_ww,
+         total_dmc, 
+         height_vol,
+         sav_scaled, 
          sta_scaled,
-         sap_mean, frond_peri_scaled # ,
-         # aspect_ratio_mean, frond_length_scaled, frond_width_scaled
+         sap_mean
          ) %>% 
   column_to_rownames("specimen_ID") %>% 
   drop_na() %>% 
-  rename(`Surface area:dry weight` = sta_scaled,
-         `Surface area:volume` = sav_scaled,
-         `Surface area` = frond_area_scaled,
-         `Volume` = total_volume,
-         `Surface area:perimeter` = sap_mean,
-         `Perimeter` = frond_peri_scaled,
-         # `Aspect ratio` = aspect_ratio_mean,
-         # `Length` = frond_length_scaled,
-         # `Width` = frond_width_scaled,
-         `Dry:wet weight` = total_dmc,
-         `Dry weight` = total_dry,
-         `Wet weight` = total_wet,
+  rename(`Height` = maximum_height,
          `Thickness` = thickness_mm_mean,
-         `Dry weight:height` = mass_to_height,
-         `Height` = maximum_height,
+         `Surface area` = frond_area_scaled,
+         `Height:wet weight` = height_ww,
+         `Dry:wet weight` = total_dmc,
+         `Height:volume` = height_vol,
+         `Surface area:volume` = sav_scaled,
+         `Surface area:dry weight` = sta_scaled,
+         `Surface area:perimeter` = sap_mean
          )  
   # select(!(`Fv/Fm`))
 
@@ -305,7 +296,7 @@ pairwise_comparisons <- p_df %>%
   )) %>% 
   mutate(formula = paste(trait1_column, "~", trait2_column, sep = " ")) 
 
-log_ind_traits <- ind_traits %>% 
+log_ind_traits <- ind_traits_filtered %>% 
   mutate(across(c(maximum_height, mass_to_height, total_dry, 
                   total_dmc, total_wet, total_volume, 
                   sav_scaled, frond_area_scaled,
@@ -889,11 +880,21 @@ screeplot(pca_full, bstick = TRUE)
 
 # look at the summary
 summary(pca_full)
-prcomp(pca_mat_log, scale. = TRUE) %>% summary()
+prcomp(pca_mat_log, center = TRUE, scale. = TRUE) %>% summary()
 
 # proportion variance explained for downstream figure making
-prop_PC1_full <- "68.2%"
-prop_PC2_full <- "19.4%"
+prop_PC1_full <- "62.6%"
+prop_PC2_full <- "21.9%"
+
+sp_permanova <- adonis2(pca_mat_log ~ sp_code, 
+                        data = ind_traits_filtered,
+                        method = "euclidean")
+sp_permanova
+
+adonis_pairwise <- pairwise.adonis2(pca_mat_log ~ sp_code, 
+                 data = ind_traits_filtered)
+rvam_pairwise <- pairwise.perm.manova(resp = pca_mat_log,
+                     fact = ind_traits_filtered$sp_code)
 
 # ⟞ ⟞ ii. loadings --------------------------------------------------------
 
@@ -996,7 +997,7 @@ plot_PCA_12_full <- ggplot() +
   labs(x = paste0("PC1 (", prop_PC1_full, ")"),
        y = paste0("PC2 (", prop_PC2_full, ")"),
        title = "(a) PC1 and PC2",
-       subtitle = "BO, CC, CO, BF, DP, GR, LAFA, PTCA, R, CYOS", 
+       subtitle = "BO, CC, CO, BF, DP, LAFA, PTCA, R, CYOS", 
        color = "Scientific name") 
 plot_PCA_12_full
 
@@ -1088,7 +1089,7 @@ ggsave(here::here(
 # ⟞ ⟞ i. PCA --------------------------------------------------------------
 
 reduced_mat <- pca_mat_log %>% 
-  select(`Dry:wet weight`, `Thickness`, `Height`)
+  select(`Dry:wet weight`, `Height:wet weight`, `Height`, `Thickness`)
 
 # trait by species PCA
 pca_reduced <- rda(reduced_mat, scale = TRUE)
@@ -1100,9 +1101,14 @@ screeplot(pca_reduced, bstick = TRUE)
 summary(pca_reduced)
 
 # proportion variance explained for downstream figure making
-prop_PC1_reduced <- "50.8%"
-prop_PC2_reduced <- "41.5%"
+prop_PC1_reduced <- "48.1%"
+prop_PC2_reduced <- "34.8%"
 
+adonis_pairwise_reduced <- pairwise.adonis2(reduced_mat ~ sp_code, 
+                                    data = ind_traits_filtered)
+rvam_pairwise_reduced <- pairwise.perm.manova(reduced_mat,
+                                              fact = ind_traits_filtered$sp_code)
+rvam_pairwise_reduced 
 
 # ⟞ ⟞ ii. loadings --------------------------------------------------------
 
@@ -1203,7 +1209,7 @@ plot_PCA_12_reduced <- ggplot() +
   labs(x = paste0("PC1 (", prop_PC1_reduced, ")"),
        y = paste0("PC2 (", prop_PC2_reduced, ")"),
        title = "(a) PC1 and PC2",
-       subtitle = "BO, CC, BF, DP, LAFA, PTCA, R, CYOS", 
+       subtitle = "BO, CC, CO, BF, DP, LAFA, PTCA, R, CYOS", 
        color = "Scientific name") 
 plot_PCA_12_reduced
 
@@ -1288,12 +1294,12 @@ ggsave(here::here(
 # ---------------------- 6. species collection table ----------------------
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-total_sample_collection_table <- pca_mat %>% 
-  rownames_to_column("specimen_ID") %>% 
-  select(specimen_ID) %>% 
-  left_join(., metadata_ind, by = "specimen_ID") %>% 
-  left_join(., coarse_traits, by = "sp_code") %>% 
-  filter(sp_code %in% algae_proposal) %>% 
+total_sample_collection_table <- ind_traits_filtered %>% 
+  # rownames_to_column("specimen_ID") %>% 
+  # select(specimen_ID) %>% 
+  # left_join(., metadata_ind, by = "specimen_ID") %>% 
+  # left_join(., coarse_traits, by = "sp_code") %>% 
+  # filter(sp_code %in% algae_proposal) %>% 
   select(specimen_ID, scientific_name, site) %>% 
   group_by(scientific_name, site) %>% 
   count() %>% 
@@ -1309,54 +1315,54 @@ total_sample_collection_table <- pca_mat %>%
     na_str = "-"
   ) %>% 
   autofit() %>% 
-  fit_to_width(10) %>% 
+  fit_to_width(7) %>% 
   font(fontname = "Times New Roman",
        part = "all")
 
 total_sample_collection_table
 
-# total_sample_collection_table %>%
-#   save_as_docx(path = here::here(
-#     "tables",
-#     "sample-tables",
-#     paste0("total-samples_", today(), ".docx")
-#     ))
-
-total_samples_with_all_data <- ind_traits %>% 
-  filter(sp_code %in% algae_proposal) %>% 
-  select(scientific_name, site,
-         maximum_height, thickness_mm_mean, sta_mean, frond_dmc_mean,
-         sav_mean, sap_mean, aspect_ratio_mean, frond_length_mean,
-         frond_width_mean, fvfm_mean, total_wet, total_dry, total_volume,
-         total_dmc) %>% 
-  drop_na(maximum_height, thickness_mm_mean, sta_mean, frond_dmc_mean,
-          sav_mean, sap_mean, aspect_ratio_mean, frond_length_mean,
-          frond_width_mean, fvfm_mean, total_wet, total_dry, total_volume,
-          total_dmc) %>% 
-  select(scientific_name, site) %>% 
-  group_by(scientific_name, site) %>% 
-  count() %>% 
-  pivot_wider(names_from = "site",
-              values_from = "n") %>% 
-  select(scientific_name, Bullito, `Arroyo Quemado`, Naples, `Isla Vista`,
-         Mohawk, Carpinteria) %>% 
-  adorn_totals(c("row", "col")) %>% 
-  rename(`Scientific name` = scientific_name) %>% 
-  flextable() %>% 
-  colformat_num(
-    part = "all",
-    na_str = "-"
-  ) %>% 
-  autofit() %>% 
-  fit_to_width(10) %>% 
-  font(fontname = "Times New Roman",
-       part = "all")
-
-total_samples_with_all_data 
-
-total_samples_with_all_data %>%
+total_sample_collection_table %>%
   save_as_docx(path = here::here(
     "tables",
     "sample-tables",
     paste0("total-samples_all-data_", today(), ".docx")
     ))
+
+# total_samples_with_all_data <- ind_traits %>% 
+#   filter(sp_code %in% algae_proposal) %>% 
+#   select(scientific_name, site,
+#          maximum_height, thickness_mm_mean, sta_mean, frond_dmc_mean,
+#          sav_mean, sap_mean, aspect_ratio_mean, frond_length_mean,
+#          frond_width_mean, fvfm_mean, total_wet, total_dry, total_volume,
+#          total_dmc) %>% 
+#   drop_na(maximum_height, thickness_mm_mean, sta_mean, frond_dmc_mean,
+#           sav_mean, sap_mean, aspect_ratio_mean, frond_length_mean,
+#           frond_width_mean, fvfm_mean, total_wet, total_dry, total_volume,
+#           total_dmc) %>% 
+#   select(scientific_name, site) %>% 
+#   group_by(scientific_name, site) %>% 
+#   count() %>% 
+#   pivot_wider(names_from = "site",
+#               values_from = "n") %>% 
+#   select(scientific_name, Bullito, `Arroyo Quemado`, Naples, `Isla Vista`,
+#          Mohawk, Carpinteria) %>% 
+#   adorn_totals(c("row", "col")) %>% 
+#   rename(`Scientific name` = scientific_name) %>% 
+#   flextable() %>% 
+#   colformat_num(
+#     part = "all",
+#     na_str = "-"
+#   ) %>% 
+#   autofit() %>% 
+#   fit_to_width(10) %>% 
+#   font(fontname = "Times New Roman",
+#        part = "all")
+# 
+# total_samples_with_all_data 
+# 
+# total_samples_with_all_data %>%
+#   save_as_docx(path = here::here(
+#     "tables",
+#     "sample-tables",
+#     paste0("total-samples_all-data_", today(), ".docx")
+#     ))

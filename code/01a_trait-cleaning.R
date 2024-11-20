@@ -297,6 +297,7 @@ av_leaf_values <- leaf_traits %>%
 # ⊣ b. individual values ------------------------------------
 
 # all traits for each individual with mean taken for each trait
+# H, T, SA, H:WW, DW:WW, H:V, SA:V, SA:DW, and SA:P
 ind_traits <- ct_prep %>% 
   left_join(., ind_height, by = "specimen_ID") %>% 
   left_join(., thickness_ind, by = "specimen_ID") %>% 
@@ -307,7 +308,8 @@ ind_traits <- ct_prep %>%
   left_join(., chlA_ind, by = "specimen_ID") %>% 
   left_join(., isotopes_ind, by = "specimen_ID") %>% 
   mutate(mass_to_height = total_dry/maximum_height,
-         height_ww = maximum_height/total_wet) %>% 
+         height_ww = maximum_height/total_wet,
+         height_vol = maximum_height/total_volume) %>% 
   left_join(., (metadata_ind %>% select(specimen_ID, date_collected, site)), by = "specimen_ID") %>% 
   filter(sp_code != "EGME") %>% 
   filter(!(sp_code == "PTCA" & lifestage == "recruit")) %>% 
@@ -322,6 +324,47 @@ ind_traits <- ct_prep %>%
          frond_peri_scaled = frond_peri_mean*total_wet,
          frond_length_scaled = frond_length_mean*total_wet,
          frond_width_scaled = frond_width_mean*total_wet)
+
+ind_traits_filtered <- ind_traits %>% 
+  filter(!(specimen_ID %in% c("20210721-BULL-023", "20210719-IVEE-009"))) %>% 
+  filter(sp_code %in% c("BO", "CC", "CO", "BF", "DP", 
+                        "LAFA", "PTCA", "R", "CYOS")) %>% 
+ #  H, T, SA, H:WW, DW:WW, H:V, SA:V, SA:DW, and SA:P
+  drop_na(specimen_ID, scientific_name, sp_code, 
+          maximum_height, 
+          thickness_mm_mean, 
+          frond_area_scaled,
+          height_ww,
+          total_dmc, 
+          height_vol,
+          sav_scaled, 
+          sta_scaled,
+          sap_mean) %>% 
+  select(specimen_ID, scientific_name, sp_code, date_collected, year, site,
+         maximum_height, 
+         thickness_mm_mean, 
+         frond_area_scaled,
+         height_ww,
+         total_dmc, 
+         height_vol,
+         sav_scaled, 
+         sta_scaled,
+         sap_mean)
+
+saved_df <- ind_traits %>% 
+  filter(specimen_ID %in% pull(ind_traits_filtered, specimen_ID)) %>% 
+  select(specimen_ID, scientific_name, sp_code, 
+         maximum_height, 
+         total_dry, total_wet, total_dmc,
+         total_volume,
+         mass_to_height,
+         thickness_mm_mean,
+         sav_scaled, frond_area_scaled,
+         sta_scaled,
+         sap_mean,
+         frond_peri_scaled)
+
+write_csv(saved_df, here("data", "ind-trait-values_2024-11-18.csv"))
 
 # ⊣ c. trait by species matrix ------------------------------
 

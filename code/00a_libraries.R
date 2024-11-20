@@ -278,21 +278,15 @@ fvfm_col <- "#b2d8d8"
 volume_col <- "#CC7556"
 
 trait_color_palette <- c(
-  `Surface area:dry weight` = sta_col,
-  `Surface area:volume` = sav_col,
-  `Surface area` = sav_col,
-  `Volume` = sav_col,
-  `Surface area:perimeter` = sap_col,
-  `Perimeter` = sap_col,
-  # `Aspect ratio` = aspect_ratio_col,
-  # `Length` = aspect_ratio_col,
-  # `Width` = aspect_ratio_col,
-  `Dry:wet weight` = total_dmc_col,
-  `Dry weight` = total_dmc_col,
-  `Wet weight` = total_dmc_col,
+  `Height` = max_height_col,
   `Thickness` = thickness_col,
-  `Dry weight:height` = mass_to_height_col,
-  `Height` = max_height_col
+  `Surface area` = sta_col,
+  `Height:wet weight` = mass_to_height_col,
+  `Dry:wet weight` = total_dmc_col,
+  `Height:volume` = mass_to_height_col,
+  `Surface area:volume` = sav_col,
+  `Surface area:dry weight` = sta_col,
+  `Surface area:perimeter` = sap_col
 )
       
     # gradient palette
