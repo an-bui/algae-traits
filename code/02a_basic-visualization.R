@@ -60,8 +60,9 @@ boxplots <- ind_traits_filtered %>%
     data, units,
     ~ .x %>% 
       mutate( 
-      sp_code = fct_relevel(sp_code,
-                                  "R", "BO", "CO", "CC", "BF", "DP", "LAFA", "PTCA", "CYOS")) %>% 
+        sp_code = fct_relevel(sp_code,
+                              "R", "BO", "CO", "CC", "BF", 
+                              "DP", "LAFA", "PTCA", "CYOS")) %>% 
       ggplot(aes(x = sp_code,
                  y = value)) +
       geom_boxplot(aes(fill = sp_code),
@@ -71,8 +72,6 @@ boxplots <- ind_traits_filtered %>%
                                             seed = 666),
                  shape = 21) +
       scale_fill_manual(values = algae_spcode_colors) +
-      # facet_grid(cols = vars(pigment_type), 
-      #            scales = "free_x") +
       scale_x_discrete(labels = scales::label_wrap(10)) +
       labs(title = .y) +
       boxplot_theme +
@@ -90,6 +89,7 @@ pluck(boxplots, 4, 2)
 pluck(boxplots, 4, 3)
 
 # height:wet weight
+# checked out the one high BO point - that's real as far as I can tell
 pluck(boxplots, 4, 4)
 
 # dry:wet weight
@@ -117,36 +117,6 @@ boxplot_multipanel <-
 
 # ⟞ c. saving outputs -----------------------------------------------------
 
-# traits in the boxplot data frame
-boxplot_traits <- c("fvfm", "thickness", "volume", "sap", "sav", 
-                    "max_height", "sta", "mass_to_height", "aspect_ratio", 
-                    "chlA", "frond_dmc", "total_dmc")
-
-# function to save boxplot
-save_boxplot <- function(trait, boxplot) {
-  ggsave(here("figures",
-              "basic-visualizations",
-              "boxplots",
-              paste0("boxplot-", trait, "_", today(), ".jpg")),
-         boxplot,
-         width = 16, height = 10, units = "cm",
-         dpi = 300)
-}
-
-# for loop to save boxplots
-for(i in 1:length(boxplot_traits)) {
-  
-  # save the trait as an object
-  trait <- boxplot_traits[i]
-  # save the boxplot as an object
-  boxplot <- pluck(boxplots, 4, i)
-  
-  # run the function to save the boxplot
-  save_boxplot(trait = trait, 
-               boxplot = boxplot)
-  
-}
-
 # ggsave(here("figures",
 #             "basic-visualizations",
 #             "boxplots",
@@ -161,9 +131,9 @@ for(i in 1:length(boxplot_traits)) {
 # ---------------------------- 2. distributions ---------------------------
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-# This section includes code to generate histograms and qq plots for each trait
-# in three forms: 1) untransformed, 2) log transformed, and 3) square root
-# transformed. Because many of the traits followed a skewed distribution, we
+# This section includes code to generate histograms and QQ plots for each 
+# trait in three forms: 1) un-transformed, 2) log transformed, and 3) square
+# root transformed. Because many of the traits follow a skewed distribution, we
 # wanted to know which traits would be candidates for transformation to follow
 # a normal distribution.
 
@@ -362,7 +332,6 @@ pluck(distributions, 12, 9)
 
 # transform all traits
 
-
 # ⟞ b. multipanel plot ----------------------------------------------------
 
 distributions_multipanel <- 
@@ -371,122 +340,6 @@ distributions_multipanel <-
   (pluck(distributions, 8, 7) + pluck(distributions, 8, 8) + pluck(distributions, 8, 9))
 
 # ⟞ c. saving outputs -----------------------------------------------------
-
-# traits in the distributions data frame
-
-# "maximum_height" ~    "max_height",
-# "mass_to_height" ~    "mass_to_height",
-# "sav_mean" ~          "sav",
-# "thickness_mm_mean" ~ "thickness",
-# "tdmc_mean" ~         "TDMC",
-# "sta_mean" ~          "sta",
-# "sap_mean" ~          "sap",
-# "fvfm_mean" ~         "fvfm",
-# "aspect_ratio_mean" ~ "aspect_ratio",
-# "frond_length_mean" ~ "thallus_length",
-# "frond_width_mean" ~  "thallus_width",
-# "total_wet" ~         "weight_wet",
-# "total_dry" ~         "weight_dry",
-# "total_volume" ~      "volume",
-# "chlA_mean" ~         "chlA"
-distributions_traits <- c("max_height",
-                          "mass_to_height",
-                          "sav",
-                          "thickness",
-                          "frond_dmc",
-                          "sta",
-                          "sap",
-                          "fvfm",
-                          "aspect_ratio",
-                          "thallus_length",
-                          "thallus_width",
-                          "weight_wet",
-                          "weight_dry",
-                          "volume",
-                          "chlA",
-                          "total_dmc")
-
-# function to save histograms
-save_hist_qq <- function(trait, 
-                         no_transform, 
-                         log_transform, 
-                         sqrt_transform,
-                         no_transform_qq,
-                         log_transform_qq,
-                         sqrt_transform_qq) {
-  ggsave(here("figures",
-              "basic-visualizations",
-              "distributions",
-              paste0(trait, "_hist_no-transform_", today(), ".jpg")),
-         no_transform,
-         width = 12, height = 8, units = "cm",
-         dpi = 200)
-  
-  ggsave(here("figures",
-              "basic-visualizations",
-              "distributions",
-              paste0(trait, "_hist_log-transform_", today(), ".jpg")),
-         log_transform,
-         width = 12, height = 8, units = "cm",
-         dpi = 200)
-  
-  ggsave(here("figures",
-              "basic-visualizations",
-              "distributions",
-              paste0(trait, "_hist_sqrt-transform_", today(), ".jpg")),
-         sqrt_transform,
-         width = 12, height = 8, units = "cm",
-         dpi = 200)
-  
-  ggsave(here("figures",
-              "basic-visualizations",
-              "distributions",
-              paste0(trait, "_qq_no-transform_", today(), ".jpg")),
-         no_transform_qq,
-         width = 12, height = 8, units = "cm",
-         dpi = 200)
-  
-  ggsave(here("figures",
-              "basic-visualizations",
-              "distributions",
-              paste0(trait, "_qq_log-transform_", today(), ".jpg")),
-         log_transform_qq,
-         width = 12, height = 8, units = "cm",
-         dpi = 200)
-  
-  ggsave(here("figures",
-              "basic-visualizations",
-              "distributions",
-              paste0(trait, "_qq_sqrt-transform_", today(), ".jpg")),
-         sqrt_transform_qq,
-         width = 12, height = 8, units = "cm",
-         dpi = 200)
-}
-
-# for loop to save boxplots
-for(i in 1:length(distributions_traits)) {
-  
-  # save the trait as an object
-  trait <- distributions_traits[i]
-  # save the histograms as objects
-  no_transform <- pluck(distributions, 5, i)
-  log_transform <- pluck(distributions, 6, i)
-  sqrt_transform <- pluck(distributions, 7, i)
-  # save the qq plots as objects
-  no_transform_qq <- pluck(distributions, 8, i)
-  log_transform_qq <- pluck(distributions, 9, i)
-  sqrt_transform_qq <- pluck(distributions, 10, i)
-  
-  # run the function to save the histograms
-  save_hist_qq(trait = trait,
-               no_transform = no_transform,
-               log_transform = log_transform,
-               sqrt_transform = sqrt_transform,
-               no_transform_qq = no_transform_qq,
-               log_transform_qq = log_transform_qq,
-               sqrt_transform_qq = sqrt_transform_qq)
-  
-}
 
 # ggsave(here("figures",
 #             "basic-visualizations",

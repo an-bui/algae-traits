@@ -353,18 +353,18 @@ ind_traits_filtered <- ind_traits %>%
 
 saved_df <- ind_traits %>% 
   filter(specimen_ID %in% pull(ind_traits_filtered, specimen_ID)) %>% 
-  select(specimen_ID, scientific_name, sp_code, 
+  select(specimen_ID, scientific_name, sp_code,#  date_collected, year, site,
          maximum_height, 
-         total_dry, total_wet, total_dmc,
-         total_volume,
-         mass_to_height,
-         thickness_mm_mean,
-         sav_scaled, frond_area_scaled,
+         thickness_mm_mean, 
+         frond_area_scaled,
+         height_ww,
+         total_dmc, 
+         height_vol,
+         sav_scaled, 
          sta_scaled,
-         sap_mean,
-         frond_peri_scaled)
+         sap_mean)
 
-write_csv(saved_df, here("data", "ind-trait-values_2024-11-18.csv"))
+write_csv(saved_df, here("data", "ind-trait-values_2024-11-19.csv"))
 
 # ⊣ c. trait by species matrix ------------------------------
 

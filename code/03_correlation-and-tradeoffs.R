@@ -245,67 +245,52 @@ dev.off()
 # p-values from correlation in matrix form
 p_df <- p$p
 
-# thank you rguha for this solution: https://stackoverflow.com/questions/24554642/what-is-the-best-way-to-remove-items-above-a-diagonal-in-a-data-frame-in-r
+# thank you rguha for this solution: 
+# https://stackoverflow.com/questions/24554642/what-is-the-best-way-to-remove-items-above-a-diagonal-in-a-data-frame-in-r
+
 # get rid of the upper triangle
 p_df[upper.tri(p_df)] <- NA
 
-pairwise_comparisons <- p_df %>% 
+pairwise_comparisons <- p_df %>%
   # turn into data frame
   as.data.frame() %>% 
   # make the rownames into "trait1" or the first trait in the pairwise comparison
-  rownames_to_column("trait1") %>% 
+  rownames_to_column("trait1") %>%
   # when p < 0.05, keep the p, and when it's not then replace with NA
-  mutate(across(where(is.numeric), 
-                ~ case_when(. < 0.05 ~ ., TRUE ~ NA))) %>% 
+  mutate(across(where(is.numeric),
+                ~ case_when(. < 0.05 ~ ., TRUE ~ NA))) %>%
   # make the data frame longer and turn the column names into "trait2" or the second trait in the comparison
   pivot_longer(cols = 2:length(colnames(.)),
                names_to = "trait2",
-               values_to = "corr") %>%
+               values_to = "corr") %>% 
   # drop any NAs in the p-values (the upper triangle of the matrix)
   drop_na(corr) %>% 
   # only include p-values that are more than 0 (the matrix has the same-same pair as 0)
-  filter(corr > 0) %>% 
-  mutate(trait1_column = case_match(
-    trait1,
-    "Height" ~ "maximum_height",
-    "Dry weight:height" ~ "mass_to_height",
-    "Dry weight" ~ "total_dry",
-    "Dry:wet weight" ~ "total_dmc",
-    "Wet weight" ~ "total_wet",
-    "Volume" ~ "total_volume",
-    "Surface area:volume" ~ "sav_scaled",
-    "Surface area" ~ "frond_area_scaled",
-    "Thickness" ~ "thickness_mm_mean",
-    "Surface area:dry weight" ~ "sta_scaled",
-    "Surface area:perimeter" ~ "sap_mean",
-    "Perimeter" ~ "frond_peri_scaled"
-  )) %>% 
-  mutate(trait2_column = case_match(
-    trait2,
-    "Height" ~ "maximum_height",
-    "Dry weight:height" ~ "mass_to_height",
-    "Dry weight" ~ "total_dry",
-    "Dry:wet weight" ~ "total_dmc",
-    "Wet weight" ~ "total_wet",
-    "Volume" ~ "total_volume",
-    "Surface area:volume" ~ "sav_scaled",
-    "Surface area" ~ "frond_area_scaled",
-    "Thickness" ~ "thickness_mm_mean",
-    "Surface area:dry weight" ~ "sta_scaled",
-    "Surface area:perimeter" ~ "sap_mean"
-  )) %>% 
-  mutate(formula = paste(trait1_column, "~", trait2_column, sep = " ")) 
+  filter(corr > 0) 
 
 log_ind_traits <- ind_traits_filtered %>% 
-  mutate(across(c(maximum_height, mass_to_height, total_dry, 
-                  total_dmc, total_wet, total_volume, 
-                  sav_scaled, frond_area_scaled,
-                  thickness_mm_mean,
-                  sta_scaled, sap_mean, frond_peri_scaled), 
+  mutate(across(c(maximum_height, 
+                  thickness_mm_mean, 
+                  frond_area_scaled,
+                  height_ww,
+                  total_dmc, 
+                  height_vol,
+                  sav_scaled, 
+                  sta_scaled,
+                  sap_mean), 
                 log))
 
-scaled_ind_traits <- ind_traits %>% 
-  mutate(across(where(is.numeric), scale))
+scaled_ind_traits <- ind_traits_filtered %>% 
+  mutate(across(c(maximum_height, 
+                  thickness_mm_mean, 
+                  frond_area_scaled,
+                  height_ww,
+                  total_dmc, 
+                  height_vol,
+                  sav_scaled, 
+                  sta_scaled,
+                  sap_mean), 
+                scale))
 
 pairwise_sma <- function(model_formula, trait1, trait2, data) {
   df <- if(data == "normal") {
@@ -358,16 +343,16 @@ sta_sav_plot <- pair_sta_sav[[3]] +
        title = "(a)") +
   theme(plot.title.position = "plot")
 
-pair_sta_mh <- pairwise_sma(
-  model_formula = "sta_scaled ~ mass_to_height", 
+pair_sta_h_ww <- pairwise_sma(
+  model_formula = "sta_scaled ~ height_ww", 
   trait1 = sta_scaled,
-  trait2 = mass_to_height,
+  trait2 = height_ww,
   data = "log"
 )
 
-sta_mh_plot <- pair_sta_mh[[3]] +
+sta_h_ww_plot <- pair_sta_h_ww[[3]] +
   labs(x = "Surface area:dry weight",
-       y = "Mass:height",
+       y = "Height:wet weight",
        title = "(b)") +
   theme(plot.title.position = "plot")
 
@@ -384,7 +369,7 @@ dmc_height_plot <- pair_dmc_height[[3]] +
        title = "(c)") +
   theme(plot.title.position = "plot")
 
-sma_together <- sta_sav_plot + sta_mh_plot + dmc_height_plot
+sma_together <- sta_sav_plot + sta_h_ww_plot + dmc_height_plot
 
 ggsave(here::here("figures",
                   "tradeoffs",
@@ -393,469 +378,6 @@ ggsave(here::here("figures",
        height = 4,
        units = "cm",
        dpi = 300)
-
-# pair_sav_height <- pairwise_sma(
-#   model_formula = "sav_mean ~ maximum_height", 
-#   trait1 = sav_mean,
-#   trait2 = maximum_height,
-#   data = "log"
-# )
-# 
-# pair_sav_mh <- pairwise_sma(
-#   model_formula = "sav_mean ~ mass_to_height", 
-#   trait1 = sav_mean,
-#   trait2 = mass_to_height,
-#   data = "log"
-# )
-# 
-# # fix this later with new mass data entry, though not sure why things worked with 
-# # other models...
-# pair_thickness_mh <- pairwise_sma(
-#   model_formula = "thickness_mm_mean ~ mass_to_height",
-#   trait1 = thickness_mm_mean,
-#   trait2 = mass_to_height,
-#   data = "log"
-# )
-# 
-# sma(mass_to_height ~ thickness_mm_mean,
-#     data = log_ind_traits %>% 
-#       filter(mass_to_height != "-Inf"))
-# 
-# ggplot(data = log_ind_traits %>% 
-#          filter(mass_to_height != "-Inf"),
-#        aes(x = mass_to_height,
-#            y = thickness_mm_mean)) +
-#   geom_point(alpha = 0.5,
-#              shape = 21) +
-#   stat_ma_line(method = "SMA") +
-#   # labs(title = model_formula) +
-#   theme_bw() +
-#   theme(panel.grid = element_blank()) +
-#   labs(x = "log mass:height ratio",
-#        y = "log thickness") +
-#   coord_cartesian(ylim = c(-2.5, 0.6)) +
-#   annotate(geom = "text", x = -1.5, y = -2.5, label = "R\U00B2 = 0.20, p < 0.001")
-# 
-# pair_thickness_sav <- pairwise_sma(
-#   model_formula = "thickness_mm_mean ~ sav_mean", 
-#   trait1 = thickness_mm_mean,
-#   trait2 = sav_mean,
-#   data = "log"
-# )
-# 
-# pair_tdmc_height <- pairwise_sma(
-#   model_formula = "tdmc_mean ~ maximum_height", 
-#   trait1 = tdmc_mean,
-#   trait2 = maximum_height,
-#   data = "log"
-# )
-# 
-# pair_tdmc_mh <- pairwise_sma(
-#   model_formula = "tdmc_mean ~ mass_to_height", 
-#   trait1 = tdmc_mean,
-#   trait2 = mass_to_height,
-#   data = "log"
-# )
-# 
-# pair_tdmc_thickness <- pairwise_sma(
-#   model_formula = "tdmc_mean ~ thickness_mm_mean", 
-#   trait1 = tdmc_mean,
-#   trait2 = thickness_mm_mean,
-#   data = "log"
-# )
-# 
-# pair_sta_height <- pairwise_sma(
-#   model_formula = "sta_mean ~ maximum_height", 
-#   trait1 = sta_mean,
-#   trait2 = maximum_height,
-#   data = "log"
-# )
-# 
-# 
-# 
-# 
-# pair_sta_thickness <- pairwise_sma(
-#   model_formula = "sta_mean ~ thickness_mm_mean", 
-#   trait1 = sta_mean,
-#   trait2 = thickness_mm_mean,
-#   data = "log"
-# )
-# 
-# pair_sta_tdmc <- pairwise_sma(
-#   model_formula = "sta_mean ~ tdmc_mean", 
-#   trait1 = sta_mean,
-#   trait2 = tdmc_mean,
-#   data = "log"
-# )
-# 
-# pair_sap_height <- pairwise_sma(
-#   model_formula = "sap_mean ~ maximum_height", 
-#   trait1 = sap_mean,
-#   trait2 = maximum_height,
-#   data = "log"
-# )
-# 
-# pair_sap_sav <- pairwise_sma(
-#   model_formula = "sap_mean ~ sav_mean", 
-#   trait1 = sap_mean,
-#   trait2 = sav_mean,
-#   data = "log"
-# )
-# 
-# pair_sap_thickness <- pairwise_sma(
-#   model_formula = "sap_mean ~ thickness_mm_mean", 
-#   trait1 = sap_mean,
-#   trait2 = thickness_mm_mean,
-#   data = "log"
-# )
-# 
-# pair_sap_tdmc <- pairwise_sma(
-#   model_formula = "sap_mean ~ tdmc_mean", 
-#   trait1 = sap_mean,
-#   trait2 = tdmc_mean,
-#   data = "log"
-# )
-# 
-# pair_sap_sta <- pairwise_sma(
-#   model_formula = "sap_mean ~ sta_mean", 
-#   trait1 = sap_mean,
-#   trait2 = sta_mean,
-#   data = "log"
-# )     
-# 
-# sma(mass_to_height ~ sav_mean,
-#         data = log_ind_traits)
-# 
-# ggplot(data = log_ind_traits,
-#        aes(x = mass_to_height,
-#            y = sav_mean)) +
-#   geom_point(alpha = 0.5,
-#              shape = 21) +
-#   stat_ma_line(method = "SMA") +
-#   # labs(title = model_formula) +
-#   theme_bw() +
-#   theme(panel.grid = element_blank()) +
-#   labs(x = "log mass:height ratio",
-#        y = "log surface area:volume ratio") +
-#   coord_cartesian(ylim = c(4, 9.5)) +
-#   annotate(geom = "text", x = -1.5, y = 4, label = "R\U00B2 = 0.049, p < 0.001")
-# 
-# pair_fvfm_height <- pairwise_sma(
-#   model_formula = "fvfm_mean ~ maximum_height", 
-#   trait1 = fvfm_mean,
-#   trait2 = maximum_height,
-#   data = "log"
-# )     
-# 
-# pair_fvfm_sav <- pairwise_sma(
-#   model_formula = "fvfm_mean ~ sav_mean", 
-#   trait1 = fvfm_mean,
-#   trait2 = sav_mean,
-#   data = "log"
-# )    
-# 
-# pair_fvfm_tdmc <- pairwise_sma(
-#   model_formula = "fvfm_mean ~ tdmc_mean", 
-#   trait1 = fvfm_mean,
-#   trait2 = tdmc_mean,
-#   data = "log"
-# )
-# 
-# pair_fvfm_sta <- pairwise_sma(
-#   model_formula = "fvfm_mean ~ sta_mean", 
-#   trait1 = fvfm_mean,
-#   trait2 = sta_mean,
-#   data = "log"
-# )
-# 
-# pair_fvfm_sap <- pairwise_sma(
-#   model_formula = "fvfm_mean ~ sap_mean", 
-#   trait1 = fvfm_mean,
-#   trait2 = sap_mean,
-#   data = "log"
-# )
-# 
-# pair_ar_height <- pairwise_sma(
-#   model_formula = "aspect_ratio_mean ~ maximum_height", 
-#   trait1 = aspect_ratio_mean,
-#   trait2 = maximum_height,
-#   data = "log"
-# )
-# 
-# # this also doesn't work!
-# # pair_ar_mh <- pairwise_sma(
-# #   model_formula = "aspect_ratio_mean ~ mass_to_height",
-# #   trait1 = aspect_ratio_mean,
-# #   trait2 = mass_to_height,
-# #   data = "log"
-# # )
-# 
-# pair_ar_sav <- pairwise_sma(
-#   model_formula = "aspect_ratio_mean ~ sav_mean", 
-#   trait1 = aspect_ratio_mean,
-#   trait2 = sav_mean,
-#   data = "log"
-# )
-# 
-# pair_ar_thickness <- pairwise_sma(
-#   model_formula = "aspect_ratio_mean ~ thickness_mm_mean", 
-#   trait1 = aspect_ratio_mean,
-#   trait2 = thickness_mm_mean,
-#   data = "log"
-# )
-# 
-# pair_ar_tdmc <- pairwise_sma(
-#   model_formula = "aspect_ratio_mean ~ tdmc_mean", 
-#   trait1 = aspect_ratio_mean,
-#   trait2 = tdmc_mean,
-#   data = "log"
-# )
-# 
-# pair_ar_fvfm <- pairwise_sma(
-#   model_formula = "aspect_ratio_mean ~ fvfm_mean", 
-#   trait1 = aspect_ratio_mean,
-#   trait2 = fvfm_mean,
-#   data = "log"
-# )
-# 
-# ar_plots <- (pair_ar_height[[3]] | pair_ar_fvfm[[3]] | pair_ar_sav[[3]] | pair_ar_tdmc[[3]] | pair_ar_thickness[[3]]) 
-# 
-# fvfm_plots <- 
-#   (pair_fvfm_height[[3]] | pair_fvfm_sap[[3]] | pair_fvfm_sav[[3]] | pair_fvfm_tdmc[[3]] | pair_fvfm_sta[[3]] ) 
-# 
-# ar_plots/fvfm_plots
-# 
-# mh_row_scaled <- plot_grid(
-#   NULL,
-#   NULL,
-#   NULL,
-#   NULL,
-#   NULL,
-#   NULL,
-#   NULL,
-#   NULL,
-#   nrow = 1
-# )
-# 
-# mh_row <- plot_grid(
-#   NULL,
-#   NULL,
-#   NULL,
-#   NULL,
-#   NULL,
-#   NULL,
-#   NULL,
-#   NULL,
-#   nrow = 1
-# )
-# 
-# sav_row_scaled <- plot_grid(
-#   NULL,
-#   pair_sav_mh[[3]],
-#   NULL,
-#   NULL,
-#   NULL,
-#   NULL,
-#   NULL,
-#   NULL,
-#   nrow = 1
-# )
-# 
-# sav_row <- plot_grid(
-#   pair_sav_height[[3]],
-#   pair_sav_mh[[3]],
-#   NULL,
-#   NULL,
-#   NULL,
-#   NULL,
-#   NULL,
-#   NULL,
-#   nrow = 1
-# )
-# 
-# 
-# 
-# thickness_row_scaled <- plot_grid(
-#   NULL,
-#   pair_thickness_mh[[3]],
-#   pair_thickness_sav[[3]],
-#   NULL,
-#   NULL,
-#   NULL,
-#   NULL,
-#   NULL,
-#   nrow = 1
-# )
-# 
-# thickness_row <- plot_grid(
-#   NULL,
-#   NULL,
-#   pair_thickness_sav[[3]],
-#   NULL,
-#   NULL,
-#   NULL,
-#   NULL,
-#   NULL,
-#   nrow = 1
-# )
-# 
-# tdmc_row_scaled <- plot_grid(
-#   NULL,
-#   pair_tdmc_mh[[3]],
-#   NULL,
-#   pair_tdmc_thickness[[3]],
-#   NULL,
-#   NULL,
-#   NULL,
-#   NULL,
-#   nrow = 1
-# )
-# 
-# tdmc_row <- plot_grid(
-#   pair_tdmc_height[[3]],
-#   pair_tdmc_mh[[3]],
-#   NULL,
-#   pair_tdmc_thickness[[3]],
-#   NULL,
-#   NULL,
-#   NULL,
-#   NULL,
-#   nrow = 1
-# )
-# 
-# sta_row_scaled <- plot_grid(
-#   NULL,
-#   pair_sta_mh[[3]],
-#   pair_sta_sav[[3]],
-#   pair_sta_thickness[[3]],
-#   pair_sta_tdmc[[3]],
-#   NULL,
-#   NULL,
-#   NULL,
-#   nrow = 1
-# )
-# 
-# sta_row <- plot_grid(
-#   pair_sta_height[[3]],
-#   pair_sta_mh[[3]],
-#   pair_sta_sav[[3]],
-#   pair_sta_thickness[[3]],
-#   pair_sta_tdmc[[3]],
-#   NULL,
-#   NULL,
-#   NULL,
-#   nrow = 1
-# )
-# 
-# sap_row_scaled <- plot_grid(
-#   NULL,
-#   NULL,
-#   pair_sap_sav[[3]],
-#   pair_sap_thickness[[3]],
-#   pair_sap_tdmc[[3]],
-#   pair_sap_sta[[3]],
-#   NULL,
-#   NULL,
-#   nrow = 1
-# )
-# 
-# sap_row <- plot_grid(
-#   pair_sap_height[[3]],
-#   NULL,
-#   pair_sap_sav[[3]],
-#   NULL,
-#   pair_sap_tdmc[[3]],
-#   pair_sap_sta[[3]],
-#   NULL,
-#   NULL,
-#   nrow = 1
-# )
-# 
-# fvfm_row_scaled <- plot_grid(
-#   pair_fvfm_height[[3]],
-#   NULL,
-#   pair_fvfm_sav[[3]],
-#   NULL,
-#   pair_fvfm_tdmc[[3]],
-#   pair_fvfm_sta[[3]],
-#   pair_fvfm_sap[[3]],
-#   NULL,
-#   nrow = 1
-# )
-# 
-# fvfm_row <- plot_grid(
-#   pair_fvfm_height[[3]],
-#   NULL,
-#   pair_fvfm_sav[[3]],
-#   NULL,
-#   pair_fvfm_tdmc[[3]],
-#   pair_fvfm_sta[[3]],
-#   pair_fvfm_sap[[3]],
-#   NULL,
-#   nrow = 1
-# )
-# 
-# ar_row_scaled <- plot_grid(
-#   NULL,
-#   NULL,
-#   pair_ar_sav[[3]], 
-#   pair_ar_thickness[[3]],
-#   NULL,
-#   NULL,
-#   NULL,
-#   NULL,
-#   nrow = 1
-# )
-# 
-# ar_row <- plot_grid(
-#   pair_ar_height[[3]],
-#   NULL,
-#   pair_ar_sav[[3]], 
-#   pair_ar_thickness[[3]],
-#   pair_ar_tdmc[[3]],
-#   NULL,
-#   NULL,
-#   pair_ar_fvfm[[3]],
-#   nrow = 1
-# )
-# 
-# sma_grid_scaled <- plot_grid(mh_row_scaled,
-#                              sav_row_scaled,
-#                              thickness_row_scaled,
-#                              tdmc_row_scaled,
-#                              sta_row_scaled,
-#                              sap_row_scaled,
-#                              fvfm_row_scaled,
-#                              ar_row_scaled,
-#                              nrow = 8)
-# 
-# sma_grid <- plot_grid(mh_row,
-#                       sav_row,
-#                       thickness_row,
-#                       tdmc_row,
-#                       sta_row,
-#                       sap_row,
-#                       fvfm_row,
-#                       ar_row,
-#                       nrow = 8)
-# 
-# cowplot::save_plot(here::here(
-#   "figures",
-#   "tradeoffs",
-#   paste0("sma-grid_", today(), ".jpg")),
-#   base_height = 10,
-#   sma_grid_scaled)
-# 
-# ggsave(filename = here::here(
-#   "figures",
-#   "tradeoffs",
-#   paste0("sma-grid_", today(), ".jpg")),
-#   plot = sma_grid,
-#   width = 18,
-#   height = 18,
-#   units = "cm",
-#   dpi = 300
-# )
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # -------------------- 5. Principal Components Analysis -------------------
@@ -1028,7 +550,7 @@ varcoord_full <- PCAvect_full %>%
   ungroup() %>% 
   mutate(contrib = (values/component_total)*100)
 
-# The red dashed line on the graph above indicates the expected average contribution. If the contribution of the variables were uniform, the expected value would be 1/length(variables) = 1/10 = 10%
+# The red dashed line on the graph above indicates the expected average contribution. If the contribution of the variables were uniform, the expected value would be 1/length(variables) = 1/9 = 11.1%
 expected_average_full <- (1/length(unique(varcoord_full$trait)))*100
 
 contrib_aesthetics_full <- list(
@@ -1086,10 +608,243 @@ ggsave(here::here(
 
 # ⟞ b. reduced model ------------------------------------------------------
 
+test_meta <- sample(c(1, 2, 3), replace = TRUE, 20) %>% 
+  as_tibble() %>% 
+  rename("species" = "value")
+
+test_df <- test_meta %>% 
+  mutate(a = case_when(
+    species == 1 ~ rnorm(n = 20, mean = 5, sd = 1),
+    species == 2 ~ rnorm(n = 20, mean = 10, sd = 1),
+    species == 3 ~ rnorm(n = 20, mean = 15, sd = 1)
+  )) %>% 
+  mutate(b = case_when(
+    species == 1 ~ rnorm(n = 20, mean = 6, sd = 1),
+    species == 2 ~ rnorm(n = 20, mean = 11, sd = 1),
+    species == 3 ~ rnorm(n = 20, mean = 16, sd = 1)
+  )) %>% 
+  mutate(c = rnorm(n = 20, mean = 8, sd = 1)) %>% 
+  mutate(d = rnorm(n = 20, mean = 15, sd = 1)) %>% 
+  mutate(e = rnorm(n = 20, mean = 12, sd = 1)) %>% 
+  mutate(f = rnorm(n = 20, mean = 7, sd = 1)) %>% 
+  mutate(g = rnorm(n = 20, mean = 9, sd = 1)) %>% 
+  select(!species)
+
+trait_names <- c("a", "b", "c", "d", "e", "f", "g")
+
+combo <- combn(x = trait_names,
+               m = 4) %>% 
+  # transpose this to look more like a long format data frame
+  t() %>% 
+  # turn it into a dataframe
+  as_tibble() %>% 
+  # rename columns to reflect "traits"
+  rename("trait1" = "V1",
+         "trait2" = "V2",
+         "trait3" = "V3",
+         "trait4" = "V4") %>% 
+  # nest the data frame
+  nest(.by = c(trait1, trait2, trait3, trait4),
+       data = everything()) %>% 
+  # take out the "data" column (which is meaningless)
+  select(!data) %>% 
+  # attach the trait data frame to the nested data frame
+  # each "cell" contains the trait data frame
+  mutate(df = map(
+    trait1,
+    ~ bind_cols(test_df)
+  )) %>% 
+  # subset the trait data frame by the traits in the combination
+  mutate(subset_df = pmap(
+    list(v = df, w = trait1, x = trait2, y = trait3, z = trait4),
+    function(v, w, x, y, z) v %>% select(c(w, x, y, z))
+  )) %>% 
+  # do the PCA
+  mutate(pca = map(
+    subset_df,
+    ~ prcomp(.x, center = TRUE, scale = TRUE)
+  )) %>% 
+  # extract the cumulative proportion explained by PC1 and PC2
+  mutate(cumu_prop = map(
+    pca,
+    # [3, 2] is cumulative proportion of PC1 and PC2
+    ~ summary(.x)$importance[3, 2]
+  )) %>% 
+  # do the permanova to ask if species are different in trait values
+  mutate(permanova = map(
+    subset_df,
+    ~ adonis2(.x ~ species, data = test_meta)
+  )) %>% 
+  # do the pairwise comparisons to ask which pairwise differences exist
+  mutate(pairwise = map(
+    subset_df,
+    ~ pairwise.perm.manova(resp = .x, 
+                           fact = test_meta$species,
+                           p.method = "none")
+  )) %>% 
+  # ask if the p-values in the pairwise comparisons are greater or less than 0.05
+  # if less than 0.05, then subset traits conserve differences between species
+  mutate(pairwise_significant = map(
+    pairwise,
+    ~ .x$p.value < 0.05
+  )) %>% 
+  # creating a new column: if any p-value > 0.05, then "no" 
+  # this makes the following filtering step easier
+  mutate(pairwise_conserved = map(
+    pairwise_significant,
+    ~ case_when(
+      # if any p-values < 0.05, then pairwise comparisons are conserved
+      "TRUE" %in% .x ~ "yes",
+      # if all p-values > 0.05, then pairwise comparisons are not conserved
+      TRUE ~ "no"
+    )
+  ))
+
+# only keep combinations where the pairwise comparisons are conserved
+keep <- combo %>% 
+  filter(pairwise_conserved == "yes") %>% 
+  select(trait1, trait2, trait3, trait4, cumu_prop) %>% 
+  unnest(cols = c(cumu_prop))
+
+# holding vectors
+# pca1_hold <- rep(NaN, length = nrow(combo))
+# 
+# pca2_hold <- rep(NaN, length = nrow(combo))
+# 
+# combo_hold <- matrix(, nrow = nrow(combo), ncol = 4)
+# 
+# for(i in 1:nrow(combo)) {
+#   
+#   # subset the data frame based on combination of traits
+#   test_df_subset <- test_df %>% 
+#     select(pluck(combo, 1, i),
+#            pluck(combo, 2, i),
+#            pluck(combo, 3, i),
+#            pluck(combo, 4, i))
+#   
+#   # store traits into holding matrix to keep track of combinations
+#   combo_hold[i, 1] <- pluck(combo, 1, i)
+#   combo_hold[i, 2] <- pluck(combo, 2, i)
+#   combo_hold[i, 3] <- pluck(combo, 3, i)
+#   combo_hold[i, 4] <- pluck(combo, 4, i)
+#   
+#   # do the PCA
+#   test_pca <- rda(test_df_subset, scale = TRUE)
+#   
+#   # store proportion explained by PC1 in holding vector
+#   pca1_hold[i] <- summary(test_pca)$cont$importance[2, 1]
+#   
+#   # store proportion explained by PC2 in holding vector
+#   pca2_hold[i] <- summary(test_pca)$cont$importance[2, 2]
+#   
+# }
+# 
+# # post-processing
+# # bind the PC1 and PC2 proportion vectors together
+# pca_prop_df <- bind_cols(pca1_hold, pca2_hold) %>% 
+#   # rename the columns
+#   rename("pca1_prop" = "...1",
+#          "pca2_prop" = "...2") %>% 
+#   # calculate total proportions for each PC axis
+#   mutate(total_prop = pca1_prop + pca2_prop) %>% 
+#   # bind with trait combinations
+#   cbind(., combo_hold) %>% 
+#   # rename the columns
+#   rename("trait1" = "1",
+#          "trait2" = "2",
+#          "trait3" = "3",
+#          "trait4" = "4")
+# # in this example, the combination that explains the most variation is a, d, e, and f
+
+trait_names_vector <- colnames(pca_mat_log)
+
+combo_real <- combn(x = trait_names_vector,
+               m = 4) %>% 
+  # transpose this to look more like a long format data frame
+  t() %>% 
+  # turn it into a dataframe
+  as_tibble() %>% 
+  # rename columns to reflect "traits"
+  rename("trait1" = "V1",
+         "trait2" = "V2",
+         "trait3" = "V3",
+         "trait4" = "V4") %>% 
+  # nest the data frame
+  nest(.by = c(trait1, trait2, trait3, trait4),
+       data = everything()) %>% 
+  # take out the "data" column (which is meaningless)
+  select(!data) %>% 
+  # attach the trait data frame to the nested data frame
+  # each "cell" contains the trait data frame
+  mutate(df = map(
+    trait1,
+    ~ bind_cols(pca_mat_log)
+  )) %>% 
+  # subset the trait data frame by the traits in the combination
+  mutate(subset_df = pmap(
+    list(v = df, w = trait1, x = trait2, y = trait3, z = trait4),
+    function(v, w, x, y, z) v %>% select(c(w, x, y, z))
+  )) %>% 
+  # do the PCA
+  mutate(pca = map(
+    subset_df,
+    ~ prcomp(.x, center = TRUE, scale = TRUE)
+  )) %>% 
+  # extract the cumulative proportion explained by PC1 and PC2
+  mutate(cumu_prop = map(
+    pca,
+    # [3, 2] is cumulative proportion of PC1 and PC2
+    ~ summary(.x)$importance[3, 2]
+  )) %>% 
+  # do the permanova to ask if species are different in trait values
+  mutate(permanova = map(
+    subset_df,
+    ~ adonis2(.x ~ sp_code, data = ind_traits_filtered)
+  )) %>% 
+  # do the pairwise comparisons to ask which pairwise differences exist
+  mutate(pairwise = map(
+    subset_df,
+    ~ pairwise.perm.manova(resp = .x, 
+                           fact = ind_traits_filtered$sp_code,
+                           p.method = "none")
+  )) %>% 
+  # ask if the p-values in the pairwise comparisons are greater or less than 0.05
+  # if less than 0.05, then subset traits conserve differences between species
+  mutate(pairwise_significant = map(
+    pairwise,
+    ~ .x$p.value < 0.05
+  )) %>% 
+  # creating a new column: if any p-value > 0.05, then "no" 
+  # this makes the following filtering step easier
+  mutate(pairwise_conserved = map(
+    pairwise_significant,
+    ~ case_when(
+      # if any p-values < 0.05, then pairwise comparisons are conserved
+      "TRUE" %in% .x ~ "yes",
+      # if all p-values > 0.05, then pairwise comparisons are not conserved
+      TRUE ~ "no"
+    )
+  ))
+
+# write_rds(x = combo_real,
+#           file = here("rds-objects",
+#                       paste0("combo_4-traits_", today(), ".rds")))
+
+test_rds <- read_rds(file = here("rds-objects",
+                                 "combo_4-traits_2024-11-20.rds"))
+
+# only keep combinations where the pairwise comparisons are conserved
+keep_real <- combo_real %>% 
+  filter(pairwise_conserved == "yes") %>% 
+  select(trait1, trait2, trait3, trait4, cumu_prop) %>% 
+  unnest(cols = c(cumu_prop))
+
+summary(combo_real[111, 7])
+
 # ⟞ ⟞ i. PCA --------------------------------------------------------------
 
 reduced_mat <- pca_mat_log %>% 
-  select(`Dry:wet weight`, `Height:wet weight`, `Height`, `Thickness`)
+  select(`Surface area`, `Height:wet weight`, `Height`, `Thickness`)
 
 # trait by species PCA
 pca_reduced <- rda(reduced_mat, scale = TRUE)
@@ -1101,8 +856,8 @@ screeplot(pca_reduced, bstick = TRUE)
 summary(pca_reduced)
 
 # proportion variance explained for downstream figure making
-prop_PC1_reduced <- "48.1%"
-prop_PC2_reduced <- "34.8%"
+prop_PC1_reduced <- "66.7%"
+prop_PC2_reduced <- "19.7%"
 
 adonis_pairwise_reduced <- pairwise.adonis2(reduced_mat ~ sp_code, 
                                     data = ind_traits_filtered)
