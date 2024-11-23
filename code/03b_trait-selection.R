@@ -239,10 +239,10 @@ combo_3traits <- combn(x = trait_names_vector,
   mutate(pairwise_conserved = map(
     pairwise_significant,
     ~ case_when(
-      # if any p-values < 0.05, then pairwise comparisons are conserved
-      "TRUE" %in% .x ~ "yes",
-      # if all p-values > 0.05, then pairwise comparisons are not conserved
-      TRUE ~ "no"
+      # if any p-values > 0.05, then pairwise comparisons are NOT conserved
+      "FALSE" %in% .x ~ "no",
+      # if all p-values > 0.05, then pairwise comparisons are conserved
+      TRUE ~ "yes"
     )
   ))
 
@@ -250,8 +250,19 @@ combo_3traits <- combn(x = trait_names_vector,
 #           file = here("rds-objects",
 #                       paste0("combo_3-traits_", today(), ".rds")))
 
-test_rds_3traits <- read_rds(file = here("rds-objects",
-                                 "combo_3-traits_2024-11-23.rds"))
+combo_3traits <- read_rds(file = here("rds-objects",
+                                 "combo_3-traits_2024-11-23.rds")) %>% 
+  # creating a new column: if any p-value > 0.05, then "no" 
+  # this makes the following filtering step easier
+  mutate(pairwise_conserved = map(
+    pairwise_significant,
+    ~ case_when(
+      # if any p-values > 0.05, then pairwise comparisons are NOT conserved
+      "FALSE" %in% .x ~ "no",
+      # if all p-values > 0.05, then pairwise comparisons are conserved
+      TRUE ~ "yes"
+    )
+  ))
 
 trait_factor <- c("Surface area",
                   "Surface area:perimeter",
@@ -266,10 +277,10 @@ trait_factor <- c("Surface area",
 
 # only keep combinations where the pairwise comparisons are conserved
 keep_3traits <- combo_3traits %>% 
-  filter(pairwise_conserved == "yes") %>% 
-  select(trait1, trait2, trait3, cumu_prop) %>% 
+  select(trait1, trait2, trait3, cumu_prop, pairwise_conserved) %>% 
   unnest(cols = c(cumu_prop)) %>% 
   rownames_to_column("combo") %>% 
+  filter(pairwise_conserved == "yes") %>% 
   mutate(trait1 = fct_relevel(trait1, trait_factor),
          trait2 = fct_relevel(trait2, trait_factor),
          trait3 = fct_relevel(trait3, trait_factor))
@@ -286,7 +297,7 @@ keep_3traits_heatmap <- keep_3traits %>%
   replace_na(list(present = "FALSE")) %>% 
   mutate(trait = fct_relevel(trait, rev(trait_factor)))
 
-bottom_3traits <- ggplot(data = keep_real_heatmap,
+bottom_3traits <- ggplot(data = keep_3traits_heatmap,
                  aes(x = combo,
                      y = trait,
                      fill = present)) +
@@ -303,7 +314,7 @@ bottom_3traits <- ggplot(data = keep_real_heatmap,
         plot.margin = margin(0, 0, 0, 0, "cm"),
         panel.grid = element_blank())
 
-top_3traits <- ggplot(data = keep_real,
+top_3traits <- ggplot(data = keep_3traits,
               aes(x = reorder(combo, -cumu_prop),
                   y = cumu_prop)) +
   geom_col(fill = "darkgreen") +
@@ -318,14 +329,19 @@ top_3traits <- ggplot(data = keep_real,
 
 top_3traits / bottom_3traits
 
-# top combination
-summary(combo_3traits[[6]][[81]])
+# top combination: SA:V, SA:DW, H:WW
+# PCA summary
+summary(combo_3traits[[6]][[33]])
+# PERMANOVA summary
+combo_3traits[[8]][[33]]
+# pairwise summary
+combo_3traits[[9]][[33]]
 
 # ⟞ ⟞ ii. 4 traits --------------------------------------------------------
 
 trait_names_vector <- colnames(pca_mat_log)
 
-combo_real <- combn(x = trait_names_vector,
+combo_4traits <- combn(x = trait_names_vector,
                     m = 4) %>% 
   # transpose this to look more like a long format data frame
   t() %>% 
@@ -386,19 +402,29 @@ combo_real <- combn(x = trait_names_vector,
   mutate(pairwise_conserved = map(
     pairwise_significant,
     ~ case_when(
-      # if any p-values < 0.05, then pairwise comparisons are conserved
-      "TRUE" %in% .x ~ "yes",
-      # if all p-values > 0.05, then pairwise comparisons are not conserved
-      TRUE ~ "no"
+      # if any p-values > 0.05, then pairwise comparisons are NOT conserved
+      "FALSE" %in% .x ~ "no",
+      # if all p-values > 0.05, then pairwise comparisons are conserved
+      TRUE ~ "yes"
     )
   ))
-
-# write_rds(x = combo_real,
+# write_rds(x = combo_4traits,
 #           file = here("rds-objects",
 #                       paste0("combo_4-traits_", today(), ".rds")))
 
-test_rds <- read_rds(file = here("rds-objects",
-                                 "combo_4-traits_2024-11-20.rds"))
+combo_4traits <- read_rds(file = here("rds-objects",
+                                 "combo_4-traits_2024-11-20.rds")) %>% 
+  # creating a new column: if any p-value > 0.05, then "no" 
+  # this makes the following filtering step easier
+  mutate(pairwise_conserved = map(
+    pairwise_significant,
+    ~ case_when(
+      # if any p-values > 0.05, then pairwise comparisons are NOT conserved
+      "FALSE" %in% .x ~ "no",
+      # if all p-values > 0.05, then pairwise comparisons are conserved
+      TRUE ~ "yes"
+    )
+  ))
 
 trait_factor <- c("Surface area",
                   "Surface area:perimeter",
@@ -412,17 +438,17 @@ trait_factor <- c("Surface area",
 
 
 # only keep combinations where the pairwise comparisons are conserved
-keep_real <- combo_real %>% 
-  filter(pairwise_conserved == "yes") %>% 
-  select(trait1, trait2, trait3, trait4, cumu_prop) %>% 
+keep_4traits <- combo_4traits %>% 
+  select(trait1, trait2, trait3, trait4, cumu_prop, pairwise_conserved) %>% 
   unnest(cols = c(cumu_prop)) %>% 
   rownames_to_column("combo") %>% 
+  filter(pairwise_conserved == "yes") %>% 
   mutate(trait1 = fct_relevel(trait1, trait_factor),
          trait2 = fct_relevel(trait2, trait_factor),
          trait3 = fct_relevel(trait3, trait_factor),
          trait4 = fct_relevel(trait4, trait_factor))
 
-keep_real_heatmap <- keep_real %>% 
+keep_4traits_heatmap <- keep_4traits %>% 
   arrange(-cumu_prop) %>% 
   mutate(combo = fct_inorder((combo))) %>% 
   select(!cumu_prop) %>% 
@@ -434,7 +460,7 @@ keep_real_heatmap <- keep_real %>%
   replace_na(list(present = "FALSE")) %>% 
   mutate(trait = fct_relevel(trait, rev(trait_factor)))
 
-bottom <- ggplot(data = keep_real_heatmap,
+bottom_4traits <- ggplot(data = keep_4traits_heatmap,
                  aes(x = combo,
                      y = trait,
                      fill = present)) +
@@ -451,7 +477,7 @@ bottom <- ggplot(data = keep_real_heatmap,
         plot.margin = margin(0, 0, 0, 0, "cm"),
         panel.grid = element_blank())
 
-top <- ggplot(data = keep_real,
+top_4traits <- ggplot(data = keep_4traits,
               aes(x = reorder(combo, -cumu_prop),
                   y = cumu_prop)) +
   geom_col(fill = "cornflowerblue") +
@@ -464,10 +490,15 @@ top <- ggplot(data = keep_real,
         plot.margin = margin(0, 0, 0, 0, "cm"),
         panel.grid = element_blank())
 
-top / bottom
+top_4traits / bottom_4traits
 
-# top combination
-summary(combo_real[111, 7])
+# top combination: SA:V, SA:DW, H, H:WW
+# PCA summary
+summary(combo_real[[7]][[44]])
+# PERMANOVA summary
+combo_4traits[[9]][[44]]
+# pairwise summary
+combo_4traits[[10]][[44]]
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # ----------------------- 2. reduced model analysis  ----------------------
