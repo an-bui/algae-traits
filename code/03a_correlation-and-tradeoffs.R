@@ -412,9 +412,10 @@ sp_permanova <- adonis2(pca_mat_log ~ sp_code,
 sp_permanova
 
 adonis_pairwise <- pairwise.adonis2(pca_mat_log ~ sp_code, 
-                 data = ind_traits_filtered)
+                                    data = ind_traits_filtered)
 rvam_pairwise <- pairwise.perm.manova(resp = pca_mat_log,
-                     fact = ind_traits_filtered$sp_code)
+                                      fact = ind_traits_filtered$sp_code,
+                                      p.method = "none")
 
 # ⟞ b. loadings -----------------------------------------------------------
 
