@@ -15,7 +15,7 @@ source(here::here("code", "03a_correlation-and-tradeoffs.R"))
 keep_trait_function <- function(df) {
   df %>% 
     select(contains("trait"), cumu_prop, pairwise_conserved) %>% 
-    unnest(cols = c(cumu_prop)) %>% 
+    unnest(cols = c(cumu_prop, pairwise_conserved)) %>% 
     rownames_to_column("combo") %>% 
     mutate(across(contains("trait"), 
                   \(x) fct_relevel(x, trait_factor))) 
@@ -50,12 +50,14 @@ keep_traits_heatmap_function <- function(df) {
 upset_plot_bottom <- list(
   geom_tile(color = "black"),
   labs(y = "Trait"),
+  theme_minimal(),
   theme(legend.position = "none",
         axis.text.x = element_blank(),
         axis.title.x = element_blank(),
-        axis.ticks.x = element_blank(),
+        axis.ticks = element_blank(),
         plot.margin = margin(0, 0, 0, 0, "cm"),
-        panel.grid = element_blank())
+        panel.grid = element_blank(),
+        text = element_text(size = 14))
 )
 
 # aesthetics for the top of the upset plot
@@ -63,11 +65,13 @@ upset_plot_top <- list(
   coord_cartesian(ylim = c(0.8, 1)),
   labs(y = "Cumulative proportion"),
   theme_minimal(),
-  theme(axis.text.x = element_blank(),
+  theme(legend.position = "none",
+        axis.text.x = element_blank(),
         axis.title.x = element_blank(),
         axis.ticks.x = element_blank(),
         plot.margin = margin(0, 0, 0, 0, "cm"),
-        panel.grid = element_blank())
+        panel.grid = element_blank(),
+        text = element_text(size = 14))
 )
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -271,27 +275,46 @@ combo_3traits <- read_rds(file = here("rds-objects",
 
 # only keep combinations where the pairwise comparisons are conserved
 keep_3traits <- combo_3traits %>% 
-  keep_trait_function() %>% 
-  filter(pairwise_conserved == "yes")
+  keep_trait_function() 
 
 keep_3traits_heatmap <- keep_3traits %>% 
   keep_traits_heatmap_function()
 
-bottom_3traits <- ggplot(data = keep_3traits_heatmap,
-                 aes(x = combo,
-                     y = trait,
-                     fill = present)) +
+bottom_3traits <- keep_3traits_heatmap %>% 
+  ggplot(aes(x = combo,
+             y = trait,
+             fill = present,
+             alpha = pairwise_conserved
+  )) +
   scale_fill_manual(values = c("TRUE" = "darkgreen",
                                "FALSE" = "white")) +
+  # geom_tile(color = "black")
+  scale_alpha_manual(values = c("no" = 0.2,
+                                "yes" = 1)) +
   upset_plot_bottom
 
-top_3traits <- ggplot(data = keep_3traits,
-              aes(x = reorder(combo, -cumu_prop),
-                  y = cumu_prop)) +
+top_3traits <- keep_3traits %>% 
+  # filter(pairwise_conserved == "yes") %>% 
+  ggplot(aes(x = reorder(combo, -cumu_prop),
+                  y = cumu_prop,
+                  alpha = pairwise_conserved)) +
   geom_col(fill = "darkgreen") +
+  scale_alpha_manual(values = c("no" = 0.2,
+                                "yes" = 1)) +
   upset_plot_top
 
-top_3traits / bottom_3traits
+upset_plot_3traits <- top_3traits / bottom_3traits
+
+upset_plot_3traits
+
+ggsave(here("figures",
+            "trait-selection",
+            paste0("upset-plot_3traits_all-combinations_", today(), ".jpg")),
+       upset_plot_3traits,
+       height = 5,
+       width = 12,
+       units = "cm",
+       dpi = 300)
 
 # top combination: SA:V, SA:DW, H:WW
 # PCA summary
@@ -390,27 +413,42 @@ combo_4traits <- read_rds(file = here("rds-objects",
 
 # only keep combinations where the pairwise comparisons are conserved
 keep_4traits <- combo_4traits %>% 
-  keep_trait_function() %>% 
-  filter(pairwise_conserved == "yes") 
+  keep_trait_function()
 
 keep_4traits_heatmap <- keep_4traits %>% 
   keep_traits_heatmap_function()
 
-bottom_4traits <- ggplot(data = keep_4traits_heatmap,
-                 aes(x = combo,
-                     y = trait,
-                     fill = present)) +
+bottom_4traits <- keep_4traits_heatmap %>% 
+  ggplot(aes(x = combo,
+             y = trait,
+             fill = present,
+             alpha = pairwise_conserved)) +
   scale_fill_manual(values = c("TRUE" = "cornflowerblue",
                                "FALSE" = "white")) +
+  scale_alpha_manual(values = c("no" = 0.2,
+                                "yes" = 1)) +
   upset_plot_bottom
 
 top_4traits <- ggplot(data = keep_4traits,
               aes(x = reorder(combo, -cumu_prop),
-                  y = cumu_prop)) +
+                  y = cumu_prop,
+                  alpha = pairwise_conserved)) +
   geom_col(fill = "cornflowerblue") +
+  scale_alpha_manual(values = c("no" = 0.2,
+                                "yes" = 1)) +
   upset_plot_top
 
-top_4traits / bottom_4traits
+upset_plot_4traits <- top_4traits / bottom_4traits
+upset_plot_4traits
+
+ggsave(here("figures",
+            "trait-selection",
+            paste0("upset-plot_4traits_all-combinations_", today(), ".jpg")),
+       upset_plot_4traits,
+       height = 4,
+       width = 18,
+       units = "cm",
+       dpi = 300)
 
 # top combination: SA:V, SA:DW, H, H:WW
 # PCA summary
