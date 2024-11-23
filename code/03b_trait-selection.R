@@ -175,7 +175,153 @@ keep <- combo %>%
 
 # ⟞ b. real model ---------------------------------------------------------
 
-# ⟞ ⟞ i. 4 traits ---------------------------------------------------------
+# ⟞ ⟞ i. 3 traits ---------------------------------------------------------
+
+trait_names_vector <- colnames(pca_mat_log)
+
+combo_3traits <- combn(x = trait_names_vector,
+                    m = 3) %>% 
+  # transpose this to look more like a long format data frame
+  t() %>% 
+  # turn it into a dataframe
+  as_tibble() %>% 
+  # rename columns to reflect "traits"
+  rename("trait1" = "V1",
+         "trait2" = "V2",
+         "trait3" = "V3") %>% 
+  # nest the data frame
+  nest(.by = c(trait1, trait2, trait3),
+       data = everything()) %>% 
+  # take out the "data" column (which is meaningless)
+  select(!data) %>% 
+  # attach the trait data frame to the nested data frame
+  # each "cell" contains the trait data frame
+  mutate(df = map(
+    trait1,
+    ~ bind_cols(pca_mat_log)
+  )) %>% 
+  # subset the trait data frame by the traits in the combination
+  mutate(subset_df = pmap(
+    list(v = df, w = trait1, x = trait2, y = trait3),
+    function(v, w, x, y) v %>% select(c(w, x, y))
+  )) %>% 
+  # do the PCA
+  mutate(pca = map(
+    subset_df,
+    ~ prcomp(.x, center = TRUE, scale = TRUE)
+  )) %>% 
+  # extract the cumulative proportion explained by PC1 and PC2
+  mutate(cumu_prop = map(
+    pca,
+    # [3, 2] is cumulative proportion of PC1 and PC2
+    ~ summary(.x)$importance[3, 2]
+  )) %>% 
+  # do the permanova to ask if species are different in trait values
+  mutate(permanova = map(
+    subset_df,
+    ~ adonis2(.x ~ sp_code, data = ind_traits_filtered)
+  )) %>% 
+  # do the pairwise comparisons to ask which pairwise differences exist
+  mutate(pairwise = map(
+    subset_df,
+    ~ pairwise.perm.manova(resp = .x, 
+                           fact = ind_traits_filtered$sp_code,
+                           p.method = "none")
+  )) %>% 
+  # ask if the p-values in the pairwise comparisons are greater or less than 0.05
+  # if less than 0.05, then subset traits conserve differences between species
+  mutate(pairwise_significant = map(
+    pairwise,
+    ~ .x$p.value < 0.05
+  )) %>% 
+  # creating a new column: if any p-value > 0.05, then "no" 
+  # this makes the following filtering step easier
+  mutate(pairwise_conserved = map(
+    pairwise_significant,
+    ~ case_when(
+      # if any p-values < 0.05, then pairwise comparisons are conserved
+      "TRUE" %in% .x ~ "yes",
+      # if all p-values > 0.05, then pairwise comparisons are not conserved
+      TRUE ~ "no"
+    )
+  ))
+
+# write_rds(x = combo_3traits,
+#           file = here("rds-objects",
+#                       paste0("combo_3-traits_", today(), ".rds")))
+
+test_rds_3traits <- read_rds(file = here("rds-objects",
+                                 "combo_3-traits_2024-11-23.rds"))
+
+trait_factor <- c("Surface area",
+                  "Surface area:perimeter",
+                  "Surface area:volume",
+                  "Surface area:dry weight",
+                  "Thickness",
+                  "Height",
+                  "Height:wet weight",
+                  "Height:volume",
+                  "Dry:wet weight")
+
+
+# only keep combinations where the pairwise comparisons are conserved
+keep_3traits <- combo_3traits %>% 
+  filter(pairwise_conserved == "yes") %>% 
+  select(trait1, trait2, trait3, cumu_prop) %>% 
+  unnest(cols = c(cumu_prop)) %>% 
+  rownames_to_column("combo") %>% 
+  mutate(trait1 = fct_relevel(trait1, trait_factor),
+         trait2 = fct_relevel(trait2, trait_factor),
+         trait3 = fct_relevel(trait3, trait_factor))
+
+keep_3traits_heatmap <- keep_3traits %>% 
+  arrange(-cumu_prop) %>% 
+  mutate(combo = fct_inorder((combo))) %>% 
+  select(!cumu_prop) %>% 
+  pivot_longer(cols = trait1:trait3) %>% 
+  rename(trait = value) %>% 
+  mutate(present = "TRUE") %>% 
+  select(!name) %>% 
+  complete(combo, trait) %>% 
+  replace_na(list(present = "FALSE")) %>% 
+  mutate(trait = fct_relevel(trait, rev(trait_factor)))
+
+bottom_3traits <- ggplot(data = keep_real_heatmap,
+                 aes(x = combo,
+                     y = trait,
+                     fill = present)) +
+  geom_tile(color = "black") +
+  # scale_x_continuous(breaks = seq(from = 1, to = 126, by = 1),
+  #                    expand = c(0, 0)) +
+  scale_fill_manual(values = c("TRUE" = "darkgreen",
+                               "FALSE" = "white")) +
+  labs(y = "Trait") +
+  theme(legend.position = "none",
+        axis.text.x = element_blank(),
+        axis.title.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        plot.margin = margin(0, 0, 0, 0, "cm"),
+        panel.grid = element_blank())
+
+top_3traits <- ggplot(data = keep_real,
+              aes(x = reorder(combo, -cumu_prop),
+                  y = cumu_prop)) +
+  geom_col(fill = "darkgreen") +
+  coord_cartesian(ylim = c(0.8, 1)) +
+  labs(y = "Cumulative proportion") +
+  theme_minimal() +
+  theme(axis.text.x = element_blank(),
+        axis.title.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        plot.margin = margin(0, 0, 0, 0, "cm"),
+        panel.grid = element_blank())
+
+top_3traits / bottom_3traits
+
+# top combination
+summary(combo_3traits[[6]][[81]])
+
+# ⟞ ⟞ ii. 4 traits --------------------------------------------------------
 
 trait_names_vector <- colnames(pca_mat_log)
 
