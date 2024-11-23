@@ -288,6 +288,16 @@ trait_color_palette <- c(
   `Surface area:dry weight` = sta_col,
   `Surface area:perimeter` = sap_col
 )
+
+trait_factor <- c("Surface area",
+                  "Surface area:perimeter",
+                  "Surface area:volume",
+                  "Surface area:dry weight",
+                  "Thickness",
+                  "Height",
+                  "Height:wet weight",
+                  "Height:volume",
+                  "Dry:wet weight")
       
     # gradient palette
     gradient_palette <- c("#FFFFFF", "#009BB0")

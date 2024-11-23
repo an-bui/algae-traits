@@ -7,9 +7,72 @@
 source(here::here("code", "03a_correlation-and-tradeoffs.R"))
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# ------------------------- 1. trait combinations -------------------------
+# -------------------- 1. functions and aesthetics ------------------------
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+# function to extract cumulative proportion, conserved pairwise differences,
+# and traits
+keep_trait_function <- function(df) {
+  df %>% 
+    select(contains("trait"), cumu_prop, pairwise_conserved) %>% 
+    unnest(cols = c(cumu_prop)) %>% 
+    rownames_to_column("combo") %>% 
+    mutate(across(contains("trait"), 
+                  \(x) fct_relevel(x, trait_factor))) 
+}
+
+# function to organize the data frame for the heat map (bottom of upset plot)
+keep_traits_heatmap_function <- function(df) {
+  df %>% 
+    # arrange in descending order of cumulative proportion explained
+    arrange(-cumu_prop) %>% 
+    # make the order of combinations the order in which they appear
+    mutate(combo = fct_inorder((combo))) %>% 
+    # get rid of the cumulative proportion column
+    select(!cumu_prop) %>% 
+    # make the data frame longer for plotting
+    pivot_longer(cols = contains("trait")) %>% 
+    # rename the colume "value" to be trait
+    rename(trait = value) %>% 
+    # mark the trait as present
+    mutate(present = "TRUE") %>% 
+    # get rid of the "name" column, which contains trait1, trait2, etc.
+    select(!name) %>% 
+    # complete all traits within a combination
+    complete(combo, trait) %>% 
+    # if the trait is not present in the combination, mark "FALSE"
+    replace_na(list(present = "FALSE")) %>% 
+    # reorder the traits in factor order
+    mutate(trait = fct_relevel(trait, rev(trait_factor)))
+}
+
+# aesthetics for the bottom of the upset plot
+upset_plot_bottom <- list(
+  geom_tile(color = "black"),
+  labs(y = "Trait"),
+  theme(legend.position = "none",
+        axis.text.x = element_blank(),
+        axis.title.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        plot.margin = margin(0, 0, 0, 0, "cm"),
+        panel.grid = element_blank())
+)
+
+# aesthetics for the top of the upset plot
+upset_plot_top <- list(
+  coord_cartesian(ylim = c(0.8, 1)),
+  labs(y = "Cumulative proportion"),
+  theme_minimal(),
+  theme(axis.text.x = element_blank(),
+        axis.title.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        plot.margin = margin(0, 0, 0, 0, "cm"),
+        panel.grid = element_blank())
+)
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ------------------------- 2. trait combinations -------------------------
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # ⟞ a. toy model ----------------------------------------------------------
 
@@ -111,76 +174,18 @@ keep <- combo %>%
   select(trait1, trait2, trait3, trait4, cumu_prop) %>% 
   unnest(cols = c(cumu_prop))
 
-# maximizing use: Thickness
-# Dry:wet weight
-# Height:volume
-# Surface area:perimeter
-
-# "best" combination: 
-# Surface area
-# Surface area:volume
-# Surface area:dry weight
-# Surface area:perimeter
-
-# holding vectors
-# pca1_hold <- rep(NaN, length = nrow(combo))
-# 
-# pca2_hold <- rep(NaN, length = nrow(combo))
-# 
-# combo_hold <- matrix(, nrow = nrow(combo), ncol = 4)
-# 
-# for(i in 1:nrow(combo)) {
-#   
-#   # subset the data frame based on combination of traits
-#   test_df_subset <- test_df %>% 
-#     select(pluck(combo, 1, i),
-#            pluck(combo, 2, i),
-#            pluck(combo, 3, i),
-#            pluck(combo, 4, i))
-#   
-#   # store traits into holding matrix to keep track of combinations
-#   combo_hold[i, 1] <- pluck(combo, 1, i)
-#   combo_hold[i, 2] <- pluck(combo, 2, i)
-#   combo_hold[i, 3] <- pluck(combo, 3, i)
-#   combo_hold[i, 4] <- pluck(combo, 4, i)
-#   
-#   # do the PCA
-#   test_pca <- rda(test_df_subset, scale = TRUE)
-#   
-#   # store proportion explained by PC1 in holding vector
-#   pca1_hold[i] <- summary(test_pca)$cont$importance[2, 1]
-#   
-#   # store proportion explained by PC2 in holding vector
-#   pca2_hold[i] <- summary(test_pca)$cont$importance[2, 2]
-#   
-# }
-# 
-# # post-processing
-# # bind the PC1 and PC2 proportion vectors together
-# pca_prop_df <- bind_cols(pca1_hold, pca2_hold) %>% 
-#   # rename the columns
-#   rename("pca1_prop" = "...1",
-#          "pca2_prop" = "...2") %>% 
-#   # calculate total proportions for each PC axis
-#   mutate(total_prop = pca1_prop + pca2_prop) %>% 
-#   # bind with trait combinations
-#   cbind(., combo_hold) %>% 
-#   # rename the columns
-#   rename("trait1" = "1",
-#          "trait2" = "2",
-#          "trait3" = "3",
-#          "trait4" = "4")
-# # in this example, the combination that explains the most variation is a, d, e, and f
-
 
 # ⟞ b. real model ---------------------------------------------------------
 
 # ⟞ ⟞ i. 3 traits ---------------------------------------------------------
 
+# put all the traits into a vector
 trait_names_vector <- colnames(pca_mat_log)
 
+# test differences between species with the trait combinations
+# first, select 3 traits from the vector (order doesn't matter)
 combo_3traits <- combn(x = trait_names_vector,
-                    m = 3) %>% 
+                       m = 3) %>% 
   # transpose this to look more like a long format data frame
   t() %>% 
   # turn it into a dataframe
@@ -264,68 +269,27 @@ combo_3traits <- read_rds(file = here("rds-objects",
     )
   ))
 
-trait_factor <- c("Surface area",
-                  "Surface area:perimeter",
-                  "Surface area:volume",
-                  "Surface area:dry weight",
-                  "Thickness",
-                  "Height",
-                  "Height:wet weight",
-                  "Height:volume",
-                  "Dry:wet weight")
-
-
 # only keep combinations where the pairwise comparisons are conserved
 keep_3traits <- combo_3traits %>% 
-  select(trait1, trait2, trait3, cumu_prop, pairwise_conserved) %>% 
-  unnest(cols = c(cumu_prop)) %>% 
-  rownames_to_column("combo") %>% 
-  filter(pairwise_conserved == "yes") %>% 
-  mutate(trait1 = fct_relevel(trait1, trait_factor),
-         trait2 = fct_relevel(trait2, trait_factor),
-         trait3 = fct_relevel(trait3, trait_factor))
+  keep_trait_function() %>% 
+  filter(pairwise_conserved == "yes")
 
 keep_3traits_heatmap <- keep_3traits %>% 
-  arrange(-cumu_prop) %>% 
-  mutate(combo = fct_inorder((combo))) %>% 
-  select(!cumu_prop) %>% 
-  pivot_longer(cols = trait1:trait3) %>% 
-  rename(trait = value) %>% 
-  mutate(present = "TRUE") %>% 
-  select(!name) %>% 
-  complete(combo, trait) %>% 
-  replace_na(list(present = "FALSE")) %>% 
-  mutate(trait = fct_relevel(trait, rev(trait_factor)))
+  keep_traits_heatmap_function()
 
 bottom_3traits <- ggplot(data = keep_3traits_heatmap,
                  aes(x = combo,
                      y = trait,
                      fill = present)) +
-  geom_tile(color = "black") +
-  # scale_x_continuous(breaks = seq(from = 1, to = 126, by = 1),
-  #                    expand = c(0, 0)) +
   scale_fill_manual(values = c("TRUE" = "darkgreen",
                                "FALSE" = "white")) +
-  labs(y = "Trait") +
-  theme(legend.position = "none",
-        axis.text.x = element_blank(),
-        axis.title.x = element_blank(),
-        axis.ticks.x = element_blank(),
-        plot.margin = margin(0, 0, 0, 0, "cm"),
-        panel.grid = element_blank())
+  upset_plot_bottom
 
 top_3traits <- ggplot(data = keep_3traits,
               aes(x = reorder(combo, -cumu_prop),
                   y = cumu_prop)) +
   geom_col(fill = "darkgreen") +
-  coord_cartesian(ylim = c(0.8, 1)) +
-  labs(y = "Cumulative proportion") +
-  theme_minimal() +
-  theme(axis.text.x = element_blank(),
-        axis.title.x = element_blank(),
-        axis.ticks.x = element_blank(),
-        plot.margin = margin(0, 0, 0, 0, "cm"),
-        panel.grid = element_blank())
+  upset_plot_top
 
 top_3traits / bottom_3traits
 
@@ -339,10 +303,8 @@ combo_3traits[[9]][[33]]
 
 # ⟞ ⟞ ii. 4 traits --------------------------------------------------------
 
-trait_names_vector <- colnames(pca_mat_log)
-
 combo_4traits <- combn(x = trait_names_vector,
-                    m = 4) %>% 
+                       m = 4) %>% 
   # transpose this to look more like a long format data frame
   t() %>% 
   # turn it into a dataframe
@@ -426,69 +388,27 @@ combo_4traits <- read_rds(file = here("rds-objects",
     )
   ))
 
-trait_factor <- c("Surface area",
-                  "Surface area:perimeter",
-                  "Surface area:volume",
-                  "Surface area:dry weight",
-                  "Thickness",
-                  "Height",
-                  "Height:wet weight",
-                  "Height:volume",
-                  "Dry:wet weight")
-
-
 # only keep combinations where the pairwise comparisons are conserved
 keep_4traits <- combo_4traits %>% 
-  select(trait1, trait2, trait3, trait4, cumu_prop, pairwise_conserved) %>% 
-  unnest(cols = c(cumu_prop)) %>% 
-  rownames_to_column("combo") %>% 
-  filter(pairwise_conserved == "yes") %>% 
-  mutate(trait1 = fct_relevel(trait1, trait_factor),
-         trait2 = fct_relevel(trait2, trait_factor),
-         trait3 = fct_relevel(trait3, trait_factor),
-         trait4 = fct_relevel(trait4, trait_factor))
+  keep_trait_function() %>% 
+  filter(pairwise_conserved == "yes") 
 
 keep_4traits_heatmap <- keep_4traits %>% 
-  arrange(-cumu_prop) %>% 
-  mutate(combo = fct_inorder((combo))) %>% 
-  select(!cumu_prop) %>% 
-  pivot_longer(cols = trait1:trait4) %>% 
-  rename(trait = value) %>% 
-  mutate(present = "TRUE") %>% 
-  select(!name) %>% 
-  complete(combo, trait) %>% 
-  replace_na(list(present = "FALSE")) %>% 
-  mutate(trait = fct_relevel(trait, rev(trait_factor)))
+  keep_traits_heatmap_function()
 
 bottom_4traits <- ggplot(data = keep_4traits_heatmap,
                  aes(x = combo,
                      y = trait,
                      fill = present)) +
-  geom_tile(color = "black") +
-  # scale_x_continuous(breaks = seq(from = 1, to = 126, by = 1),
-  #                    expand = c(0, 0)) +
   scale_fill_manual(values = c("TRUE" = "cornflowerblue",
                                "FALSE" = "white")) +
-  labs(y = "Trait") +
-  theme(legend.position = "none",
-        axis.text.x = element_blank(),
-        axis.title.x = element_blank(),
-        axis.ticks.x = element_blank(),
-        plot.margin = margin(0, 0, 0, 0, "cm"),
-        panel.grid = element_blank())
+  upset_plot_bottom
 
 top_4traits <- ggplot(data = keep_4traits,
               aes(x = reorder(combo, -cumu_prop),
                   y = cumu_prop)) +
   geom_col(fill = "cornflowerblue") +
-  coord_cartesian(ylim = c(0.8, 1)) +
-  labs(y = "Cumulative proportion") +
-  theme_minimal() +
-  theme(axis.text.x = element_blank(),
-        axis.title.x = element_blank(),
-        axis.ticks.x = element_blank(),
-        plot.margin = margin(0, 0, 0, 0, "cm"),
-        panel.grid = element_blank())
+  upset_plot_top
 
 top_4traits / bottom_4traits
 
@@ -501,7 +421,7 @@ combo_4traits[[9]][[44]]
 combo_4traits[[10]][[44]]
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# ----------------------- 2. reduced model analysis  ----------------------
+# ----------------------- 3. reduced model analysis  ----------------------
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # ⟞ a. PCA ----------------------------------------------------------------
