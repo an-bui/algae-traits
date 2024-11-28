@@ -410,7 +410,7 @@ raw_anova_table <- sp_anova_tables %>%
   set_formatter(
     sumsq = format_scientific,
     meansq = format_scientific
-  ) %>% 
+  ) %>%
   # bold p values if they are significant
   style(i = ~ signif == "yes",
         j = c("p.value"),
