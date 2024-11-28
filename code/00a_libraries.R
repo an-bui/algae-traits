@@ -165,45 +165,73 @@ algae_proposal_code_factors <- algae_proposal %>%
   fct_relevel(., "BF", "CC", "GS", "CO", "BO", "POLA", "R", "GR", "Nandersoniana",
               "PTCA", "CYOS", "DL", "EGME", "LAFA", "DU", "DP")
 
-algae_proposal_sciname_factors <- as_factor(
-  c("Cryptopleura ruprechtiana", 
-    "Chondracanthus corymbiferus; Chondracanthus exasperatus", 
-    "Gracilaria spp.", 
-    "Corallina officinalis", 
-    "Bossiella orbigniana", 
-    "Polyneura latissima", 
-    "Rhodymenia californica", 
-    "Gelidium spp.", 
-    "Nienburgia andersoniana",
-    "Pterygophora californica", 
-    "Stephanocystis osmundacea", 
-    "Desmarestia ligulata", 
-    "Egregia menziesii", 
-    "Laminaria farlowii", 
-    "Dictyopteris undulata", 
-    "Dictyota binghamiae; Dictyota flabellata; Dictyota coriacea"
-  )
-)
+# algae_proposal_sciname_factors <- as_factor(
+#   c("Cryptopleura ruprechtiana", 
+#     "Chondracanthus corymbiferus; Chondracanthus exasperatus", 
+#     "Gracilaria spp.", 
+#     "Corallina officinalis", 
+#     "Bossiella orbigniana", 
+#     "Polyneura latissima", 
+#     "Rhodymenia californica", 
+#     "Gelidium spp.", 
+#     "Nienburgia andersoniana",
+#     "Pterygophora californica", 
+#     "Stephanocystis osmundacea", 
+#     "Desmarestia ligulata", 
+#     "Egregia menziesii", 
+#     "Laminaria farlowii", 
+#     "Dictyopteris undulata", 
+#     "Dictyota binghamiae; Dictyota flabellata; Dictyota coriacea"
+#   )
+# )
 
 algae_colors <- c(
-  # reds
-  "Cryptopleura ruprechtiana" = "#C68F76", 
-  "Chondracanthus corymbiferus; Chondracanthus exasperatus" = "#F5CFBC", 
-  "Gracilaria spp." = "#985030", 
-  "Corallina officinalis" = "#D6A48D", 
-  "Bossiella orbigniana" = "#893B19", 
-  "Polyneura latissima" = "#E5B9A4", 
-  "Rhodymenia californica" = "#A86547", 
-  "Gelidium spp." = "#B77A5F", 
-  "Nienburgia andersoniana" = "#7A2602",
-  # browns
-  "Pterygophora californica" = "#7A6720", 
-  "Stephanocystis osmundacea" = "#BA9C30", 
-  "Desmarestia ligulata" = "#CFAE35", 
-  "Egregia menziesii" = "#8F7825", 
-  "Laminaria farlowii" = "#FAD241", 
-  "Dictyopteris undulata" = "#A48A2A", 
-  "Dictyota binghamiae; Dictyota flabellata; Dictyota coriacea" = "#E4C03B"
+  # BO, CO
+  "Corallina officinalis" = "#E29244", 
+  "Bossiella orbigniana" = "#FFAA00", 
+  # everything else (BF, CC, R, CYOS, DP)
+  "Cryptopleura ruprechtiana" = "#5A7ECB", 
+  "Chondracanthus corymbiferus; Chondracanthus exasperatus" = "#6B6D9F", 
+  "Rhodymenia californica" = "#69B9FA", 
+  "Stephanocystis osmundacea" = "#59A3F8", 
+  "Dictyota binghamiae; Dictyota flabellata; Dictyota coriacea" = "#3B4F8E",
+  # PTCA, LAFA
+  "Pterygophora californica" = "#3B7D6E", 
+  "Laminaria farlowii" = "#4CA49E"
+)
+
+algae_spcode_colors <- c(
+  # BO, CO
+  "CO" = "#E29244", 
+  "BO" = "#FFAA00", 
+  # everything else (BF, CC, R, CYOS, DP)
+  "BF" = "#5A7ECB", 
+  "CC" = "#6B6D9F", 
+  "R" = "#69B9FA", 
+  "CYOS" = "#59A3F8", 
+  "DP" = "#3B4F8E",
+  # PTCA, LAFA
+  "PTCA" = "#3B7D6E", 
+  "LAFA" = "#4CA49E"
+)
+
+algae_factors <- c(
+  # BO, CO
+  "Corallina officinalis", 
+  "Bossiella orbigniana", 
+  # everything else (BF, CC, R, CYOS, DP)
+  "Cryptopleura ruprechtiana", 
+  "Chondracanthus corymbiferus; Chondracanthus exasperatus", 
+  "Rhodymenia californica", 
+  "Stephanocystis osmundacea", 
+  "Dictyota binghamiae; Dictyota flabellata; Dictyota coriacea",
+  # PTCA, LAFA
+  "Pterygophora californica", 
+  "Laminaria farlowii"
+)
+
+algae_spcode_factors <- c(
+  "CO", "BO", "BF", "CC", "R", "CYOS", "DP", "PTCA", "LAFA"
 )
 
 algae_spcode_colors <- c(
@@ -277,24 +305,29 @@ max_height_col <- "#4D5B75"
 fvfm_col <- "#b2d8d8"
 volume_col <- "#CC7556"
 
+height_col <- "#BE5A47"
+surface_area_col <- "#BE5A47"
+thickness_col <- "#4D5B75"
+tradeoff_col <- "#865B5E"
+
 trait_color_palette <- c(
-  `Height` = max_height_col,
+  `Height` = height_col,
   `Thickness` = thickness_col,
-  `Surface area` = sta_col,
-  `Height:wet weight` = mass_to_height_col,
-  `Dry:wet weight` = total_dmc_col,
-  `Height:volume` = mass_to_height_col,
-  `Surface area:volume` = sav_col,
-  `Surface area:dry weight` = sta_col,
-  `Surface area:perimeter` = sap_col
+  `Surface area` = surface_area_col,
+  `Height:wet weight` =tradeoff_col,
+  `Dry:wet weight` = tradeoff_col,
+  `Height:volume` = tradeoff_col,
+  `Surface area:volume` = tradeoff_col,
+  `Surface area:dry weight` = tradeoff_col,
+  `Surface area:perimeter` = tradeoff_col
 )
 
-trait_factor <- c("Surface area",
+trait_factor <- c("Height",
+                  "Surface area",
+                  "Thickness",
                   "Surface area:perimeter",
                   "Surface area:volume",
                   "Surface area:dry weight",
-                  "Thickness",
-                  "Height",
                   "Height:wet weight",
                   "Height:volume",
                   "Dry:wet weight")

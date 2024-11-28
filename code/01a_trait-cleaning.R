@@ -329,6 +329,8 @@ ind_traits_filtered <- ind_traits %>%
   filter(!(specimen_ID %in% c("20210721-BULL-023", "20210719-IVEE-009"))) %>% 
   filter(sp_code %in% c("BO", "CC", "CO", "BF", "DP", 
                         "LAFA", "PTCA", "R", "CYOS")) %>% 
+  mutate(sp_code = fct_relevel(sp_code, algae_spcode_factors),
+         scientific_name = fct_relevel(scientific_name, algae_factors)) %>% 
  #  H, T, SA, H:WW, DW:WW, H:V, SA:V, SA:DW, and SA:P
   drop_na(specimen_ID, scientific_name, sp_code, 
           maximum_height, 

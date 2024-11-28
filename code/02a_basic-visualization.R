@@ -11,9 +11,10 @@ boxplot_theme <- list(
     theme_bw(),
     theme(legend.position = "none",
           panel.grid = element_blank(),
-          axis.title = element_text(size = 20),
-          axis.text = element_text(size = 12),
-          plot.title = element_text(size = 26))
+          axis.text = element_text(size = 8),
+          plot.title = element_text(size = 12),
+          axis.title = element_blank(),
+          plot.title.position = "plot")
 )
 
 distribution_theme <- list(
@@ -26,16 +27,80 @@ distribution_theme <- list(
 )
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# ------------------------------ 1. boxplots ------------------------------
+# ------------------------------ 1. functions -----------------------------
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#' This is a function to get the pairwise comparisons from the Tukey HSD into
+#' a matrix for easier comparisons within pairs. Thanks to IRTFM for this
+#' solution on how to fill in a matrix with the values from a vector:
+#' https://stackoverflow.com/questions/24598710/presenting-tukey-hsd-pairwise-p-values-in-a-table
+
+#' The function expects the subsetted output of a `TukeyHSD()` call. It's
+#' easier to see in the downstream section where I do the ANOVAs with the post-
+#' hoc comparisons, but the function's output creates this structure where the
+#' actual information is in a separate column, like `TukeyHSD(data)$name`.
+#' In any case, this function expects the `$` object, not the full `TukeyHSD()`
+#' output.
+
+pairwise_sig_fxn <- function(pairwise) {
+  # create an empty matrix
+  sig_mat <- matrix(NA, 9, 9)
+  
+  # turn the pairwise object into a data frame
+  sig_df <- data.frame(pairwise) %>% 
+    # create a nicer p-value display
+    mutate(p_display = case_when(
+      # if p-value < 0.001, then display < 0.001
+      between(p.adj, 0, 0.001) ~ "<0.001",
+      # if p-value is between 0.001 and 0.01, round to 3 digits
+      between(p.adj, 0.001, 0.01) ~ as.character(round(p.adj, digits = 3)),
+      # if p-value is between 0.01 and 1, round to 2 digits
+      between(p.adj, 0.01, 1) ~ as.character(round(p.adj, digits = 2))
+    ))
+  
+  # fill in the matrix with the p-value display
+  sig_mat[lower.tri(sig_mat)] <- sig_df$p_display
+  
+  # make the columns and row names the species codes
+  colnames(sig_mat) <- algae_spcode_factors
+  rownames(sig_mat) <- algae_spcode_factors
+  
+  # make the matrix a data frame (for easy table making later)
+  sig_mat_to_df <- data.frame(sig_mat) %>% 
+    # replace the NAs with a -
+    mutate(across(where(is.character), ~replace_na(.,"-")))
+  
+  # return the final data frame
+  return(sig_mat_to_df)
+}
+
+sig_table_fxn <- function(pairwise_sig_df) {
+  table <- gt(pairwise_sig_df, rownames_to_stub = T) %>%
+    cols_width(everything() ~ px(75)) %>% 
+    tab_style(
+      style = cell_text(align = "center"),
+      locations = list(cells_body(columns = everything(),
+                                  rows = everything()),
+                       cells_column_labels(columns = everything()),
+                       cells_stub(rows = everything()))) %>% 
+    tab_options(
+      table.border.top.color = "white"
+    )
+  
+  return(table)
+}
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ------------------------------ 2. boxplots ------------------------------
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # This section includes code to generate a bunch of boxplots showing trait
 # distributions across species. Each point is an individual, and the boxplots
 # depict the median, IQR, and 1.5*IQR. The outliers aren't shown.
 
-# ⟞ a. generating plots ---------------------------------------------------
+# ⟞ a. ANOVA --------------------------------------------------------------
 
-boxplots <- ind_traits_filtered %>% 
+sp_anovas <- ind_traits_filtered %>% 
   pivot_longer(cols = maximum_height:sap_mean,
                names_to = "trait",
                values_to = "value") %>% 
@@ -56,13 +121,88 @@ boxplots <- ind_traits_filtered %>%
       "sap_mean" ~ "Surface area:perimeter (mm\U00B2/mm)"
     )
   )) %>% 
-  mutate(boxplot = map2(
+  mutate(data = map(
+    data,
+    ~ .x %>% 
+      mutate(log_value = log(value))
+  )) %>% 
+  mutate(variances = map(
+    data,
+    ~ .x %>% 
+      group_by(sp_code) %>% 
+      summarize(var = var(log_value))
+  )) %>% 
+  mutate(log_anova = map(
+    data,
+    ~ aov(log_value ~ sp_code,
+          data = .x)
+  )) %>% 
+  mutate(raw_anova = map(
+    data,
+    ~ aov(value ~ sp_code,
+          data = .x)
+  )) %>% 
+  mutate(log_pairwise = map(
+    log_anova,
+    ~ TukeyHSD(.x)$sp_code
+  )) %>% 
+  mutate(raw_pairwise = map(
+    raw_anova,
+    ~ TukeyHSD(.x)$sp_code
+  )) %>% 
+  mutate(log_sig_df = map(
+    log_pairwise,
+    ~ pairwise_sig_fxn(.x)
+  ))  %>% 
+  mutate(raw_sig_df = map(
+    raw_pairwise,
+    ~ pairwise_sig_fxn(.x)
+  )) %>% 
+  mutate(log_sig_table = map(
+    log_sig_df,
+    ~ sig_table_fxn(.x)
+  )) %>% 
+  mutate(raw_sig_table = map(
+    raw_sig_df,
+    ~ sig_table_fxn(.x)
+  )) %>% 
+  mutate(log_boxplot = map2(
     data, units,
     ~ .x %>% 
-      mutate( 
-        sp_code = fct_relevel(sp_code,
-                              "R", "BO", "CO", "CC", "BF", 
-                              "DP", "LAFA", "PTCA", "CYOS")) %>% 
+      ggplot(aes(x = sp_code,
+                 y = log(value))) +
+      geom_boxplot(aes(fill = sp_code),
+                   outliers = FALSE) +
+      geom_point(alpha = 0.2,
+                 position = position_jitter(width = 0.1,
+                                            seed = 666),
+                 shape = 21) +
+      scale_fill_manual(values = algae_spcode_colors) +
+      scale_x_discrete(labels = scales::label_wrap(10)) +
+      labs(title = paste0(.y, " (log transform)")) +
+      boxplot_theme
+  )) %>% 
+  mutate(log_means_plot = map2(
+    data, units,
+    ~ .x %>% 
+      ggplot(aes(x = sp_code,
+                 y = log(value),
+                 group = sp_code,
+                 color = sp_code)) +
+      geom_point(alpha = 0.2,
+                 position = position_jitter(width = 0.1,
+                                            seed = 666),
+                 shape = 21) +
+      stat_summary(geom = "pointrange",
+                   fun.data = mean_cl_normal) +
+      scale_color_manual(values = algae_spcode_colors) +
+      scale_x_discrete(labels = scales::label_wrap(10)) +
+      labs(title = paste0(.y, " (log transform)")) +
+      boxplot_theme
+  )) %>% 
+  mutate(raw_boxplot = map2(
+    data, units,
+    ~ .x %>% 
       ggplot(aes(x = sp_code,
                  y = value)) +
       geom_boxplot(aes(fill = sp_code),
@@ -74,58 +214,157 @@ boxplots <- ind_traits_filtered %>%
       scale_fill_manual(values = algae_spcode_colors) +
       scale_x_discrete(labels = scales::label_wrap(10)) +
       labs(title = .y) +
-      boxplot_theme +
-      theme(axis.title = element_blank(),
-            axis.title.x = element_blank())
-  ))
+      boxplot_theme
+  )) %>% 
+  mutate(raw_means_plot = map2(
+    data, units,
+    ~ .x %>% 
+      ggplot(aes(x = sp_code,
+                 y = value,
+                 group = sp_code,
+                 color = sp_code)) +
+      geom_point(alpha = 0.2,
+                 position = position_jitter(width = 0.1,
+                                            seed = 666),
+                 shape = 21) +
+      stat_summary(geom = "pointrange",
+                   fun.data = mean_cl_normal) +
+      scale_color_manual(values = algae_spcode_colors) +
+      scale_x_discrete(labels = scales::label_wrap(10)) +
+      labs(title = .y) +
+      boxplot_theme
+  )) %>% 
+  mutate(log_means_plot_table = map2(
+    log_means_plot, log_sig_table,
+    ~ (.x +
+      theme(axis.text = element_text(size = 10),
+            axis.text.x = element_blank(),
+            plot.margin = unit(c(0, 0, 0, 0), units = "cm"))) / wrap_table(.y, space = "fixed")
+  )) %>% 
+  mutate(raw_means_plot_table = map2(
+    raw_means_plot, raw_sig_table,
+    ~ (.x +
+      theme(axis.text = element_text(size = 10),
+            axis.text.x = element_blank(),
+            plot.margin = unit(c(0, 0, 0, 0), units = "cm"))) / wrap_table(.y, space = "fixed")
+  )) 
+
+# h:ww not sig with raw values, sig with log because of huge BO outlier
 
 # maximum height
-pluck(boxplots, 4, 1)
+log_h_means_plot_table <- pluck(sp_anovas, 17, 1)
+raw_h_means_plot_table <- pluck(sp_anovas, 18, 1)
 
 # thickness
-pluck(boxplots, 4, 2)
+log_t_means_plot_table <- pluck(sp_anovas, 17, 2)
+raw_t_means_plot_table <- pluck(sp_anovas, 18, 2)
 
 # surface area
-pluck(boxplots, 4, 3)
+log_sa_means_plot_table <- pluck(sp_anovas, 17, 3)
+raw_sa_means_plot_table <- pluck(sp_anovas, 18, 3)
 
 # height:wet weight
-# checked out the one high BO point - that's real as far as I can tell
-pluck(boxplots, 4, 4)
+log_h_ww_means_plot_table <- pluck(sp_anovas, 17, 4)
+raw_h_ww_means_plot_table <- pluck(sp_anovas, 18, 4)
 
 # dry:wet weight
-pluck(boxplots, 4, 5)
+log_dw_ww_means_plot_table <- pluck(sp_anovas, 17, 5)
+raw_dw_ww_means_plot_table <- pluck(sp_anovas, 18, 5)
 
 # height:volume
-pluck(boxplots, 4, 6)
+log_h_v_means_plot_table <- pluck(sp_anovas, 17, 6)
+raw_h_v_means_plot_table <- pluck(sp_anovas, 18, 6)
 
 # SA:V
-pluck(boxplots, 4, 7)
+log_sa_v_means_plot_table <- pluck(sp_anovas, 17, 7)
+raw_sa_v_means_plot_table <- pluck(sp_anovas, 18, 7)
 
 # surface area:dry weight
-pluck(boxplots, 4, 8)
+log_sa_dw_means_plot_table <- pluck(sp_anovas, 17, 8)
+raw_sa_dw_means_plot_table <- pluck(sp_anovas, 18, 8)
 
 # SA:P
-pluck(boxplots, 4, 9)
-
+log_sa_p_means_plot_table <- pluck(sp_anovas, 17, 9)
+raw_sa_p_means_plot_table <- pluck(sp_anovas, 18, 9)
 
 # ⟞ b. multipanel plot ----------------------------------------------------
 
 boxplot_multipanel <- 
-  (pluck(boxplots, 4, 1) + pluck(boxplots, 4, 2) + pluck(boxplots, 4, 3)) /
-  (pluck(boxplots, 4, 4) + pluck(boxplots, 4, 5) + pluck(boxplots, 4, 6)) /
-  (pluck(boxplots, 4, 7) + pluck(boxplots, 4, 8) + pluck(boxplots, 4, 9)) 
-
-# ⟞ c. saving outputs -----------------------------------------------------
+  (pluck(sp_anovas, 15, 1) + pluck(sp_anovas, 15, 2) + pluck(sp_anovas, 15, 3)) /
+  (pluck(sp_anovas, 15, 4) + pluck(sp_anovas, 15, 5) + pluck(sp_anovas, 15, 6)) /
+  (pluck(sp_anovas, 15, 7) + pluck(sp_anovas, 15, 8) + pluck(sp_anovas, 15, 9)) 
 
 # ggsave(here("figures",
 #             "basic-visualizations",
 #             "boxplots",
 #             paste0("multipanel_boxplots_", today(), ".jpg")),
 #        boxplot_multipanel,
-#        width = 24,
+#        width = 26,
 #        height = 18,
 #        units = "cm",
 #        dpi = 300)
+
+# ⟞ c. saving outputs -----------------------------------------------------
+
+trait_file_names <- list(
+  "h",
+  "t",
+  "sa",
+  "h-ww",
+  "dw-ww",
+  "h-v",
+  "sa-v",
+  "sa-dw",
+  "sa-p"
+)
+
+log_means_plot_tables <- list(
+  log_h_means_plot_table,
+  log_t_means_plot_table,
+  log_sa_means_plot_table,
+  log_h_ww_means_plot_table,
+  log_dw_ww_means_plot_table,
+  log_h_v_means_plot_table,
+  log_sa_v_means_plot_table,
+  log_sa_dw_means_plot_table,
+  log_sa_p_means_plot_table
+)
+
+raw_means_plot_tables <- list(
+  raw_h_means_plot_table,
+  raw_t_means_plot_table,
+  raw_sa_means_plot_table,
+  raw_h_ww_means_plot_table,
+  raw_dw_ww_means_plot_table,
+  raw_h_v_means_plot_table,
+  raw_sa_v_means_plot_table,
+  raw_sa_dw_means_plot_table,
+  raw_sa_p_means_plot_table
+)
+
+for(i in 1:length(log_means_plot_tables)) {
+  ggsave(here("figures",
+              "basic-visualizations", 
+              "means-plots",
+              paste0("log_", trait_file_names[[i]], "_plot-table_", today(), ".jpg")),
+         plot = log_means_plot_tables[[i]],
+         width = 21,
+         height = 21,
+         units = "cm",
+         dpi = 300)
+}
+
+for(i in 1:length(raw_means_plot_tables)) {
+  ggsave(here("figures",
+              "basic-visualizations", 
+              "means-plots",
+              paste0("raw_", trait_file_names[[i]], "_plot-table_", today(), ".jpg")),
+         plot = raw_means_plot_tables[[i]],
+         width = 21,
+         height = 21,
+         units = "cm",
+         dpi = 300)
+}
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # ---------------------------- 2. distributions ---------------------------
