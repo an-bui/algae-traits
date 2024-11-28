@@ -21,9 +21,10 @@ distribution_theme <- list(
   theme_bw(),
   theme(legend.position = "none",
         panel.grid = element_blank(),
-        axis.title = element_text(size = 18),
-        axis.text = element_text(size = 14),
-        plot.title = element_text(size = 22))
+        axis.title = element_text(size = 8),
+        axis.text = element_text(size = 8),
+        plot.title = element_text(size = 10),
+        plot.title.position = "plot")
 )
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -76,7 +77,7 @@ pairwise_sig_fxn <- function(pairwise) {
 
 sig_table_fxn <- function(pairwise_sig_df) {
   table <- gt(pairwise_sig_df, rownames_to_stub = T) %>%
-    cols_width(everything() ~ px(75)) %>% 
+    cols_width(everything() ~ px(70)) %>% 
     tab_style(
       style = cell_text(align = "center"),
       locations = list(cells_body(columns = everything(),
@@ -290,7 +291,7 @@ raw_sa_p_means_plot_table <- pluck(sp_anovas, 18, 9)
 # ⟞ b. multipanel plot ----------------------------------------------------
 
 boxplot_multipanel <- 
-  (pluck(sp_anovas, 15, 1) + pluck(sp_anovas, 15, 2) + pluck(sp_anovas, 15, 3)) /
+  (pluck(sp_anovas, 15, 1) + pluck(sp_anovas, 15, 3) + pluck(sp_anovas, 15, 2)) /
   (pluck(sp_anovas, 15, 4) + pluck(sp_anovas, 15, 5) + pluck(sp_anovas, 15, 6)) /
   (pluck(sp_anovas, 15, 7) + pluck(sp_anovas, 15, 8) + pluck(sp_anovas, 15, 9)) 
 
@@ -382,6 +383,7 @@ distributions <- ind_traits_filtered %>%
   pivot_longer(cols = maximum_height:sap_mean,
                names_to = "trait",
                values_to = "value") %>% 
+  mutate(trait = fct_relevel(trait, trait_colnames_factor)) %>% 
   nest(.by = trait,
        data = everything()) %>% 
   mutate(units = map(
@@ -414,15 +416,15 @@ distributions <- ind_traits_filtered %>%
     trait,
     ~ case_match(
       .x,
-      "maximum_height" ~ max_height_col, 
+      "maximum_height" ~ height_col, 
       "thickness_mm_mean" ~ thickness_col, 
-      "frond_area_scaled" ~ sta_col,
-      "height_ww" ~ mass_to_height_col,
-      "total_dmc" ~ total_dmc_col, 
-      "height_vol" ~ mass_to_height_col,
-      "sav_scaled" ~ sav_col, 
-      "sta_scaled" ~ sta_col,
-      "sap_mean" ~ sap_col
+      "frond_area_scaled" ~ surface_area_col,
+      "height_ww" ~ tradeoff_col,
+      "total_dmc" ~ tradeoff_col, 
+      "height_vol" ~ tradeoff_col,
+      "sav_scaled" ~ tradeoff_col, 
+      "sta_scaled" ~ tradeoff_col,
+      "sap_mean" ~ tradeoff_col
     )
   )) %>% 
   mutate(distribution_plot = pmap(
@@ -574,18 +576,18 @@ pluck(distributions, 12, 9)
 # ⟞ b. multipanel plot ----------------------------------------------------
 
 distributions_multipanel <- 
-  (pluck(distributions, 8, 1) + pluck(distributions, 8, 2) + pluck(distributions, 8, 3)) /
+  (pluck(distributions, 8, 1) + pluck(distributions, 8, 3) + pluck(distributions, 8, 2)) /
   (pluck(distributions, 8, 4) + pluck(distributions, 8, 5) + pluck(distributions, 8, 6)) /
   (pluck(distributions, 8, 7) + pluck(distributions, 8, 8) + pluck(distributions, 8, 9))
 
 # ⟞ c. saving outputs -----------------------------------------------------
 
-# ggsave(here("figures",
-#             "basic-visualizations",
-#             "distributions",
-#             paste0("multipanel_hist_", today(), ".jpg")),
-#        distributions_multipanel,
-#        width = 24,
-#        height = 18,
-#        units = "cm",
-#        dpi = 300)
+ggsave(here("figures",
+            "basic-visualizations",
+            "distributions",
+            paste0("multipanel_hist_", today(), ".jpg")),
+       distributions_multipanel,
+       width = 24,
+       height = 18,
+       units = "cm",
+       dpi = 300)

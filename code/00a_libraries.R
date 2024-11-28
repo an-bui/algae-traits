@@ -314,7 +314,7 @@ trait_color_palette <- c(
   `Height` = height_col,
   `Thickness` = thickness_col,
   `Surface area` = surface_area_col,
-  `Height:wet weight` =tradeoff_col,
+  `Height:wet weight` = tradeoff_col,
   `Dry:wet weight` = tradeoff_col,
   `Height:volume` = tradeoff_col,
   `Surface area:volume` = tradeoff_col,
@@ -331,6 +331,18 @@ trait_factor <- c("Height",
                   "Height:wet weight",
                   "Height:volume",
                   "Dry:wet weight")
+
+trait_colnames_factor <- c(
+  "maximum_height",
+  "frond_area_scaled",
+  "thickness_mm_mean",
+  "sap_mean",
+  "sav_scaled",
+  "sta_scaled",
+  "height_ww",
+  "height_vol",
+  "total_dmc"
+)
       
     # gradient palette
     gradient_palette <- c("#FFFFFF", "#009BB0")
