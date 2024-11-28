@@ -92,12 +92,17 @@ sig_table_fxn <- function(pairwise_sig_df) {
 }
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# ------------------------------ 2. boxplots ------------------------------
+# --------------- 2. ANOVAs, post-hoc comparisons, and plots --------------
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-# This section includes code to generate a bunch of boxplots showing trait
-# distributions across species. Each point is an individual, and the boxplots
-# depict the median, IQR, and 1.5*IQR. The outliers aren't shown.
+#' This section includes code to do one-way ANOVAs comparing trait values 
+#' between species. I also do a Tukey HSD post-hoc comparison after each ANOVA.
+#' The trait values used in the correlation analysis, standardized major axis
+#' regression, and PCA are log transformed; thus, this code includes ANOVAs for
+#' log transformed (log) and raw (raw) trait values. 
+#' 
+#' The code also includes visualizations of logged and raw trait values in 
+#' boxplots and means and 95% CI. 
 
 # ⟞ a. ANOVA --------------------------------------------------------------
 
@@ -122,27 +127,45 @@ sp_anovas <- ind_traits_filtered %>%
       "sap_mean" ~ "Surface area:perimeter (mm\U00B2/mm)"
     )
   )) %>% 
+  # log transform the trait value
   mutate(data = map(
     data,
     ~ .x %>% 
       mutate(log_value = log(value))
   )) %>% 
+  # calculate variances (ANOVA assumption check)
+  # I don't do this for the raw trait values because the variances are all off
   mutate(variances = map(
     data,
     ~ .x %>% 
       group_by(sp_code) %>% 
       summarize(var = var(log_value))
   )) %>% 
+  
+  # ANOVA using log transformed trait values
   mutate(log_anova = map(
     data,
     ~ aov(log_value ~ sp_code,
-          data = .x)
+          data = .x) 
   )) %>% 
+  # ANOVA using raw trait values
   mutate(raw_anova = map(
     data,
     ~ aov(value ~ sp_code,
-          data = .x)
+          data = .x) 
   )) %>% 
+  
+  # tidy ANOVA outputs for table making later
+  mutate(log_anova_table = map(
+    log_anova,
+    ~ tidy(.x)
+  )) %>% 
+  mutate(raw_anova_table = map(
+    raw_anova,
+    ~ tidy(.x)
+  )) %>% 
+  
+  # pairwise comparisons
   mutate(log_pairwise = map(
     log_anova,
     ~ TukeyHSD(.x)$sp_code
@@ -151,14 +174,18 @@ sp_anovas <- ind_traits_filtered %>%
     raw_anova,
     ~ TukeyHSD(.x)$sp_code
   )) %>% 
+  
+  # getting the p-values from pairwise comparisons
   mutate(log_sig_df = map(
     log_pairwise,
     ~ pairwise_sig_fxn(.x)
-  ))  %>% 
+  )) %>% 
   mutate(raw_sig_df = map(
     raw_pairwise,
     ~ pairwise_sig_fxn(.x)
   )) %>% 
+  
+  # getting the p-values into a table (using gt)
   mutate(log_sig_table = map(
     log_sig_df,
     ~ sig_table_fxn(.x)
@@ -167,6 +194,7 @@ sp_anovas <- ind_traits_filtered %>%
     raw_sig_df,
     ~ sig_table_fxn(.x)
   )) %>% 
+  # log transformed boxplot
   mutate(log_boxplot = map2(
     data, units,
     ~ .x %>% 
@@ -183,6 +211,7 @@ sp_anovas <- ind_traits_filtered %>%
       labs(title = paste0(.y, " (log transform)")) +
       boxplot_theme
   )) %>% 
+  # log transformed means plot (mean + 95% CI)
   mutate(log_means_plot = map2(
     data, units,
     ~ .x %>% 
@@ -201,6 +230,7 @@ sp_anovas <- ind_traits_filtered %>%
       labs(title = paste0(.y, " (log transform)")) +
       boxplot_theme
   )) %>% 
+  # raw boxplot
   mutate(raw_boxplot = map2(
     data, units,
     ~ .x %>% 
@@ -217,6 +247,7 @@ sp_anovas <- ind_traits_filtered %>%
       labs(title = .y) +
       boxplot_theme
   )) %>% 
+  # raw means plot (means + 95% CI)
   mutate(raw_means_plot = map2(
     data, units,
     ~ .x %>% 
@@ -253,47 +284,47 @@ sp_anovas <- ind_traits_filtered %>%
 # h:ww not sig with raw values, sig with log because of huge BO outlier
 
 # maximum height
-log_h_means_plot_table <- pluck(sp_anovas, 17, 1)
-raw_h_means_plot_table <- pluck(sp_anovas, 18, 1)
+log_h_means_plot_table <- pluck(sp_anovas, 19, 1)
+raw_h_means_plot_table <- pluck(sp_anovas, 20, 1)
 
 # thickness
-log_t_means_plot_table <- pluck(sp_anovas, 17, 2)
-raw_t_means_plot_table <- pluck(sp_anovas, 18, 2)
+log_t_means_plot_table <- pluck(sp_anovas, 19, 2)
+raw_t_means_plot_table <- pluck(sp_anovas, 20, 2)
 
 # surface area
-log_sa_means_plot_table <- pluck(sp_anovas, 17, 3)
-raw_sa_means_plot_table <- pluck(sp_anovas, 18, 3)
+log_sa_means_plot_table <- pluck(sp_anovas, 19, 3)
+raw_sa_means_plot_table <- pluck(sp_anovas, 20, 3)
 
 # height:wet weight
-log_h_ww_means_plot_table <- pluck(sp_anovas, 17, 4)
-raw_h_ww_means_plot_table <- pluck(sp_anovas, 18, 4)
+log_h_ww_means_plot_table <- pluck(sp_anovas, 19, 4)
+raw_h_ww_means_plot_table <- pluck(sp_anovas, 20, 4)
 
 # dry:wet weight
-log_dw_ww_means_plot_table <- pluck(sp_anovas, 17, 5)
-raw_dw_ww_means_plot_table <- pluck(sp_anovas, 18, 5)
+log_dw_ww_means_plot_table <- pluck(sp_anovas, 19, 5)
+raw_dw_ww_means_plot_table <- pluck(sp_anovas, 20, 5)
 
 # height:volume
-log_h_v_means_plot_table <- pluck(sp_anovas, 17, 6)
-raw_h_v_means_plot_table <- pluck(sp_anovas, 18, 6)
+log_h_v_means_plot_table <- pluck(sp_anovas, 19, 6)
+raw_h_v_means_plot_table <- pluck(sp_anovas, 20, 6)
 
 # SA:V
-log_sa_v_means_plot_table <- pluck(sp_anovas, 17, 7)
-raw_sa_v_means_plot_table <- pluck(sp_anovas, 18, 7)
+log_sa_v_means_plot_table <- pluck(sp_anovas, 19, 7)
+raw_sa_v_means_plot_table <- pluck(sp_anovas, 20, 7)
 
 # surface area:dry weight
-log_sa_dw_means_plot_table <- pluck(sp_anovas, 17, 8)
-raw_sa_dw_means_plot_table <- pluck(sp_anovas, 18, 8)
+log_sa_dw_means_plot_table <- pluck(sp_anovas, 19, 8)
+raw_sa_dw_means_plot_table <- pluck(sp_anovas, 20, 8)
 
 # SA:P
-log_sa_p_means_plot_table <- pluck(sp_anovas, 17, 9)
-raw_sa_p_means_plot_table <- pluck(sp_anovas, 18, 9)
+log_sa_p_means_plot_table <- pluck(sp_anovas, 19, 9)
+raw_sa_p_means_plot_table <- pluck(sp_anovas, 20, 9)
 
 # ⟞ b. multipanel plot ----------------------------------------------------
 
 boxplot_multipanel <- 
-  (pluck(sp_anovas, 15, 1) + pluck(sp_anovas, 15, 3) + pluck(sp_anovas, 15, 2)) /
-  (pluck(sp_anovas, 15, 4) + pluck(sp_anovas, 15, 5) + pluck(sp_anovas, 15, 6)) /
-  (pluck(sp_anovas, 15, 7) + pluck(sp_anovas, 15, 8) + pluck(sp_anovas, 15, 9)) 
+  (pluck(sp_anovas, 17,  1) + pluck(sp_anovas, 17,  3) + pluck(sp_anovas, 17,  2)) /
+  (pluck(sp_anovas, 17,  4) + pluck(sp_anovas, 17,  5) + pluck(sp_anovas, 17,  6)) /
+  (pluck(sp_anovas, 17,  7) + pluck(sp_anovas, 17,  8) + pluck(sp_anovas, 17,  9)) 
 
 # ggsave(here("figures",
 #             "basic-visualizations",
@@ -305,7 +336,134 @@ boxplot_multipanel <-
 #        units = "cm",
 #        dpi = 300)
 
-# ⟞ c. saving outputs -----------------------------------------------------
+
+# ⟞ c. ANOVA tables -------------------------------------------------------
+
+table_fxn <- function(df) {
+  df %>% 
+  mutate(term = case_when(
+    term == "sp_code" ~ "Species",
+    TRUE ~ term
+  )) %>% 
+    # create a new column that indicates whether an effect is significant
+    mutate(signif = case_when(
+      p.value < 0.05 ~ "yes",
+      TRUE ~ "no"
+    )) %>% 
+    # create a p-value column that converts very small values to < 0.001
+    # and rounds all other values to relevant digits
+    mutate(p.value = case_when(
+      between(p.value, 0, 0.001) ~ "<0.001",
+      between(p.value, 0.001, 0.01) ~ as.character(round(p.value, digits = 3)),
+      between(p.value, 0.01, 1) ~ as.character(round(p.value, digits = 2))
+    )) %>% 
+    # round other numeric values to two digits
+    mutate(across(where(is.numeric), ~ round(., digits = 2)))
+}
+
+sp_anova_tables <- sp_anovas %>% 
+  select(units, log_anova_table, raw_anova_table) %>% 
+  mutate(log_anova_table = map2(
+    log_anova_table, units,
+    ~ .x %>% 
+      mutate(trait = .y) %>% 
+      relocate(trait, .before = term) %>% 
+      table_fxn()
+  )) %>% 
+  mutate(raw_anova_table = map2(
+    raw_anova_table, units,
+    ~ .x %>% 
+      mutate(trait = .y) %>% 
+      relocate(trait, .before = term) %>% 
+      table_fxn()
+  ))
+
+# thank you stefan for this solution: https://stackoverflow.com/questions/72451868/flextable-scientific-formats-for-a-table-that-has-both-very-large-and-very-smal
+format_scientific <- function(x) {
+  formatC(x, format = "e", digits = 2)
+}
+
+
+raw_anova_table <- sp_anova_tables %>% 
+  select(raw_anova_table) %>% 
+  unnest(cols = raw_anova_table) %>% 
+  flextable(col_keys = c("trait",
+                         "term",
+                         "df",
+                         "sumsq",
+                         "meansq",
+                         "statistic", 
+                         "p.value")) %>% 
+  # merge group cells to create a grouping column
+  merge_v(j = ~ trait) %>% 
+  valign(j = ~ trait,
+         i = NULL,
+         valign = "top") %>% 
+  # change the column names
+  set_header_labels("trait" = "Trait",
+                    "term" = "Term",
+                    "df" = "Degrees of freedom",
+                    "sumsq" = "Sum of squares",
+                    "meansq" = "Mean squares",
+                    "statistic" = "F-statistic", 
+                    "p.value" = "p-value") %>% 
+  set_formatter(
+    sumsq = format_scientific,
+    meansq = format_scientific
+  ) %>% 
+  # bold p values if they are significant
+  style(i = ~ signif == "yes",
+        j = c("p.value"),
+        pr_t = officer::fp_text(bold = TRUE),
+        part = "body") %>% 
+  autofit() %>% 
+  fit_to_width(7) %>% 
+  font(fontname = "Times New Roman",
+       part = "all")
+
+raw_anova_table
+
+log_anova_table <- sp_anova_tables %>% 
+  select(log_anova_table) %>% 
+  unnest(cols = log_anova_table) %>% 
+  flextable(col_keys = c("trait",
+                         "term",
+                         "df",
+                         "sumsq",
+                         "meansq",
+                         "statistic", 
+                         "p.value")) %>% 
+  # merge group cells to create a grouping column
+  merge_v(j = ~ trait) %>% 
+  valign(j = ~ trait,
+         i = NULL,
+         valign = "top") %>% 
+  # change the column names
+  set_header_labels("trait" = "Trait",
+                    "term" = "Term",
+                    "df" = "Degrees of freedom",
+                    "sumsq" = "Sum of squares",
+                    "meansq" = "Mean squares",
+                    "statistic" = "F-statistic", 
+                    "p.value" = "p-value") %>% 
+  # bold p values if they are significant
+  style(i = ~ signif == "yes",
+        j = c("p.value"),
+        pr_t = officer::fp_text(bold = TRUE),
+        part = "body") %>% 
+  autofit() %>% 
+  fit_to_width(7) %>% 
+  font(fontname = "Times New Roman",
+       part = "all")
+
+log_anova_table
+
+# ⟞ d. saving outputs -----------------------------------------------------
+
+
+# ⟞ ⟞ i. plots ------------------------------------------------------------
+
+
 
 trait_file_names <- list(
   "h",
@@ -367,6 +525,19 @@ for(i in 1:length(raw_means_plot_tables)) {
          dpi = 300)
 }
 
+
+# ⟞ ⟞ ii. tables ----------------------------------------------------------
+
+# save_as_docx(path = here("tables",
+#                   "ANOVA",
+#                   paste0("raw-trait-ANOVA_", today(), ".docx")),
+#              raw_anova_table)
+# 
+# save_as_docx(path = here("tables",
+#                          "ANOVA",
+#                          paste0("log-trait-ANOVA_", today(), ".docx")),
+#              log_anova_table)
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # ---------------------------- 2. distributions ---------------------------
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -379,28 +550,8 @@ for(i in 1:length(raw_means_plot_tables)) {
 
 # ⟞ a. generating plots ---------------------------------------------------
 
-distributions <- ind_traits_filtered %>% 
-  pivot_longer(cols = maximum_height:sap_mean,
-               names_to = "trait",
-               values_to = "value") %>% 
-  mutate(trait = fct_relevel(trait, trait_colnames_factor)) %>% 
-  nest(.by = trait,
-       data = everything()) %>% 
-  mutate(units = map(
-    trait,
-    ~ case_match(
-      .x,
-      "maximum_height" ~ "Maximum height (cm)", 
-      "thickness_mm_mean" ~ "Thickness (mm)", 
-      "frond_area_scaled" ~ "Surface area (mm\U00B2)",
-      "height_ww" ~ "Height:Wet weight (cm/wet mg)",
-      "total_dmc" ~ "Dry:wet weight", 
-      "height_vol" ~ "Height:volume (cm/mL)",
-      "sav_scaled" ~ "Surface area:volume (mm\U00B2/mL)", 
-      "sta_scaled" ~ "Surface area:dry weight (mm\U00B2/dry mg)",
-      "sap_mean" ~ "Surface area:perimeter (mm\U00B2/mm)"
-    )
-  )) %>% 
+distributions <- sp_anovas %>%
+  select(data, units, trait) %>% 
   mutate(length = map(
     data,
     ~ .x %>% 

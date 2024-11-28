@@ -46,6 +46,7 @@ library(lmodel2) # SMA
 library(smatr) # SMA
 library(ggpmisc) # visualization of SMA
 library(ggExtra) # visualization of SMA
+library(broom) # getting tidy model outputs
 
 ############################################################-
 # 4. visualization packages ---------------------------------
