@@ -339,6 +339,8 @@ boxplot_multipanel <-
 
 # ⟞ c. ANOVA tables -------------------------------------------------------
 
+# solution from TarJae: https://stackoverflow.com/questions/72451868/flextable-scientific-formats-for-a-table-that-has-both-very-large-and-very-smal
+
 table_fxn <- function(df) {
   df %>% 
   mutate(term = case_when(
@@ -358,7 +360,11 @@ table_fxn <- function(df) {
       between(p.value, 0.01, 1) ~ as.character(round(p.value, digits = 2))
     )) %>% 
     # round other numeric values to two digits
-    mutate(across(where(is.numeric), ~ round(., digits = 2)))
+    mutate(across(where(is.numeric), ~ round(., digits = 2))) %>% 
+    # format sum squares and mean squares in scientific format if > 1000000
+    mutate(across(sumsq:meansq, ~
+                    case_when(. < 1000000 ~ format(., scientific = FALSE),
+                              . >= 1000000 ~ format(., scientific = TRUE, digits = 2))))
 }
 
 sp_anova_tables <- sp_anovas %>% 
@@ -377,12 +383,6 @@ sp_anova_tables <- sp_anovas %>%
       relocate(trait, .before = term) %>% 
       table_fxn()
   ))
-
-# thank you stefan for this solution: https://stackoverflow.com/questions/72451868/flextable-scientific-formats-for-a-table-that-has-both-very-large-and-very-smal
-format_scientific <- function(x) {
-  formatC(x, format = "e", digits = 2)
-}
-
 
 raw_anova_table <- sp_anova_tables %>% 
   select(raw_anova_table) %>% 
@@ -407,10 +407,6 @@ raw_anova_table <- sp_anova_tables %>%
                     "meansq" = "Mean squares",
                     "statistic" = "F-statistic", 
                     "p.value" = "p-value") %>% 
-  set_formatter(
-    sumsq = format_scientific,
-    meansq = format_scientific
-  ) %>%
   # bold p values if they are significant
   style(i = ~ signif == "yes",
         j = c("p.value"),
