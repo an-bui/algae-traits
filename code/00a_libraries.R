@@ -258,23 +258,16 @@ algae_spcode_colors <- c(
 
 algae_spcode_full_names <- c(
   # reds
-  "BF" = "Cryptopleura\nruprechtiana", 
-  "CC" = "Chondracanthus\nspp.", 
-  "GS" = "Gracilaria\nspp.", 
-  "CO" = "Corallina\nofficinalis", 
-  "BO" = "Bossiella\norbigniana", 
-  "POLA" = "Polyneura\nlatissima", 
-  "R" = "Rhodymenia\ncalifornica", 
-  "GR" = "Gelidium\nspp.", 
-  "Nandersoniana" = "Nienburgia\nandersoniana",
+  "BF" = "Cryptopleura ruprechtiana", 
+  "CC" = "Chondracanthus spp.", 
+  "CO" = "Corallina officinalis", 
+  "BO" = "Bossiella orbigniana", 
+  "R" = "Rhodymenia californica", 
   # browns
-  "PTCA" = "Pterygophora\ncalifornica", 
-  "CYOS" = "Stephanocystis\nosmundacea", 
-  "DL" = "Desmarestia\nligulata", 
-  "EGME" = "Egregia\nmenziesii", 
-  "LAFA" = "Laminaria\nfarlowii", 
-  "DU" = "Dictyopteris\nundulata", 
-  "DP" = "Dictyota\nspp."
+  "PTCA" = "Pterygophora californica", 
+  "CYOS" = "Stephanocystis osmundacea", 
+  "LAFA" = "Laminaria farlowii", 
+  "DP" = "Dictyota spp."
 )
 
 

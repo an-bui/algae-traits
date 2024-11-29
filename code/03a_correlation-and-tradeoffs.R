@@ -117,13 +117,18 @@ loadings_plot_theme <- function() {
 # ⟞ c. PCA plots ----------------------------------------------------------
 
 PCA_aesthetics <- list(
-  coord_cartesian(),
+  # coord_cartesian(),
   geom_vline(xintercept = c(0), color = "grey70", linetype = 2),
-  geom_hline(yintercept = c(0), color = "grey70", linetype = 2),
+  geom_hline(yintercept = c(0), color = "grey70", linetype = 2)
+)
+
+vector_colors <- list(
   scale_color_manual(values = trait_color_palette),
-  scale_fill_manual(values = trait_color_palette),
-  guides(colour = guide_legend(ncol = 4),
-         shape = guide_legend(ncol = 4)) 
+  scale_fill_manual(values = trait_color_palette)
+)
+
+species_colors <- list(
+  scale_color_manual(values = algae_colors)
 )
 
 PCA_theme <- function() {
@@ -134,7 +139,8 @@ PCA_theme <- function() {
           axis.title = element_text(size = 18),
           axis.text = element_text(size = 16),
           title = element_text(size = 20),
-          legend.text = element_text(size = 10)) 
+          legend.text = element_text(size = 10),
+          panel.grid = element_blank()) 
 }
 
 # ⟞ d. trait contributions plots ------------------------------------------
@@ -149,9 +155,6 @@ contrib_theme <- function() {
           plot.title = element_text(size = 22),
           axis.title = element_blank())
 }
-
-
-
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # ----------------------------- 3. correlations ---------------------------
@@ -280,23 +283,9 @@ log_ind_traits <- ind_traits_filtered %>%
                   sap_mean), 
                 log))
 
-scaled_ind_traits <- ind_traits_filtered %>% 
-  mutate(across(c(maximum_height, 
-                  thickness_mm_mean, 
-                  frond_area_scaled,
-                  height_ww,
-                  total_dmc, 
-                  height_vol,
-                  sav_scaled, 
-                  sta_scaled,
-                  sap_mean), 
-                scale))
-
 pairwise_sma <- function(model_formula, trait1, trait2, data) {
   df <- if(data == "normal") {
     ind_traits_filtered
-  } else if(data == "scaled") {
-    scaled_ind_traits 
   } else if(data == "log") {
     log_ind_traits 
   } 
@@ -311,18 +300,28 @@ pairwise_sma <- function(model_formula, trait1, trait2, data) {
   # plot
   plot <- ggplot(data = df,
                  aes(x = {{ trait1 }},
-                     y = {{ trait2 }})) +
+                     y = {{ trait2 }},
+                     color = scientific_name)) +
     geom_point(alpha = 0.3,
                shape = 21,
-               color = "#7e97c0") +
+               size = 0.75) +
     stat_ma_line(method = "SMA",
-                 color = "#295396",
-                 fill = "#a9bad5",
+                 color = "black",
+                 fill = "lightgrey",
                  linewidth = 0.75) +
+    geom_smooth(aes(group = scientific_name),
+                method = "lm",
+                se = FALSE,
+                linewidth = 0.5) +
+    scale_color_manual(values = algae_colors,
+                       labels = function(x) str_wrap(x, width = 40)) +
+    labs(color = "Scientific name") + 
+    guides(color = guide_legend(nrow = 3),
+           label.position = "bottom") +
     # labs(title = model_formula) +
     theme_bw() +
     theme(panel.grid = element_blank(),
-          text = element_text(size = 12))
+          text = element_text(size = 22))
   
   # return all
   return(list(lmodel2_obj, sma_obj, plot))
@@ -343,6 +342,19 @@ sta_sav_plot <- pair_sta_sav[[3]] +
        title = "(a)") +
   theme(plot.title.position = "plot")
 
+pair_thick_height <- pairwise_sma(
+  model_formula = "thickness_mm_mean ~ maximum_height", 
+  trait1 = thickness_mm_mean,
+  trait2 = maximum_height,
+  data = "log"
+)
+
+thick_height_plot <- pair_thick_height[[3]] +
+  labs(x = "Thickness",
+       y = "Height",
+       title = "(b)") +
+  theme(plot.title.position = "plot")
+
 pair_sta_h_ww <- pairwise_sma(
   model_formula = "sta_scaled ~ height_ww", 
   trait1 = sta_scaled,
@@ -353,7 +365,7 @@ pair_sta_h_ww <- pairwise_sma(
 sta_h_ww_plot <- pair_sta_h_ww[[3]] +
   labs(x = "Surface area:dry weight",
        y = "Height:wet weight",
-       title = "(b)") +
+       title = "(c)") +
   theme(plot.title.position = "plot")
 
 pair_dmc_height <- pairwise_sma(
@@ -366,16 +378,24 @@ pair_dmc_height <- pairwise_sma(
 dmc_height_plot <- pair_dmc_height[[3]] +
   labs(x = "Dry:wet weight",
        y = "Height",
-       title = "(c)") +
+       title = "(d)") +
   theme(plot.title.position = "plot")
 
-sma_together <- sta_sav_plot + sta_h_ww_plot + dmc_height_plot
+plot_legend <- pair_dmc_height[[3]] +
+  labs(color = "Scientific name") + 
+  guides(color = guide_legend(nrow = 3),
+         label.position = "bottom")
 
+plot_legend_test <- cowplot::get_plot_component(plot_legend, "guide-box-right", return_all = TRUE)
+
+
+sma_together <- (sta_sav_plot | thick_height_plot) / (sta_h_ww_plot | dmc_height_plot) + plot_layout(guides = "collect") & theme(legend.position = 'bottom')
+  
 ggsave(here::here("figures",
                   "tradeoffs",
-                  paste0("sma_main-text_", today(), ".jpg")),
-       width = 10,
-       height = 4,
+                  paste0("sma_supplement_", today(), ".jpg")),
+       width = 14,
+       height = 18,
        units = "cm",
        dpi = 300)
 
@@ -475,6 +495,9 @@ PCAscores_full <- scores(pca_full,
                                   levels = algae_proposal_sciname_factors)) %>% 
   left_join(., fvfm_ind, by = "specimen_ID")
 
+
+# ⟞ ⟞ i. trait vectors ----------------------------------------------------
+
 # trait vectors
 PCAvect_full <- scores(pca_full, 
                        display = "species", 
@@ -482,8 +505,9 @@ PCAvect_full <- scores(pca_full,
   as.data.frame()
 
 # plot PCA
-plot_PCA_12_full <- ggplot() +
+plot_PCA_12_vectors <- ggplot() +
   PCA_aesthetics +
+  vector_colors + 
   geom_point(data = PCAscores_full, 
              aes(x = PC1, 
                  y = PC2#, 
@@ -491,7 +515,8 @@ plot_PCA_12_full <- ggplot() +
                  # shape = scientific_name,
                  # size = fvfm_mean
                  ) ,
-             alpha = 0.7,
+             alpha = 0.3,
+             size = 1,
              shape = 21,
              color = "darkgrey"
              ) +
@@ -517,17 +542,61 @@ plot_PCA_12_full <- ggplot() +
   PCA_theme() +
   labs(x = paste0("PC1 (", prop_PC1_full, ")"),
        y = paste0("PC2 (", prop_PC2_full, ")"),
-       title = "(a) PC1 and PC2",
-       subtitle = "BO, CC, CO, BF, DP, LAFA, PTCA, R, CYOS", 
+       title = "(a) Trait vectors",
+       # subtitle = "BO, CC, CO, BF, DP, LAFA, PTCA, R, CYOS", 
        color = "Scientific name") 
-plot_PCA_12_full
+plot_PCA_12_vectors
 
 ggsave(here::here("figures",
                   "ordination",
-                  paste("PCA-log_scale_full-model_", today(), ".jpg", sep = "")),
-       plot_PCA_12_full,
+                  paste("PCA-log_scale_full-model_vectors_", today(), ".jpg", sep = "")),
+       plot_PCA_12_vectors,
        width = 12, height = 12, units = "cm", dpi = 300)
 
+
+# ⟞ ⟞ i. species points ---------------------------------------------------
+
+plot_PCA_12_species <- PCAscores_full %>% 
+  mutate(scientific_name = fct_relevel(scientific_name, algae_factors)) %>% 
+  ggplot(aes(x = PC1, 
+             y = PC2, 
+             color = scientific_name, 
+             # shape = scientific_name,
+             # size = fvfm_mean
+  ) ) +
+  PCA_aesthetics +
+  species_colors + 
+  geom_point(
+    shape = 21,
+    alpha = 0.3,
+    size = 1
+  )   +
+  stat_ellipse(aes(color = scientific_name),
+               level = 0.5) +
+  scale_x_continuous(limits = c(-1.6, 1.2)) +
+  scale_y_continuous(limits = c(-1.6, 1.2)) +
+  PCA_theme() +
+  theme(legend.position = "inside",
+        legend.position.inside = c(0.28, 0.2),
+        legend.background = element_blank(),
+        legend.spacing.y = unit(0.01, "cm"),
+        legend.key.spacing.y = unit(0.01, "cm"),
+        legend.key.height = unit(0.25, "cm")) +
+  labs(color = "Scientific name",
+       title = "(b) Species",
+       x = paste0("PC1 (", prop_PC1_full, ")"),
+       y = paste0("PC2 (", prop_PC2_full, ")"),
+  )
+
+plot_PCA_12_species
+
+PCA_vectors_species <- plot_PCA_12_vectors | plot_PCA_12_species
+
+ggsave(here::here("figures",
+                  "ordination",
+                  paste("PCA_full-model_vectors-and-species_", today(), ".jpg", sep = "")),
+       PCA_vectors_species,
+       width = 18, height = 10, units = "cm", dpi = 300)
 
 # ⟞ d. axis contributions -------------------------------------------------
 
@@ -555,42 +624,47 @@ expected_average_full <- (1/length(unique(varcoord_full$trait)))*100
 
 contrib_aesthetics_full <- list(
   geom_col(color = "black"),
-  geom_vline(xintercept = expected_average_full,
+  geom_hline(yintercept = expected_average_full,
              color = "#96a39e",
              linetype = 2),
   scale_fill_manual(values = trait_color_palette),
-  scale_x_continuous(expand = expansion(c(0, 0.05)),
-                     position = "top")
+  scale_y_continuous(expand = expansion(c(0, 0.05)),
+                     position = "left")
 )
 
 pc1_contrib_full <- varcoord_full %>% 
   filter(axis == "PC1") %>% 
-  ggplot(aes(y = reorder(trait, contrib),
-             x = contrib, 
+  ggplot(aes(x = reorder(trait, -contrib),
+             y = contrib, 
              fill = trait)) +
   contrib_aesthetics_full +
   contrib_theme() +
-  labs(title = "(b) Trait % contributions to PC1")
+  labs(title = "(c) Trait % contributions to PC1")
 
 pc1_contrib_full
 
 pc2_contrib_full <- varcoord_full %>% 
   filter(axis == "PC2") %>% 
-  ggplot(aes(y = reorder(trait, contrib),
-             x = contrib, 
+  ggplot(aes(x = reorder(trait, -contrib),
+             y = contrib, 
              fill = trait)) +
   contrib_aesthetics_full +
   contrib_theme() +
-  labs(title = "(c) Trait % contributions to PC2")
+  labs(title = "(d) Trait % contributions to PC2")
 
 pc2_contrib_full
 
 # scaled layout
-contrib_together_full <- (plot_PCA_12_full) | ((pc1_contrib_full / pc2_contrib_full) + plot_layout(axis_titles = "collect")) 
+contrib_together_full <- (plot_PCA_12_vectors | plot_PCA_12_species) / 
+  ((free(pc1_contrib_full) / free(pc2_contrib_full)) + 
+     plot_layout(axis_titles = "collect")) +
+  plot_layout()
 
-contrib_together_full <- (free(plot_PCA_12_full) / 
-                            (free(pc1_contrib_full) | free(pc2_contrib_full))) + 
-  plot_layout(heights = c(1, 0.8))
+contrib_together_full
+
+# contrib_together_full <- (free(plot_PCA_12_full) / 
+#                             (free(pc1_contrib_full) | free(pc2_contrib_full))) + 
+#   plot_layout(heights = c(1, 0.8))
 
 # contrib_together_full <- ((free(plot_PCA_12_full) / (free(pc1_contrib_full)) | (free(pc2_contrib_full) / plot_spacer()))) + 
 #   plot_layout(heights = c(1, 0.5, 0.5))
@@ -600,8 +674,8 @@ ggsave(here::here(
   "ordination",
   paste0("contributions_scale_full-model_", today(), ".jpg")),
   contrib_together_full,
-  width = 14,
-  height = 22,
+  width = 18,
+  height = 18,
   units = "cm",
   dpi = 300
 )

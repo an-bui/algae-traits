@@ -77,7 +77,7 @@ pairwise_sig_fxn <- function(pairwise) {
 
 sig_table_fxn <- function(pairwise_sig_df) {
   table <- gt(pairwise_sig_df, rownames_to_stub = T) %>%
-    cols_width(everything() ~ px(70)) %>% 
+    cols_width(everything() ~ px(45)) %>% 
     tab_style(
       style = cell_text(align = "center"),
       locations = list(cells_body(columns = everything(),
@@ -85,7 +85,8 @@ sig_table_fxn <- function(pairwise_sig_df) {
                        cells_column_labels(columns = everything()),
                        cells_stub(rows = everything()))) %>% 
     tab_options(
-      table.border.top.color = "white"
+      table.border.top.color = "white",
+      table.font.size = px(11)
     )
   
   return(table)
@@ -212,8 +213,8 @@ sp_anovas <- ind_traits_filtered %>%
       boxplot_theme
   )) %>% 
   # log transformed means plot (mean + 95% CI)
-  mutate(log_means_plot = map2(
-    data, units,
+  mutate(log_means_plot = map(
+    data, 
     ~ .x %>% 
       ggplot(aes(x = sp_code,
                  y = log(value),
@@ -227,7 +228,7 @@ sp_anovas <- ind_traits_filtered %>%
                    fun.data = mean_cl_normal) +
       scale_color_manual(values = algae_spcode_colors) +
       scale_x_discrete(labels = scales::label_wrap(10)) +
-      labs(title = paste0(.y, " (log transform)")) +
+      labs(title = "(b) log transformed") +
       boxplot_theme
   )) %>% 
   # raw boxplot
@@ -248,8 +249,8 @@ sp_anovas <- ind_traits_filtered %>%
       boxplot_theme
   )) %>% 
   # raw means plot (means + 95% CI)
-  mutate(raw_means_plot = map2(
-    data, units,
+  mutate(raw_means_plot = map(
+    data, 
     ~ .x %>% 
       ggplot(aes(x = sp_code,
                  y = value,
@@ -263,7 +264,7 @@ sp_anovas <- ind_traits_filtered %>%
                    fun.data = mean_cl_normal) +
       scale_color_manual(values = algae_spcode_colors) +
       scale_x_discrete(labels = scales::label_wrap(10)) +
-      labs(title = .y) +
+      labs(title = "(a) untransformed") +
       boxplot_theme
   )) %>% 
   mutate(log_means_plot_table = map2(
@@ -279,45 +280,61 @@ sp_anovas <- ind_traits_filtered %>%
       theme(axis.text = element_text(size = 10),
             axis.text.x = element_blank(),
             plot.margin = unit(c(0, 0, 0, 0), units = "cm"))) / wrap_table(.y, space = "fixed")
-  )) 
+  )) %>% 
+  mutate(means_plots_together = pmap(
+    list(x = raw_means_plot_table, y = log_means_plot_table, z = units),
+    function(x, y, z) (x | y) +
+      plot_annotation(
+        title = z
+      )
+  ))
 
 # h:ww not sig with raw values, sig with log because of huge BO outlier
 
 # maximum height
 log_h_means_plot_table <- pluck(sp_anovas, 19, 1)
 raw_h_means_plot_table <- pluck(sp_anovas, 20, 1)
+h_means_plots_together <- pluck(sp_anovas, 21, 1)
 
 # thickness
 log_t_means_plot_table <- pluck(sp_anovas, 19, 2)
 raw_t_means_plot_table <- pluck(sp_anovas, 20, 2)
+t_means_plots_together <- pluck(sp_anovas, 21, 2)
 
 # surface area
 log_sa_means_plot_table <- pluck(sp_anovas, 19, 3)
 raw_sa_means_plot_table <- pluck(sp_anovas, 20, 3)
+sa_means_plots_together <- pluck(sp_anovas, 21, 3)
 
 # height:wet weight
 log_h_ww_means_plot_table <- pluck(sp_anovas, 19, 4)
 raw_h_ww_means_plot_table <- pluck(sp_anovas, 20, 4)
+h_ww_means_plots_together <- pluck(sp_anovas, 21, 4)
 
 # dry:wet weight
 log_dw_ww_means_plot_table <- pluck(sp_anovas, 19, 5)
 raw_dw_ww_means_plot_table <- pluck(sp_anovas, 20, 5)
+dw_ww_means_plots_together <- pluck(sp_anovas, 21, 5)
 
 # height:volume
 log_h_v_means_plot_table <- pluck(sp_anovas, 19, 6)
 raw_h_v_means_plot_table <- pluck(sp_anovas, 20, 6)
+h_v_means_plots_together <- pluck(sp_anovas, 21, 6)
 
 # SA:V
 log_sa_v_means_plot_table <- pluck(sp_anovas, 19, 7)
 raw_sa_v_means_plot_table <- pluck(sp_anovas, 20, 7)
+sa_v_means_plots_together <- pluck(sp_anovas, 21, 7)
 
 # surface area:dry weight
 log_sa_dw_means_plot_table <- pluck(sp_anovas, 19, 8)
 raw_sa_dw_means_plot_table <- pluck(sp_anovas, 20, 8)
+sa_dw_means_plots_together <- pluck(sp_anovas, 21, 8)
 
 # SA:P
 log_sa_p_means_plot_table <- pluck(sp_anovas, 19, 9)
 raw_sa_p_means_plot_table <- pluck(sp_anovas, 20, 9)
+sa_p_means_plots_together <- pluck(sp_anovas, 21, 9)
 
 # ⟞ b. multipanel plot ----------------------------------------------------
 
@@ -456,10 +473,7 @@ log_anova_table
 
 # ⟞ d. saving outputs -----------------------------------------------------
 
-
 # ⟞ ⟞ i. plots ------------------------------------------------------------
-
-
 
 trait_file_names <- list(
   "h",
@@ -497,6 +511,18 @@ raw_means_plot_tables <- list(
   raw_sa_p_means_plot_table
 )
 
+means_plots_together <- list(
+  h_means_plots_together,
+  t_means_plots_together,
+  sa_means_plots_together,
+  h_ww_means_plots_together,
+  dw_ww_means_plots_together,
+  h_v_means_plots_together,
+  sa_v_means_plots_together,
+  sa_dw_means_plots_together,
+  sa_p_means_plots_together
+)
+
 for(i in 1:length(log_means_plot_tables)) {
   ggsave(here("figures",
               "basic-visualizations", 
@@ -520,6 +546,19 @@ for(i in 1:length(raw_means_plot_tables)) {
          units = "cm",
          dpi = 300)
 }
+
+for(i in 1:length(means_plots_together)) {
+  ggsave(here("figures",
+              "basic-visualizations", 
+              "means-plots",
+              paste0("means-plots-together_", trait_file_names[[i]], "_", today(), ".jpg")),
+         plot = means_plots_together[[i]],
+         width = 25,
+         height = 18,
+         units = "cm",
+         dpi = 300)
+}
+
 
 
 # ⟞ ⟞ ii. tables ----------------------------------------------------------
