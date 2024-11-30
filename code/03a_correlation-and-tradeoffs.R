@@ -435,7 +435,7 @@ adonis_pairwise <- pairwise.adonis2(pca_mat_log ~ sp_code,
                                     data = ind_traits_filtered)
 rvam_pairwise <- pairwise.perm.manova(resp = pca_mat_log,
                                       fact = ind_traits_filtered$sp_code,
-                                      p.method = "none")
+                                      p.method = "BH")
 
 # ⟞ b. loadings -----------------------------------------------------------
 
@@ -617,7 +617,9 @@ varcoord_full <- PCAvect_full %>%
   group_by(axis) %>% 
   mutate(component_total = sum(values)) %>% 
   ungroup() %>% 
-  mutate(contrib = (values/component_total)*100)
+  mutate(contrib = (values/component_total)*100) %>% 
+  left_join(., enframe(trait_abbreviations), by = c("trait" = "value")) %>% 
+  rename("abbrev" = "name")
 
 # The red dashed line on the graph above indicates the expected average contribution. If the contribution of the variables were uniform, the expected value would be 1/length(variables) = 1/9 = 11.1%
 expected_average_full <- (1/length(unique(varcoord_full$trait)))*100
@@ -634,7 +636,7 @@ contrib_aesthetics_full <- list(
 
 pc1_contrib_full <- varcoord_full %>% 
   filter(axis == "PC1") %>% 
-  ggplot(aes(x = reorder(trait, -contrib),
+  ggplot(aes(x = reorder(abbrev, -contrib),
              y = contrib, 
              fill = trait)) +
   contrib_aesthetics_full +
@@ -645,7 +647,7 @@ pc1_contrib_full
 
 pc2_contrib_full <- varcoord_full %>% 
   filter(axis == "PC2") %>% 
-  ggplot(aes(x = reorder(trait, -contrib),
+  ggplot(aes(x = reorder(abbrev, -contrib),
              y = contrib, 
              fill = trait)) +
   contrib_aesthetics_full +
@@ -655,12 +657,13 @@ pc2_contrib_full <- varcoord_full %>%
 pc2_contrib_full
 
 # scaled layout
-contrib_together_full <- (plot_PCA_12_vectors | plot_PCA_12_species) / 
-  ((free(pc1_contrib_full) / free(pc2_contrib_full)) + 
-     plot_layout(axis_titles = "collect")) +
-  plot_layout()
-
-contrib_together_full
+contrib_together_full <- 
+  (
+    plot_PCA_12_vectors | plot_PCA_12_species
+  ) / (
+    pc1_contrib_full / pc2_contrib_full
+  ) +
+  plot_layout(axis_titles = "collect")
 
 # contrib_together_full <- (free(plot_PCA_12_full) / 
 #                             (free(pc1_contrib_full) | free(pc2_contrib_full))) + 

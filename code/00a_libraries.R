@@ -326,6 +326,22 @@ trait_factor <- c("Height",
                   "Height:volume",
                   "Dry:wet weight")
 
+trait_abbreviations <- c(
+  "H", "SA", "T", "SA:P", "SA:V", "SA:DW", "H:WW", "H:V", "DW:WW"
+)
+
+trait_abbreviations <- c(
+  "H" = "Height", 
+  "SA" = "Surface area", 
+  "T" = "Thickness", 
+  "SA:P" = "Surface area:perimeter", 
+  "SA:V" = "Surface area:volume", 
+  "SA:DW" = "Surface area:dry weight", 
+  "H:WW" = "Height:wet weight", 
+  "H:V" = "Height:volume", 
+  "DW:WW" = "Dry:wet weight"
+)
+
 trait_colnames_factor <- c(
   "maximum_height",
   "frond_area_scaled",
