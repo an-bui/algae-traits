@@ -14,12 +14,38 @@ source(here::here("code", "03c_trait-combination-visualizations.R"))
 
 keep_4trait_combination <- combo_4traits %>% 
   mutate(combo_number = rownames(.)) %>% 
+  # count TRUE and FALSE occurrences
+  mutate(count = map(
+    pairwise_padj_significant_euc,
+    ~ .x %>% unlist() %>% table() 
+  )) %>% 
+  # number of insignificant pairwise comparisons
+  mutate(count_false = pmap(
+    list(x = pairwise_padj_conserved_euc, y = count),
+    function(x, y) case_when(
+      x == "no" ~ y[[1]],
+      x == "yes" ~ 0
+    )
+  )) %>% 
   filter(pairwise_padj_conserved_euc == "yes") %>% 
   unite(trait1:trait4, col = trait_list, sep=", ") %>% 
   mutate(number_of_traits = 4)
 
 keep_3trait_combination <- combo_3traits  %>% 
   mutate(combo_number = rownames(.)) %>% 
+  # count TRUE and FALSE occurrences
+  mutate(count = map(
+    pairwise_padj_significant_euc,
+    ~ .x %>% unlist() %>% table() 
+  )) %>% 
+  # number of insignificant pairwise comparisons
+  mutate(count_false = pmap(
+    list(x = pairwise_padj_conserved_euc, y = count),
+    function(x, y) case_when(
+      x == "no" ~ y[[1]],
+      x == "yes" ~ 0
+    )
+  )) %>% 
   filter(pairwise_padj_conserved_euc == "yes") %>% 
   unite(trait1:trait3, col = trait_list, sep=", ") %>% 
   mutate(number_of_traits = 3)
@@ -33,16 +59,6 @@ reduced_combinations <- bind_rows(
 ) %>% 
   relocate(number_of_traits, .before = trait_list) %>% 
   relocate(combo_number, .after = number_of_traits) %>% 
-  mutate(pca = map(
-    subset_df,
-    ~ rda(.x, scale = TRUE)
-  )) %>%  
-  # extract the cumulative proportion explained by PC1 and PC2
-  mutate(cumu_prop = map(
-    pca,
-    # [3, 2] is cumulative proportion of PC1 and PC2
-    ~ summary(.x)$cont$importance[3,2]
-  )) %>% 
   select(number_of_traits, combo_number, trait_list,
          subset_df, pca, cumu_prop,
          permanova_euc, pairwise_padj_euc) %>% 
@@ -127,7 +143,7 @@ reduced_combinations <- bind_rows(
              choices = c(1, 2)) %>% 
       as.data.frame()
   )) %>% 
-  mutate(biplot_final = pmap(
+  mutate(vector_biplot_final = pmap(
     list(v = pca_scores, w = pca_vectors, x = prop_PC1, y = prop_PC2),
     function(v, w, x, y) 
       ggplot() +
@@ -161,289 +177,73 @@ reduced_combinations <- bind_rows(
              y = paste0("PC2 (", round(y, 2)*100, "%)"),
              title = "(a) PC1 and PC2",
              color = "Scientific name") 
+  )) %>% 
+  mutate(species_biplot_final = pmap(
+    list(v = pca_scores, x = prop_PC1, y = prop_PC2),
+    function(v, x, y)
+    ggplot(data = v, 
+           aes(x = PC1, 
+               y = PC2, 
+               color = scientific_name, 
+    ) ) +
+      PCA_aesthetics +
+      species_colors + 
+      geom_point(
+        shape = 21,
+        alpha = 0.3,
+        size = 1
+      )   +
+      stat_ellipse(aes(color = scientific_name),
+                   level = 0.5) +
+      # scale_x_continuous(limits = c(-1.3, 1.3)) +
+      # scale_y_continuous(limits = c(-1.3, 1.3)) +
+      PCA_theme() +
+      theme(legend.position = "inside",
+            legend.position.inside = c(0.15, 0.15),
+            legend.background = element_blank(),
+            legend.spacing.y = unit(0.01, "cm"),
+            legend.key.spacing.y = unit(0.01, "cm"),
+            legend.key.height = unit(0.25, "cm")) +
+      labs(color = "Scientific name",
+           title = "(b) Species",
+           x = paste0("PC1 (", round(x, 2)*100, "%)"),
+           y = paste0("PC2 (", round(y, 2)*100, "%)"),
+      )
+  )) %>% 
+  mutate(plots_together = pmap(
+    list(x = vector_biplot_final, y = species_biplot_final),
+    function(x, y) x + y
   ))
 
-reduced_combinations[[15]][[1]]
-reduced_combinations[[16]][[1]]
+# plots together
+combo_4traits_biplots <- reduced_combinations[[22]][[1]]
+combo_3traits_combo7_biplots <- reduced_combinations[[22]][[2]]
+combo_3traits_combo22_biplots <- reduced_combinations[[22]][[3]]
 
-reduced_combinations[[20]][[1]]
-reduced_combinations[[20]][[2]]
-reduced_combinations[[20]][[3]]
-
-
-# ⟞ ⟞ i. PCA --------------------------------------------------------------
-
-reduced_4traits <- combo_4traits[[6]][[15]]
-
-# trait by species PCA
-reduced_4trait_pca <- rda(reduced_4traits, scale = TRUE)
-
-# create a screeplot to visualize axis contributions
-screeplot(reduced_4trait_pca, bstick = TRUE)
-
-# look at the summary
-summary(reduced_4trait_pca)
-
-# proportion variance explained for downstream figure making
-prop_PC1_reduced <- "60%"
-prop_PC2_reduced <- "31%"
-
-reduced_permanova <- combo_4traits[[10]][[15]]
-reduced_permanova
-
-rvam_pairwise_reduced <- combo_4traits[[14]][[15]]
-rvam_pairwise_reduced 
-
-anova(betadisper(d = dist(reduced_mat, method = "euclidean"),
-           group = ind_traits_filtered$sp_code))
-# different dispersions
-
-TukeyHSD(betadisper(d = dist(reduced_mat, method = "euclidean"),
-                    group = ind_traits_filtered$sp_code))
-# different dispersions: PTCA-CO, R-BF, PTCA-BF, PTCA-CYOS, PTCA-DP
-
-# ⟞ ⟞ ii. loadings --------------------------------------------------------
-
-# get loadings into data frame
-loadings_df_reduced_4traits <- scores(reduced_4trait_pca, 
-                                      display = 'species', 
-                                      scaling = 0, 
-                                      choices = c(1, 2)) %>% 
-  as_tibble(rownames = NA) %>% 
-  rownames_to_column("trait") %>% 
-  # arrange the data frame in order of PC1 loadings
-  arrange(PC1) %>% 
-  # set the factor levels so that all the traits appear in the same order
-  mutate(trait = fct_inorder(trait))
-
-pc1_plot_reduced_4traits <- ggplot(data = loadings_df_reduced_4traits, 
-                           aes(x = PC1,
-                               y = trait)) +
-  loadings_plot_aes +
-  scale_x_continuous(limits = c(-1, 1), 
-                     breaks = seq(from = -1, to = 1, by = 0.25)) +
-  loadings_plot_theme() +
-  labs(title = "PC1")
-
-pc2_plot_reduced_4traits <- ggplot(data = loadings_df_reduced, 
-                           aes(x = PC2,
-                               y = trait)) +
-  loadings_plot_aes +
-  scale_x_continuous(limits = c(-1, 1), 
-                     breaks = seq(from = -1, to = 1, by = 0.25)) +
-  loadings_plot_theme() +
-  labs(title = "PC2")
-
-loadings_plot_reduced_4traits <- pc1_plot_reduced_4traits / pc2_plot_reduced_4traits
-
-# ggsave(here::here(
-#   "figures",
-#   "ordination",
-#   paste0("loadings_scale_reduced_4traits_", today(), ".jpg")),
-#   loadings_plot_reduced_4traits,
-#   width = 12,
-#   height = 14,
-#   units = "cm",
-#   dpi = 300
-# )
-
-
-# ⟞ ⟞ iii. biplots --------------------------------------------------------
-
-# simple biplot (compare with ggplot output to make sure it's right)
-biplot(reduced_4trait_pca)
-
-# species points
-PCAscores_reduced_4traits <- scores(reduced_4trait_pca, 
-                                    display = "sites", 
-                                    choices = c(1, 2)) %>% 
-  as.data.frame() %>% 
-  rownames_to_column("specimen_ID") %>% 
-  left_join(., metadata_ind, by = "specimen_ID") %>% 
-  left_join(., coarse_traits, by = "sp_code") %>% 
-  mutate(scientific_name = factor(scientific_name, 
-                                  levels = algae_factors)) %>% 
-  left_join(., fvfm_ind, by = "specimen_ID")
-
-# trait vectors
-PCAvect_reduced_4traits <- scores(reduced_4trait_pca, 
-                                  display = "species", 
-                                  choices = c(1, 2)) %>% 
-  as.data.frame()
-
-# plot PCA
-set.seed(666)
-plot_PCA_12_reduced_4traits <- ggplot() +
-  PCA_aesthetics +
-  vector_colors + 
-  geom_point(data = PCAscores_reduced_4traits, 
-             aes(x = PC1, 
-                 y = PC2),
-             shape = 21,
-             color = "darkgrey") +
-  geom_segment(data = PCAvect_reduced_4traits, 
-               aes(x = 0, 
-                   y = 0, 
-                   xend = PC1, 
-                   yend = PC2,
-                   color = rownames(PCAvect_reduced)), 
-               arrow = arrow(length = unit(0.2, "cm")), 
-               linewidth = 1) +
-  geom_label_repel(data = PCAvect_reduced, 
-                   aes(x = PC1, 
-                       y = PC2, 
-                       label = rownames(PCAvect_reduced),
-                       fill = rownames(PCAvect_reduced)), 
-                   size = 8, 
-                   alpha = 0.8,
-                   color = "black") +
-  # scale_x_continuous(limits = c(-2.7, 2.7)) +
-  # scale_y_continuous(limits = c(-2.7, 2.7)) +
-  PCA_theme() +
-  labs(x = paste0("PC1 (", prop_PC1_reduced, ")"),
-       y = paste0("PC2 (", prop_PC2_reduced, ")"),
-       title = "(a) PC1 and PC2",
-       color = "Scientific name") 
-plot_PCA_12_reduced_4traits
-
-# ggsave(here::here("figures",
-#                   "ordination",
-#                   paste("PCA-log_scale_4traits_", today(), ".jpg", sep = "")),
-#        plot_PCA_12_reduced_4traits,
-#        width = 12, height = 12, units = "cm", dpi = 300)
-
-
-# ⟞ ⟞ iv. axis contributions ----------------------------------------------
-
-varcoord_reduced_4traits <- PCAvect_reduced_4traits %>% 
-  rownames_to_column("trait") %>% 
-  mutate(quality_1 = PC1^2,
-         quality_2 = PC2^2) %>% 
-  select(trait, quality_1, quality_2) %>% 
-  pivot_longer(cols = quality_1:quality_2,
-               names_to = "axis",
-               values_to = "values") %>% 
-  mutate(axis = case_match(
-    axis,
-    "quality_1" ~ "PC1",
-    "quality_2" ~ "PC2"
-  )) %>% 
-  group_by(axis) %>% 
-  mutate(component_total = sum(values)) %>% 
-  ungroup() %>% 
-  mutate(contrib = (values/component_total)*100)
-
-# The red dashed line on the graph above indicates the expected average contribution. If the contribution of the variables were uniform, the expected value would be 1/length(variables) = 1/10 = 10%
-expected_average_reduced_4traits <- (1/length(unique(varcoord_reduced$trait)))*100
-
-contrib_aesthetics_reduced <- list(
-  geom_col(color = "black"),
-  geom_vline(xintercept = expected_average_reduced_4traits,
-             color = "#96a39e",
-             linetype = 2),
-  scale_fill_manual(values = trait_color_palette),
-  scale_x_continuous(expand = expansion(c(0, 0.05)),
-                     position = "top")
+combo_biplots_together <- list(
+  combo_4traits_biplots,
+  combo_3traits_combo7_biplots,
+  combo_3traits_combo22_biplots
 )
 
-pc1_contrib_reduced_4traits <- varcoord_reduced_4traits %>% 
-  filter(axis == "PC1") %>% 
-  ggplot(aes(y = reorder(trait, contrib),
-             x = contrib, 
-             fill = trait)) +
-  contrib_aesthetics_reduced +
-  contrib_theme() +
-  labs(title = "(b) Trait % contributions to PC1")
+combo_biplot_file_names <- list(
+  "biplot-4traits",
+  "biplot-3traits-combo7",
+  "biplot-3traits-combo22"
+)
 
-pc1_contrib_reduced_4traits
+for(i in 1:length(combo_biplots_together)) {
+  ggsave(here("figures",
+              "trait-selection", 
+              paste0("reduced-model_", 
+                     combo_biplot_file_names[[i]], 
+                     "_", 
+                     today(), 
+                     ".jpg")),
+         plot = combo_biplots_together[[i]],
+         width = 24,
+         height = 12,
+         units = "cm",
+         dpi = 300)
+}
 
-pc2_contrib_reduced_4traits <- varcoord_reduced_4traits %>% 
-  filter(axis == "PC2") %>% 
-  ggplot(aes(y = reorder(trait, contrib),
-             x = contrib, 
-             fill = trait)) +
-  contrib_aesthetics_reduced +
-  contrib_theme() +
-  labs(title = "(c) Trait % contributions to PC2")
-
-pc2_contrib_reduced
-
-# contrib_together_reduced <- pc1_contrib_reduced / pc2_contrib_reduced
-
-contrib_together_reduced_4traits <- plot_PCA_12_reduced_4traits + (pc1_contrib_reduced_4traits / pc2_contrib_reduced_4traits)
-
-# ggsave(here::here(
-#   "figures",
-#   "ordination",
-#   paste0("contributions_scale_reduced-model_", today(), ".jpg")),
-#   contrib_together_reduced,
-#   width = 18,
-#   height = 10,
-#   units = "cm",
-#   dpi = 300
-# )
-
-
-# ⟞ b. 3 traits -----------------------------------------------------------
-
-# combination 7: H, T, SA:P
-# combination 22: H, D:WW, SA:P
-
-# ⟞ ⟞ i. PCA --------------------------------------------------------------
-
-reduced_3traits_combo7 <- combo_3traits[[5]][[7]]
-reduced_3traits_combo22 <- combo_3traits[[5]][[22]]
-
-# trait by species PCA
-reduced_3traits_combo7_pca <- rda(reduced_3traits_combo7, scale = TRUE)
-reduced_3traits_combo22_pca <- rda(reduced_3traits_combo22, scale = TRUE)
-
-# create a screeplot to visualize axis contributions
-screeplot(reduced_3traits_combo7_pca, bstick = TRUE)
-screeplot(reduced_3traits_combo22_pca, bstick = TRUE)
-
-# look at the summary
-summary(reduced_3traits_combo7_pca)
-summary(reduced_3traits_combo22_pca)
-
-# proportion variance explained for downstream figure making
-prop_PC1_reduced_3traits_combo7 <- "69%"
-prop_PC2_reduced_3traits_combo7 <- "26%"
-
-prop_PC1_reduced_3traits_combo22 <- "78%"
-prop_PC2_reduced_3traits_combo22 <- "17%"
-
-reduced_3traits_combo7_permanova <- combo_3traits[[9]][[7]]
-reduced_3traits_combo7_permanova
-
-rvam_pairwise_reduced_3traits_combo7 <- combo_3traits[[13]][[7]]
-rvam_pairwise_reduced_3traits_combo7
-
-anova(betadisper(d = dist(reduced_3traits_combo7, method = "euclidean"),
-                 group = ind_traits_filtered$sp_code))
-# different dispersions
-
-TukeyHSD(betadisper(d = dist(reduced_3traits_combo7, method = "euclidean"),
-                    group = ind_traits_filtered$sp_code))
-# different dispersions: PTCA-CO, PTCA-BO, PTCA-BF, PTCA-CYOS, PTCA-DP
-
-reduced_3traits_combo22_permanova <- combo_3traits[[9]][[22]]
-reduced_3traits_combo22_permanova
-
-rvam_pairwise_reduced_3traits_combo22 <- combo_3traits[[13]][[22]]
-rvam_pairwise_reduced_3traits_combo22
-
-anova(betadisper(d = dist(reduced_3traits_combo22, method = "euclidean"),
-                 group = ind_traits_filtered$sp_code))
-# different dispersions
-
-TukeyHSD(betadisper(d = dist(reduced_3traits_combo22, method = "euclidean"),
-                    group = ind_traits_filtered$sp_code))
-# different dispersions: PTCA-CO, PTCA-BO, PTCA-BF, PTCA-CYOS, PTCA-DP
-
-
-# ⟞ ⟞ ii. loadings --------------------------------------------------------
-
-# ⟞ ⟞ iii. biplots --------------------------------------------------------
-
-# ⟞ ⟞ iv. axis contributions ----------------------------------------------
