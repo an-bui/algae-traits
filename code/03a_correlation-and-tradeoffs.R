@@ -11,20 +11,6 @@ source(here::here("code", "01a_trait-cleaning.R"))
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 pca_mat <- ind_traits_filtered %>% 
-  mutate(growth_form_num = case_when(
-    growth_form == "leathery_macrophyte" ~ 1,
-    growth_form == "corticated_macrophytes" ~ 2,
-    growth_form == "corticated_foliose" ~ 3
-  ), 
-  pigment_type_num = case_when(
-    pigment_type == "red" ~ 1,
-    pigment_type == "brown" ~ 2
-  ), 
-  longevity_num = case_when(
-    longevity == "annual" ~ 1,
-    longevity == "perennial" ~ 3,
-    longevity == "annual or perennial" ~ 2
-  )) %>% 
   # H, T, SA, H:WW, DW:WW, H:V, SA:V, SA:DW, and SA:P
   select(specimen_ID, 
          maximum_height, 
@@ -49,7 +35,6 @@ pca_mat <- ind_traits_filtered %>%
          `Surface area:dry weight` = sta_scaled,
          `Surface area:perimeter` = sap_mean
          )  
-  # select(!(`Fv/Fm`))
 
 pca_mat_scale <- scale(pca_mat)
 
@@ -426,16 +411,59 @@ prcomp(pca_mat_log, center = TRUE, scale. = TRUE) %>% summary()
 prop_PC1_full <- "62.6%"
 prop_PC2_full <- "21.9%"
 
-sp_permanova <- adonis2(pca_mat_log ~ sp_code, 
-                        data = ind_traits_filtered,
-                        method = "euclidean")
-sp_permanova
+trait_dist <- vegdist(pca_mat_log, 
+                      method = "euclidean")
 
-adonis_pairwise <- pairwise.adonis2(pca_mat_log ~ sp_code, 
-                                    data = ind_traits_filtered)
-rvam_pairwise <- pairwise.perm.manova(resp = pca_mat_log,
-                                      fact = ind_traits_filtered$sp_code,
-                                      p.method = "BH")
+sp_permanova <- adonis2(trait_dist ~ sp_code, 
+                        data = ind_traits_filtered)
+sp_permanova %>% 
+  tidy() %>% 
+  mutate(across(SumOfSqs:statistic, ~ round(.x, digits = 2))) %>% 
+  flextable() %>% 
+  autofit() %>% 
+  fit_to_width(8) %>% 
+  font(fontname = "Times New Roman",
+       part = "all") %>% 
+  # change the column names
+  set_header_labels("term" = "Term",
+                    "df" = "Degrees of freedom",
+                    "SumOfSqs" = "Sum of squares",
+                    "R2" = "R\U00B2",
+                    "statistic" = "F-statistic", 
+                    "p.value" = "p-value") %>% 
+  save_as_docx(path = here("tables", "ANOVA", paste0("full-trait-ANOVA_", today(), ".docx")))
+# species are different from each other
+
+set.seed(1)
+
+rvam_pairwise_log <- pairwise.perm.manova(resp = trait_dist,
+                                          fact = ind_traits_filtered$sp_code,
+                                          p.method = "BH",
+                                          `F` = TRUE)
+
+rvam_pairwise_log
+# BO and CO are not different from each other
+
+rvam_pairwise_log$p.value %>% 
+  as.data.frame() %>% 
+  rownames_to_column("sp_code") %>% 
+  mutate(across(c(CO:PTCA), ~ case_when(
+    between(.x, 0, 0.001) ~ "<0.001",
+    between(.x, 0.001, 0.01) ~ as.character(round(.x, digits = 3)),
+    between(.x, 0.01, 1) ~ as.character(round(.x, digits = 2))
+  ))) %>% 
+  mutate(across(everything(), ~ replace_na(.x, "-"))) %>% 
+  flextable() %>% 
+  autofit() %>% 
+  fit_to_width(8) %>% 
+  font(fontname = "Times New Roman",
+       part = "all") %>% 
+  set_header_labels("sp_code" = "") %>% 
+  save_as_docx(path = here("tables", "ANOVA", paste0("full-trait-ANOVA_pairwise-comparisons_", today(), ".docx")))
+
+anova(betadisper(d = trait_dist,
+                 group = ind_traits_filtered$sp_code))
+# no difference in dispersions
 
 # ⟞ b. loadings -----------------------------------------------------------
 
@@ -492,7 +520,7 @@ PCAscores_full <- scores(pca_full,
   left_join(., metadata_ind, by = "specimen_ID") %>% 
   left_join(., coarse_traits, by = "sp_code") %>% 
   mutate(scientific_name = factor(scientific_name, 
-                                  levels = algae_proposal_sciname_factors)) %>% 
+                                  levels = algae_factors)) %>% 
   left_join(., fvfm_ind, by = "specimen_ID")
 
 
@@ -547,17 +575,16 @@ plot_PCA_12_vectors <- ggplot() +
        color = "Scientific name") 
 plot_PCA_12_vectors
 
-ggsave(here::here("figures",
-                  "ordination",
-                  paste("PCA-log_scale_full-model_vectors_", today(), ".jpg", sep = "")),
-       plot_PCA_12_vectors,
-       width = 12, height = 12, units = "cm", dpi = 300)
+# ggsave(here::here("figures",
+#                   "ordination",
+#                   paste("PCA-log_scale_full-model_vectors_", today(), ".jpg", sep = "")),
+#        plot_PCA_12_vectors,
+#        width = 12, height = 12, units = "cm", dpi = 300)
 
 
 # ⟞ ⟞ i. species points ---------------------------------------------------
 
 plot_PCA_12_species <- PCAscores_full %>% 
-  mutate(scientific_name = fct_relevel(scientific_name, algae_factors)) %>% 
   ggplot(aes(x = PC1, 
              y = PC2, 
              color = scientific_name, 
@@ -592,11 +619,11 @@ plot_PCA_12_species
 
 PCA_vectors_species <- plot_PCA_12_vectors | plot_PCA_12_species
 
-ggsave(here::here("figures",
-                  "ordination",
-                  paste("PCA_full-model_vectors-and-species_", today(), ".jpg", sep = "")),
-       PCA_vectors_species,
-       width = 18, height = 10, units = "cm", dpi = 300)
+# ggsave(here::here("figures",
+#                   "ordination",
+#                   paste("PCA_full-model_vectors-and-species_", today(), ".jpg", sep = "")),
+#        PCA_vectors_species,
+#        width = 18, height = 10, units = "cm", dpi = 300)
 
 # ⟞ d. axis contributions -------------------------------------------------
 
@@ -672,16 +699,16 @@ contrib_together_full <-
 # contrib_together_full <- ((free(plot_PCA_12_full) / (free(pc1_contrib_full)) | (free(pc2_contrib_full) / plot_spacer()))) + 
 #   plot_layout(heights = c(1, 0.5, 0.5))
 
-ggsave(here::here(
-  "figures",
-  "ordination",
-  paste0("contributions_scale_full-model_", today(), ".jpg")),
-  contrib_together_full,
-  width = 18,
-  height = 18,
-  units = "cm",
-  dpi = 300
-)
+# ggsave(here::here(
+#   "figures",
+#   "ordination",
+#   paste0("contributions_scale_full-model_", today(), ".jpg")),
+#   contrib_together_full,
+#   width = 18,
+#   height = 18,
+#   units = "cm",
+#   dpi = 300
+# )
 
 
 
@@ -716,12 +743,12 @@ total_sample_collection_table <- ind_traits_filtered %>%
 
 total_sample_collection_table
 
-total_sample_collection_table %>%
-  save_as_docx(path = here::here(
-    "tables",
-    "sample-tables",
-    paste0("total-samples_all-data_", today(), ".docx")
-    ))
+# total_sample_collection_table %>%
+#   save_as_docx(path = here::here(
+#     "tables",
+#     "sample-tables",
+#     paste0("total-samples_all-data_", today(), ".docx")
+#     ))
 
 # total_samples_with_all_data <- ind_traits %>% 
 #   filter(sp_code %in% algae_proposal) %>% 
