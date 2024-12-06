@@ -351,7 +351,19 @@ ind_traits_filtered <- ind_traits %>%
          height_vol,
          sav_scaled, 
          sta_scaled,
-         sap_mean)
+         sap_mean) %>% 
+  mutate(sp_label = case_match(
+    scientific_name,
+    "Corallina officinalis" ~ "Corallina officinalis",
+    "Bossiella orbigniana" ~ "Bossiella orbigniana",
+    "Cryptopleura ruprechtiana" ~ "Cryptopleura ruprechtiana",
+    "Chondracanthus corymbiferus; Chondracanthus exasperatus" ~ "Chondracanthus spp.",
+    "Rhodymenia californica" ~ "Rhodymenia californica",
+    "Stephanocystis osmundacea" ~ "Stephanocystis osmundacea",
+    "Dictyota binghamiae; Dictyota flabellata; Dictyota coriacea" ~ "Dictyota spp.",
+    "Pterygophora californica" ~ "Pterygophora californica",
+    "Laminaria farlowii" ~ "Laminaria farlowii"
+  ))
 
 saved_df <- ind_traits %>% 
   filter(specimen_ID %in% pull(ind_traits_filtered, specimen_ID)) %>% 

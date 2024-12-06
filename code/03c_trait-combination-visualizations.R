@@ -1,4 +1,3 @@
-
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # ------------------------------- 0. source -------------------------------
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -24,8 +23,8 @@ keep_trait_function <- function(df) {
     select(contains("trait"), cumu_prop, pairwise_padj_conserved_euc) %>% 
     unnest(cols = c(cumu_prop, pairwise_padj_conserved_euc)) %>% 
     rownames_to_column("combo") # %>% 
-    # mutate(across(contains("trait"), 
-    #               \(x) fct_relevel(x, trait_factor))) 
+  # mutate(across(contains("trait"), 
+  #               \(x) fct_relevel(x, trait_factor))) 
 }
 
 # function to organize the data frame for the heat map (bottom of upset plot)
@@ -108,41 +107,80 @@ upset_plot_right <- list(
 
 # ⟞ i. 4 traits -----------------------------------------------------------
 
+# assigning each combination "same", "all", or "everything else"
+keep_4traits_categories <- combo_4traits %>% 
+  mutate(combo = rownames(.)) %>% 
+  # count TRUE and FALSE occurrences
+  mutate(count = map(
+    pairwise_padj_significant_euc,
+    ~ .x %>% unlist() %>% table() 
+  )) %>% 
+  # number of insignificant pairwise comparisons
+  mutate(count_false = pmap(
+    list(x = pairwise_padj_conserved_euc, y = count),
+    function(x, y) case_when(
+      x == "no" ~ y[[1]],
+      x == "yes" ~ 0
+    )
+  )) %>% 
+  select(combo, count_false) %>% 
+  mutate(category = case_when(
+    count_false == 0 ~ "all",
+    count_false == 1 ~ "same",
+    TRUE ~ "everything else"
+  )) %>% 
+  unnest(cols = everything())
+
 # only keep combinations where the pairwise comparisons are conserved
 keep_4traits <- combo_4traits %>% 
-  keep_trait_function()
+  keep_trait_function() %>% 
+  left_join(., keep_4traits_categories, by = "combo") %>% 
+  mutate(alpha = case_when(
+    category %in% c("same", "all") ~ "opaque",
+    category %in% c("everything else") ~ "transparent"
+  ))
 
-keep_4traits_tally <- keep_4traits %>% 
-  keep_traits_heatmap_function() %>% 
-  filter(pairwise_padj_conserved_euc == "yes" & present == TRUE) %>% 
-  group_by(trait) %>% 
-  tally() %>% 
-  ungroup() %>% 
-  arrange(n) %>% 
-  mutate(trait = fct_inorder(trait))
+keep_4traits_tally <- keep_4traits %>%
+  keep_traits_heatmap_function() %>%
+  filter(category %in% c("same", "all")) %>% 
+  group_by(trait) %>%
+  tally() %>%
+  ungroup() %>%
+  arrange(n) 
 
 keep_4traits_heatmap <- keep_4traits %>% 
   keep_traits_heatmap_function() %>% 
-  mutate(trait = fct_relevel(trait, as.character(pull(keep_4traits_tally, trait))))
+  mutate(trait = fct_relevel(trait, pull(keep_4traits_tally, trait))) %>% 
+  unite("category_present", category, present, sep = "/", remove = FALSE) %>% 
+  mutate(alpha = case_when(
+    category_present %in% c("same/TRUE", "all/TRUE", "NA/FALSE") ~ "opaque",
+    category_present %in% c("everything else/TRUE") ~ "transparent"
+  ))
 
 bottom_4traits <- keep_4traits_heatmap %>% 
   ggplot(aes(x = combo,
              y = trait,
-             fill = present,
-             alpha = pairwise_padj_conserved_euc)) +
-  scale_fill_manual(values = c("TRUE" = "cornflowerblue",
-                               "FALSE" = "white")) +
-  scale_alpha_manual(values = c("no" = 0.2,
-                                "yes" = 1)) +
+             fill = category_present,
+             alpha = alpha)) +
+  scale_fill_manual(values = c("NA/FALSE" = "white",
+                               "same/TRUE" = "#356B7A",
+                               "everything else/TRUE" = "#9fa0a1",
+                               "all/TRUE" = "#059EE6")) +
+  scale_alpha_manual(values = c("transparent" = 0.4,
+                                "opaque" = 1)) +
   upset_plot_bottom
 
 top_4traits <- ggplot(data = keep_4traits,
                       aes(x = reorder(combo, -cumu_prop),
                           y = cumu_prop,
-                          alpha = pairwise_padj_conserved_euc)) +
-  geom_col(fill = "cornflowerblue") +
-  scale_alpha_manual(values = c("no" = 0.2,
-                                "yes" = 1)) +
+                          alpha = alpha,
+                          fill = category)) +
+  geom_col() +
+  scale_alpha_manual(values = c("transparent" = 0.4,
+                                "opaque" = 1)) +
+  scale_fill_manual(values = c("same" = "#356B7A",
+                               "everything else" = "#9fa0a1",
+                               "all" = "#059EE6")) +
   upset_plot_top
 
 # right_4traits <- keep_4traits_tally %>% 
@@ -173,45 +211,84 @@ ggsave(here("figures",
 
 # ⟞ ii. 3 traits ----------------------------------------------------------
 
+# assigning each combination "same", "all", or "everything else"
+keep_3traits_categories <- combo_3traits %>% 
+  mutate(combo = rownames(.)) %>% 
+  # count TRUE and FALSE occurrences
+  mutate(count = map(
+    pairwise_padj_significant_euc,
+    ~ .x %>% unlist() %>% table() 
+  )) %>% 
+  # number of insignificant pairwise comparisons
+  mutate(count_false = pmap(
+    list(x = pairwise_padj_conserved_euc, y = count),
+    function(x, y) case_when(
+      x == "no" ~ y[[1]],
+      x == "yes" ~ 0
+    )
+  )) %>% 
+  select(combo, count_false) %>% 
+  mutate(category = case_when(
+    count_false == 0 ~ "all",
+    # combo 3 is the only one with 1 non-significant pairwise comp that is 
+    # different from the full model
+    count_false == 1 & combo != 3 ~ "same",
+    TRUE ~ "everything else"
+  )) %>% 
+  unnest(cols = everything())
+
 # only keep combinations where the pairwise comparisons are conserved
 keep_3traits <- combo_3traits %>% 
-  keep_trait_function()
+  keep_trait_function() %>% 
+  left_join(., keep_3traits_categories, by = "combo") %>% 
+  mutate(alpha = case_when(
+    category %in% c("same", "all") ~ "opaque",
+    category %in% c("everything else") ~ "transparent"
+  ))
 
-keep_3traits_tally <- keep_3traits %>% 
-  keep_traits_heatmap_function() %>% 
-  filter(pairwise_padj_conserved_euc == "yes" & present == TRUE) %>% 
-  group_by(trait) %>% 
-  tally() %>% 
-  ungroup() %>% 
-  arrange(n) %>% 
-  mutate(trait = fct_inorder(trait))
+keep_3traits_tally <- keep_3traits %>%
+  keep_traits_heatmap_function() %>%
+  filter(category %in% c("same", "all")) %>% 
+  group_by(trait) %>%
+  tally() %>%
+  ungroup() %>%
+  arrange(n) 
 
 keep_3traits_heatmap <- keep_3traits %>% 
   keep_traits_heatmap_function() %>% 
-  mutate(trait = fct_relevel(trait, as.character(pull(keep_4traits_tally, trait))))
+  mutate(trait = fct_relevel(trait, pull(keep_3traits_tally, trait))) %>% 
+  unite("category_present", category, present, sep = "/", remove = FALSE) %>% 
+  mutate(alpha = case_when(
+    category_present %in% c("same/TRUE", "all/TRUE", "NA/FALSE") ~ "opaque",
+    category_present %in% c("everything else/TRUE") ~ "transparent"
+  ))
 
 
 
 bottom_3traits <- keep_3traits_heatmap %>% 
   ggplot(aes(x = combo,
              y = trait,
-             fill = present,
-             alpha = pairwise_padj_conserved_euc)) +
-  scale_fill_manual(values = c("TRUE" = "darkgreen",
-                               "FALSE" = "white")) +
-  scale_alpha_manual(values = c("no" = 0.2,
-                                "yes" = 1)) +
+             fill = category_present,
+             alpha = alpha)) +
+  scale_fill_manual(values = c("NA/FALSE" = "white",
+                               "same/TRUE" = "#077A54",
+                               "everything else/TRUE" = "#9fa0a1",
+                               "all/TRUE" = "#05E67D")) +
+  scale_alpha_manual(values = c("transparent" = 0.4,
+                                "opaque" = 1)) +
   upset_plot_bottom
 
-
-top_3traits <- keep_3traits %>% 
-  # filter(pairwise_conserved == "yes") %>% 
-  ggplot(aes(x = reorder(combo, -cumu_prop),
-             y = cumu_prop,
-             alpha = pairwise_padj_conserved_euc)) +
-  geom_col(fill = "darkgreen") +
-  scale_alpha_manual(values = c("no" = 0.2,
-                                "yes" = 1)) +
+top_3traits <- ggplot(data = keep_3traits,
+                      aes(x = reorder(combo, -cumu_prop),
+                          y = cumu_prop,
+                          alpha = alpha,
+                          fill = category)) +
+  geom_col() +
+  scale_alpha_manual(values = c("transparent" = 0.4,
+                                "opaque" = 1)) +
+  scale_fill_manual(values = c("same" = "#077A54",
+                               "everything else" = "#9fa0a1",
+                               "all" = "#05E67D")) +
   upset_plot_top
 
 # right_3traits <- keep_3traits_tally %>% 

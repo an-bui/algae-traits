@@ -201,6 +201,21 @@ algae_colors <- c(
   "Laminaria farlowii" = "#4CA49E"
 )
 
+algae_splabel_colors <- c(
+  # BO, CO
+  "Corallina officinalis" = "#E29244", 
+  "Bossiella orbigniana" = "#FFAA00", 
+  # everything else (BF, CC, R, CYOS, DP)
+  "Cryptopleura ruprechtiana" = "#5A7ECB", 
+  "Chondracanthus spp." = "#6B6D9F", 
+  "Rhodymenia californica" = "#69B9FA", 
+  "Stephanocystis osmundacea" = "#59A3F8", 
+  "Dictyota spp." = "#3B4F8E",
+  # PTCA, LAFA
+  "Pterygophora californica" = "#3B7D6E", 
+  "Laminaria farlowii" = "#4CA49E"
+)
+
 algae_spcode_colors <- c(
   # BO, CO
   "CO" = "#E29244", 
@@ -226,6 +241,21 @@ algae_factors <- c(
   "Rhodymenia californica", 
   "Stephanocystis osmundacea", 
   "Dictyota binghamiae; Dictyota flabellata; Dictyota coriacea",
+  # PTCA, LAFA
+  "Pterygophora californica", 
+  "Laminaria farlowii"
+)
+
+algae_splabel_factors <- c(
+  # BO, CO
+  "Corallina officinalis", 
+  "Bossiella orbigniana", 
+  # everything else (BF, CC, R, CYOS, DP)
+  "Cryptopleura ruprechtiana", 
+  "Chondracanthus spp.", 
+  "Rhodymenia californica", 
+  "Stephanocystis osmundacea", 
+  "Dictyota spp.",
   # PTCA, LAFA
   "Pterygophora californica", 
   "Laminaria farlowii"

@@ -113,7 +113,7 @@ vector_colors <- list(
 )
 
 species_colors <- list(
-  scale_color_manual(values = algae_colors)
+  scale_color_manual(values = algae_splabel_colors)
 )
 
 PCA_theme <- function() {
@@ -145,9 +145,6 @@ contrib_theme <- function() {
 # ----------------------------- 3. correlations ---------------------------
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-
-# ⟞ a. full model ---------------------------------------------------------
-
 mat_for_corr <- pca_mat_log
 
 # create a correlation matrix based on pearson correlation
@@ -169,60 +166,21 @@ corr_traits <- corrplot(corr = M,
                         col= colorRampPalette(c("#F21A00", "#FFFFFF", "#3B9AB2"))(200), 
                         sig.level = 0.05)
 
-jpeg(here::here("figures", 
-                "correlation",
-                paste0("corrplot_log_full-model_", today(), ".jpeg")),
-     width = 24, height = 24, units = "cm", res = 300)
-corrplot(corr = M, 
-         p.mat = p$p,
-         diag = FALSE,
-         method = "circle", 
-         # addgrid.col = NA,
-         type = "lower", 
-         insig = "blank", 
-         addCoef.col = "black", 
-         col= colorRampPalette(c("#F21A00", "#FFFFFF", "#3B9AB2"))(200), 
-         sig.level = 0.05)
-dev.off()
-
-# ⟞ b. reduced model ------------------------------------------------------
-
-mat_for_corr <- pca_mat_log
-
-# create a correlation matrix based on pearson correlation
-M <- mat_for_corr %>% 
-  cor(method = "pearson")
-
-p <- cor.mtest(mat_for_corr,
-               conf.level = 0.95,
-               method = "pearson")
-
-corr_traits <- corrplot(corr = M, 
-                        p.mat = p$p,
-                        diag = FALSE,
-                        method = "circle", 
-                        # addgrid.col = NA,
-                        type = "lower", 
-                        insig = "blank", 
-                        addCoef.col = "black", 
-                        col= colorRampPalette(c("#F21A00", "#FFFFFF", "#3B9AB2"))(200), 
-                        sig.level = 0.05)
-
-jpeg(here::here("figures", 
-                "correlation",
-                paste0("corrplot_log_", today(), ".jpeg")),
-     width = 14, height = 14, units = "cm", res = 200)
-corrplot(corr = M, 
-         p.mat = p$p,
-         diag = FALSE,
-         method = "circle", 
-         # addgrid.col = NA,
-         type = "lower", 
-         insig = "blank", 
-         addCoef.col = "black", 
-         col= colorRampPalette(c("#F21A00", "#FFFFFF", "#3B9AB2"))(200), 
-         sig.level = 0.05)
-dev.off()
+# jpeg(here::here("figures", 
+#                 "correlation",
+#                 paste0("corrplot_log_full-model_", today(), ".jpeg")),
+#      width = 24, height = 24, units = "cm", res = 300)
+# corrplot(corr = M, 
+#          p.mat = p$p,
+#          diag = FALSE,
+#          method = "circle", 
+#          # addgrid.col = NA,
+#          type = "lower", 
+#          insig = "blank", 
+#          addCoef.col = "black", 
+#          col= colorRampPalette(c("#F21A00", "#FFFFFF", "#3B9AB2"))(200), 
+#          sig.level = 0.05)
+# dev.off()
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # ------------------ 4. standardized major axis regression ----------------
@@ -376,13 +334,13 @@ plot_legend_test <- cowplot::get_plot_component(plot_legend, "guide-box-right", 
 
 sma_together <- (sta_sav_plot | thick_height_plot) / (sta_h_ww_plot | dmc_height_plot) + plot_layout(guides = "collect") & theme(legend.position = 'bottom')
   
-ggsave(here::here("figures",
-                  "tradeoffs",
-                  paste0("sma_supplement_", today(), ".jpg")),
-       width = 14,
-       height = 18,
-       units = "cm",
-       dpi = 300)
+# ggsave(here::here("figures",
+#                   "tradeoffs",
+#                   paste0("sma_supplement_", today(), ".jpg")),
+#        width = 14,
+#        height = 18,
+#        units = "cm",
+#        dpi = 300)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # -------------------- 5. Principal Components Analysis -------------------
@@ -416,22 +374,22 @@ trait_dist <- vegdist(pca_mat_log,
 
 sp_permanova <- adonis2(trait_dist ~ sp_code, 
                         data = ind_traits_filtered)
-sp_permanova %>% 
-  tidy() %>% 
-  mutate(across(SumOfSqs:statistic, ~ round(.x, digits = 2))) %>% 
-  flextable() %>% 
-  autofit() %>% 
-  fit_to_width(8) %>% 
-  font(fontname = "Times New Roman",
-       part = "all") %>% 
-  # change the column names
-  set_header_labels("term" = "Term",
-                    "df" = "Degrees of freedom",
-                    "SumOfSqs" = "Sum of squares",
-                    "R2" = "R\U00B2",
-                    "statistic" = "F-statistic", 
-                    "p.value" = "p-value") %>% 
-  save_as_docx(path = here("tables", "ANOVA", paste0("full-trait-ANOVA_", today(), ".docx")))
+# sp_permanova %>% 
+#   tidy() %>% 
+#   mutate(across(SumOfSqs:statistic, ~ round(.x, digits = 2))) %>% 
+#   flextable() %>% 
+#   autofit() %>% 
+#   fit_to_width(8) %>% 
+#   font(fontname = "Times New Roman",
+#        part = "all") %>% 
+#   # change the column names
+#   set_header_labels("term" = "Term",
+#                     "df" = "Degrees of freedom",
+#                     "SumOfSqs" = "Sum of squares",
+#                     "R2" = "R\U00B2",
+#                     "statistic" = "F-statistic", 
+#                     "p.value" = "p-value") %>% 
+#   save_as_docx(path = here("tables", "ANOVA", paste0("full-trait-ANOVA_", today(), ".docx")))
 # species are different from each other
 
 set.seed(1)
@@ -444,22 +402,22 @@ rvam_pairwise_log <- pairwise.perm.manova(resp = trait_dist,
 rvam_pairwise_log
 # BO and CO are not different from each other
 
-rvam_pairwise_log$p.value %>% 
-  as.data.frame() %>% 
-  rownames_to_column("sp_code") %>% 
-  mutate(across(c(CO:PTCA), ~ case_when(
-    between(.x, 0, 0.001) ~ "<0.001",
-    between(.x, 0.001, 0.01) ~ as.character(round(.x, digits = 3)),
-    between(.x, 0.01, 1) ~ as.character(round(.x, digits = 2))
-  ))) %>% 
-  mutate(across(everything(), ~ replace_na(.x, "-"))) %>% 
-  flextable() %>% 
-  autofit() %>% 
-  fit_to_width(8) %>% 
-  font(fontname = "Times New Roman",
-       part = "all") %>% 
-  set_header_labels("sp_code" = "") %>% 
-  save_as_docx(path = here("tables", "ANOVA", paste0("full-trait-ANOVA_pairwise-comparisons_", today(), ".docx")))
+# rvam_pairwise_log$p.value %>% 
+#   as.data.frame() %>% 
+#   rownames_to_column("sp_code") %>% 
+#   mutate(across(c(CO:PTCA), ~ case_when(
+#     between(.x, 0, 0.001) ~ "<0.001",
+#     between(.x, 0.001, 0.01) ~ as.character(round(.x, digits = 3)),
+#     between(.x, 0.01, 1) ~ as.character(round(.x, digits = 2))
+#   ))) %>% 
+#   mutate(across(everything(), ~ replace_na(.x, "-"))) %>% 
+#   flextable() %>% 
+#   autofit() %>% 
+#   fit_to_width(8) %>% 
+#   font(fontname = "Times New Roman",
+#        part = "all") %>% 
+#   set_header_labels("sp_code" = "") %>% 
+#   save_as_docx(path = here("tables", "ANOVA", paste0("full-trait-ANOVA_pairwise-comparisons_", today(), ".docx")))
 
 anova(betadisper(d = trait_dist,
                  group = ind_traits_filtered$sp_code))
@@ -521,7 +479,12 @@ PCAscores_full <- scores(pca_full,
   left_join(., coarse_traits, by = "sp_code") %>% 
   mutate(scientific_name = factor(scientific_name, 
                                   levels = algae_factors)) %>% 
-  left_join(., fvfm_ind, by = "specimen_ID")
+  left_join(., fvfm_ind, by = "specimen_ID") %>% 
+  left_join(., enframe(algae_spcode_full_names), by = c("sp_code" = "name")) %>% 
+  rename("splabel" = "value") %>% 
+  relocate(splabel, .after = scientific_name) %>% 
+  mutate(splabel = factor(splabel,
+                          levels = algae_splabel_factors))
 
 
 # ⟞ ⟞ i. trait vectors ----------------------------------------------------
@@ -579,7 +542,7 @@ plot_PCA_12_vectors
 #                   "ordination",
 #                   paste("PCA-log_scale_full-model_vectors_", today(), ".jpg", sep = "")),
 #        plot_PCA_12_vectors,
-#        width = 12, height = 12, units = "cm", dpi = 300)
+#        width = 8, height = 8, units = "cm", dpi = 300)
 
 
 # ⟞ ⟞ i. species points ---------------------------------------------------
@@ -587,7 +550,7 @@ plot_PCA_12_vectors
 plot_PCA_12_species <- PCAscores_full %>% 
   ggplot(aes(x = PC1, 
              y = PC2, 
-             color = scientific_name, 
+             color = splabel, 
              # shape = scientific_name,
              # size = fvfm_mean
   ) ) +
@@ -598,17 +561,19 @@ plot_PCA_12_species <- PCAscores_full %>%
     alpha = 0.3,
     size = 1
   )   +
-  stat_ellipse(aes(color = scientific_name),
+  stat_ellipse(aes(color = splabel),
                level = 0.5) +
   scale_x_continuous(limits = c(-1.6, 1.2)) +
   scale_y_continuous(limits = c(-1.6, 1.2)) +
   PCA_theme() +
   theme(legend.position = "inside",
-        legend.position.inside = c(0.28, 0.2),
+        legend.position.inside = c(0.195, 0.225),
         legend.background = element_blank(),
         legend.spacing.y = unit(0.01, "cm"),
         legend.key.spacing.y = unit(0.01, "cm"),
-        legend.key.height = unit(0.25, "cm")) +
+        legend.key.height = unit(0.25, "cm"),
+        legend.key.size = unit(0.3, "cm"),
+        legend.text = element_text(size = 14)) +
   labs(color = "Scientific name",
        title = "(b) Species",
        x = paste0("PC1 (", prop_PC1_full, ")"),
@@ -623,7 +588,7 @@ PCA_vectors_species <- plot_PCA_12_vectors | plot_PCA_12_species
 #                   "ordination",
 #                   paste("PCA_full-model_vectors-and-species_", today(), ".jpg", sep = "")),
 #        PCA_vectors_species,
-#        width = 18, height = 10, units = "cm", dpi = 300)
+#        width = 16, height = 8, units = "cm", dpi = 300)
 
 # ⟞ d. axis contributions -------------------------------------------------
 
@@ -704,8 +669,8 @@ contrib_together_full <-
 #   "ordination",
 #   paste0("contributions_scale_full-model_", today(), ".jpg")),
 #   contrib_together_full,
-#   width = 18,
-#   height = 18,
+#   width = 16,
+#   height = 16,
 #   units = "cm",
 #   dpi = 300
 # )

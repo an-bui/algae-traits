@@ -523,41 +523,41 @@ means_plots_together <- list(
   sa_p_means_plots_together
 )
 
-for(i in 1:length(log_means_plot_tables)) {
-  ggsave(here("figures",
-              "basic-visualizations", 
-              "means-plots",
-              paste0("log_", trait_file_names[[i]], "_plot-table_", today(), ".jpg")),
-         plot = log_means_plot_tables[[i]],
-         width = 21,
-         height = 21,
-         units = "cm",
-         dpi = 300)
-}
-
-for(i in 1:length(raw_means_plot_tables)) {
-  ggsave(here("figures",
-              "basic-visualizations", 
-              "means-plots",
-              paste0("raw_", trait_file_names[[i]], "_plot-table_", today(), ".jpg")),
-         plot = raw_means_plot_tables[[i]],
-         width = 21,
-         height = 21,
-         units = "cm",
-         dpi = 300)
-}
-
-for(i in 1:length(means_plots_together)) {
-  ggsave(here("figures",
-              "basic-visualizations", 
-              "means-plots",
-              paste0("means-plots-together_", trait_file_names[[i]], "_", today(), ".jpg")),
-         plot = means_plots_together[[i]],
-         width = 25,
-         height = 18,
-         units = "cm",
-         dpi = 300)
-}
+# for(i in 1:length(log_means_plot_tables)) {
+#   ggsave(here("figures",
+#               "basic-visualizations", 
+#               "means-plots",
+#               paste0("log_", trait_file_names[[i]], "_plot-table_", today(), ".jpg")),
+#          plot = log_means_plot_tables[[i]],
+#          width = 21,
+#          height = 21,
+#          units = "cm",
+#          dpi = 300)
+# }
+# 
+# for(i in 1:length(raw_means_plot_tables)) {
+#   ggsave(here("figures",
+#               "basic-visualizations", 
+#               "means-plots",
+#               paste0("raw_", trait_file_names[[i]], "_plot-table_", today(), ".jpg")),
+#          plot = raw_means_plot_tables[[i]],
+#          width = 21,
+#          height = 21,
+#          units = "cm",
+#          dpi = 300)
+# }
+# 
+# for(i in 1:length(means_plots_together)) {
+#   ggsave(here("figures",
+#               "basic-visualizations", 
+#               "means-plots",
+#               paste0("means-plots-together_", trait_file_names[[i]], "_", today(), ".jpg")),
+#          plot = means_plots_together[[i]],
+#          width = 25,
+#          height = 18,
+#          units = "cm",
+#          dpi = 300)
+# }
 
 
 
@@ -768,12 +768,12 @@ distributions_multipanel <-
 
 # ⟞ c. saving outputs -----------------------------------------------------
 
-ggsave(here("figures",
-            "basic-visualizations",
-            "distributions",
-            paste0("multipanel_hist_", today(), ".jpg")),
-       distributions_multipanel,
-       width = 24,
-       height = 18,
-       units = "cm",
-       dpi = 300)
+# ggsave(here("figures",
+#             "basic-visualizations",
+#             "distributions",
+#             paste0("multipanel_hist_", today(), ".jpg")),
+#        distributions_multipanel,
+#        width = 24,
+#        height = 18,
+#        units = "cm",
+#        dpi = 300)
