@@ -87,18 +87,22 @@ upset_plot_top <- list(
         text = element_text(size = 20))
 )
 
-# aesthetics for the right of the upset plot
-upset_plot_right <- list(
+# aesthetics for the tally plot
+tally_plot_aesthetics <- list(
   labs(x = "Number of occurrences"),
   scale_x_continuous(expand = expansion(mult = c(0, 0.03))),
   theme(panel.background = element_blank(),
-        plot.background = element_blank(),
-        axis.text.y = element_blank(),
+        # plot.background = element_blank(),
+        # axis.text.y = element_blank(),
         axis.title.y = element_blank(),
         axis.text.x = element_blank(),
         axis.ticks.x = element_blank(),
         axis.ticks.y = element_blank(),
-        plot.margin = margin(0, 0, 0, 0, "pt"))
+        axis.title.x = element_text(size = 20),
+        text = element_text(size = 20),
+        plot.title.position = "plot"
+        # plot.margin = margin(0, 0, 0, 0, "pt")
+        )
 )
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -183,31 +187,31 @@ top_4traits <- ggplot(data = keep_4traits,
                                "all" = "#059EE6")) +
   upset_plot_top
 
-# right_4traits <- keep_4traits_tally %>% 
-#   ggplot(aes(x = n,
-#              y = trait)) +
-#   geom_point(size = 1,
-#              color = "cornflowerblue") +
-#   geom_segment(aes(x = 0, xend = n),
-#                color = "cornflowerblue") +
-#   geom_text(aes(x = n + 0.5,
-#                 label = n),
-#             size = 8) +
-#   upset_plot_right +
-#   coord_cartesian(xlim = c(31.5, 46.5)) +
-#   theme(axis.title.x = element_text(size = 14))
+tally_plot_4traits <- keep_4traits_tally %>%
+  ggplot(aes(x = n,
+             y = reorder(trait, n))) +
+  geom_point(size = 1,
+             color = "#356B7A") +
+  geom_segment(aes(x = 0, xend = n),
+               color = "#356B7A") +
+  geom_text(aes(x = n + 3.5,
+                label = n),
+            size = 6) +
+  tally_plot_aesthetics +
+  theme(axis.title.x = element_blank()) +
+  labs(title = "(a) 4 trait combination")
 
 upset_plot_4traits <- (top_4traits / bottom_4traits) # | (plot_spacer() / right_4traits)
 upset_plot_4traits
 
-ggsave(here("figures",
-            "trait-selection",
-            paste0("upset-plot_4traits_all-combinations_euclidean_", today(), ".jpg")),
-       upset_plot_4traits,
-       height = 5,
-       width = 19,
-       units = "cm",
-       dpi = 400)
+# ggsave(here("figures",
+#             "trait-selection",
+#             paste0("upset-plot_4traits_all-combinations_euclidean_", today(), ".jpg")),
+#        upset_plot_4traits,
+#        height = 5,
+#        width = 19,
+#        units = "cm",
+#        dpi = 400)
 
 # ⟞ ii. 3 traits ----------------------------------------------------------
 
@@ -291,26 +295,18 @@ top_3traits <- ggplot(data = keep_3traits,
                                "all" = "#05E67D")) +
   upset_plot_top
 
-# right_3traits <- keep_3traits_tally %>% 
-#   ggplot(aes(x = n,
-#              y = trait)) +
-#   geom_point(size = 1,
-#              color = "darkgreen") +
-#   geom_segment(aes(x = 0, xend = n),
-#                color = "darkgreen") +
-#   geom_text(aes(x = n + 0.5,
-#                 label = n),
-#             size = 6) +
-#   upset_plot_right +
-#   coord_cartesian(xlim = c(9.5, 19.75)) 
-# 
-# right_3traits
-# theme_void() +
-# # theme_void() +
-# # upset_plot_right +
-# theme(legend.position = "right",
-#       axis.title.x = element_text(),
-#       panel.background = element_blank())
+tally_plot_3traits <- keep_3traits_tally %>%
+  ggplot(aes(x = n,
+             y = reorder(trait, n))) +
+  geom_point(size = 1,
+             color = "#077A54") +
+  geom_segment(aes(x = 0, xend = n),
+               color = "#077A54") +
+  geom_text(aes(x = n + 1.5,
+                label = n),
+            size = 6) +
+  tally_plot_aesthetics +
+  labs(title = "(b) 3 trait combination")
 
 upset_plot_3traits <- (top_3traits / bottom_3traits) # | (plot_spacer() / right_3traits)
 
@@ -324,14 +320,25 @@ upset_plot_3traits <- (top_3traits / bottom_3traits) # | (plot_spacer() / right_
 # upset_plot_3traits <- top_3traits / bottom_3traits
 upset_plot_3traits
 
-ggsave(here("figures",
-            "trait-selection",
-            paste0("upset-plot_3traits_all-combinations_euclidean_", today(), ".jpg")),
-       upset_plot_3traits,
-       height = 5,
-       width = 14,
-       units = "cm",
-       dpi = 400)
+# ggsave(here("figures",
+#             "trait-selection",
+#             paste0("upset-plot_3traits_all-combinations_euclidean_", today(), ".jpg")),
+#        upset_plot_3traits,
+#        height = 5,
+#        width = 14,
+#        units = "cm",
+#        dpi = 400)
+
+tally_plots <- tally_plot_4traits / tally_plot_3traits
+
+# ggsave(here("figures",
+#             "trait-selection",
+#             paste0("tally-plots_", today(), ".jpg")),
+#        tally_plots,
+#        height = 8,
+#        width = 6,
+#        units = "cm",
+#        dpi = 400)
 
 
 # ⟞ iii. 2 traits ---------------------------------------------------------
