@@ -30,6 +30,7 @@ library(pairwiseAdonis) # pairwise comparisons for permanova
 library(factoextra) # extract components from multivariate analyses
 library(cati) # partitioning species composition/intraspecific variation
 library(RVAideMemoire) # pairwise permanova
+library(FSA) # Dunn test for KW
 
 # ⊣ b. models -----------------------------------------------
 
@@ -185,51 +186,54 @@ algae_proposal_code_factors <- algae_proposal %>%
 #     "Dictyota binghamiae; Dictyota flabellata; Dictyota coriacea"
 #   )
 # )
-
+# blue, green, red, purple
 algae_colors <- c(
-  # BO, CO
-  "Corallina officinalis" = "#E29244", 
-  "Bossiella orbigniana" = "#FFAA00", 
-  # everything else (BF, CC, R, CYOS, DP)
-  "Cryptopleura ruprechtiana" = "#5A7ECB", 
-  "Chondracanthus corymbiferus; Chondracanthus exasperatus" = "#6B6D9F", 
-  "Rhodymenia californica" = "#69B9FA", 
-  "Stephanocystis osmundacea" = "#59A3F8", 
-  "Dictyota binghamiae; Dictyota flabellata; Dictyota coriacea" = "#3B4F8E",
-  # PTCA, LAFA
-  "Pterygophora californica" = "#3B7D6E", 
-  "Laminaria farlowii" = "#4CA49E"
+  # BO, CO: articulated calcareous
+  "Corallina officinalis" = "#E67932", 
+  "Bossiella orbigniana" = "#E49C39", 
+  # corticated macrophytes: BF, R
+  "Cryptopleura ruprechtiana" = "#A6B354", 
+  "Rhodymenia californica" = "#77B77D", 
+  # corticated foliose: DP
+  "Dictyota binghamiae; Dictyota flabellata; Dictyota coriacea" = "#4D8AC6",
+  # leathery macrophytes: CC, CYOS, PTCA, LAFA
+  "Chondracanthus corymbiferus; Chondracanthus exasperatus" = "#C3ABD1", 
+  "Stephanocystis osmundacea" = "#A778B4", 
+  "Pterygophora californica" = "#8C4E99", 
+  "Laminaria farlowii" = "#6F4C9B"
 )
 
 algae_splabel_colors <- c(
-  # BO, CO
-  "Corallina officinalis" = "#E29244", 
-  "Bossiella orbigniana" = "#FFAA00", 
-  # everything else (BF, CC, R, CYOS, DP)
-  "Cryptopleura ruprechtiana" = "#5A7ECB", 
-  "Chondracanthus spp." = "#6B6D9F", 
-  "Rhodymenia californica" = "#69B9FA", 
-  "Stephanocystis osmundacea" = "#59A3F8", 
-  "Dictyota spp." = "#3B4F8E",
-  # PTCA, LAFA
-  "Pterygophora californica" = "#3B7D6E", 
-  "Laminaria farlowii" = "#4CA49E"
+  # BO, CO: articulated calcareous
+  "Corallina officinalis" = "#E67932", 
+  "Bossiella orbigniana" = "#E49C39", 
+  # corticated macrophytes: BF, R
+  "Cryptopleura ruprechtiana" = "#A6B354", 
+  "Rhodymenia californica" = "#77B77D", 
+  # corticated foliose: DP
+  "Dictyota spp." = "#4D8AC6",
+  # leathery macrophytes: CC, CYOS, PTCA, LAFA
+  "Chondracanthus spp." = "#C3ABD1", 
+  "Stephanocystis osmundacea" = "#A778B4", 
+  "Pterygophora californica" = "#8C4E99", 
+  "Laminaria farlowii" = "#6F4C9B"
 )
 
 algae_spcode_colors <- c(
-  # BO, CO
-  "CO" = "#E29244", 
-  "BO" = "#FFAA00", 
-  # everything else (BF, CC, R, CYOS, DP)
-  "BF" = "#5A7ECB", 
-  "CC" = "#6B6D9F", 
-  "R" = "#69B9FA", 
-  "CYOS" = "#59A3F8", 
-  "DP" = "#3B4F8E",
-  # PTCA, LAFA
-  "PTCA" = "#3B7D6E", 
-  "LAFA" = "#4CA49E"
-)
+  # BO, CO: articulated calcareous
+  "CO" = "#E67932", 
+  "BO" = "#E49C39", 
+  # corticated macrophytes: BF, R
+  "BF" = "#A6B354", 
+  "R" = "#77B77D", 
+  # corticated foliose: DP
+  "DP" = "#4D8AC6",
+  # leathery macrophytes: CC, CYOS, PTCA, LAFA
+  "CC" = "#C3ABD1", 
+  "CYOS" = "#A778B4", 
+  "PTCA" = "#8C4E99", 
+  "LAFA" = "#6F4C9B"
+) 
 
 algae_factors <- c(
   # BO, CO
@@ -247,44 +251,41 @@ algae_factors <- c(
 )
 
 algae_splabel_factors <- c(
-  # BO, CO
   "Corallina officinalis", 
   "Bossiella orbigniana", 
-  # everything else (BF, CC, R, CYOS, DP)
   "Cryptopleura ruprechtiana", 
-  "Chondracanthus spp.", 
   "Rhodymenia californica", 
-  "Stephanocystis osmundacea", 
   "Dictyota spp.",
-  # PTCA, LAFA
+  "Chondracanthus spp.", 
+  "Stephanocystis osmundacea", 
   "Pterygophora californica", 
   "Laminaria farlowii"
 )
 
 algae_spcode_factors <- c(
-  "CO", "BO", "BF", "CC", "R", "CYOS", "DP", "PTCA", "LAFA"
+  "CO", "BO", "BF", "R", "DP", "CC", "CYOS", "PTCA", "LAFA"
 )
 
-algae_spcode_colors <- c(
-  # reds
-  "BF" = "#C68F76", 
-  "CC" = "#F5CFBC", 
-  "GS" = "#985030", 
-  "CO" = "#D6A48D", 
-  "BO" = "#893B19", 
-  "POLA" = "#E5B9A4", 
-  "R" = "#A86547", 
-  "GR" = "#B77A5F", 
-  "Nandersoniana" = "#7A2602",
-  # browns
-  "PTCA" = "#7A6720", 
-  "CYOS" = "#BA9C30", 
-  "DL" = "#CFAE35", 
-  "EGME" = "#8F7825", 
-  "LAFA" = "#FAD241", 
-  "DU" = "#A48A2A", 
-  "DP" = "#E4C03B"
-)
+# algae_spcode_colors <- c(
+#   # reds
+#   "BF" = "#C68F76", 
+#   "CC" = "#F5CFBC", 
+#   "GS" = "#985030", 
+#   "CO" = "#D6A48D", 
+#   "BO" = "#893B19", 
+#   "POLA" = "#E5B9A4", 
+#   "R" = "#A86547", 
+#   "GR" = "#B77A5F", 
+#   "Nandersoniana" = "#7A2602",
+#   # browns
+#   "PTCA" = "#7A6720", 
+#   "CYOS" = "#BA9C30", 
+#   "DL" = "#CFAE35", 
+#   "EGME" = "#8F7825", 
+#   "LAFA" = "#FAD241", 
+#   "DU" = "#A48A2A", 
+#   "DP" = "#E4C03B"
+# )
 
 algae_spcode_full_names <- c(
   # reds

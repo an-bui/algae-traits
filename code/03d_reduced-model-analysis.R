@@ -27,7 +27,8 @@ keep_4trait_combination <- combo_4traits %>%
       x == "yes" ~ 0
     )
   )) %>% 
-  filter(pairwise_padj_conserved_euc == "yes") %>% 
+  filter(count_false %in% c(0, 1)) %>% 
+  # filter(pairwise_padj_conserved_euc == "yes") %>% 
   unite(trait1:trait4, col = trait_list, sep=", ") %>% 
   mutate(number_of_traits = 4)
 
@@ -46,7 +47,8 @@ keep_3trait_combination <- combo_3traits  %>%
       x == "yes" ~ 0
     )
   )) %>% 
-  filter(pairwise_padj_conserved_euc == "yes") %>% 
+  filter(count_false %in% c(0, 1)) %>% 
+  filter(!(combo_number == 3)) %>% 
   unite(trait1:trait3, col = trait_list, sep=", ") %>% 
   mutate(number_of_traits = 3)
 
@@ -134,7 +136,13 @@ reduced_combinations <- bind_rows(
       left_join(., metadata_ind, by = "specimen_ID") %>% 
       left_join(., coarse_traits, by = "sp_code") %>% 
       mutate(scientific_name = factor(scientific_name, 
-                                      levels = algae_factors))
+                                      levels = algae_factors)) %>% 
+      mutate(sp_label = case_when(
+        scientific_name == "Dictyota binghamiae; Dictyota flabellata; Dictyota coriacea" ~ "Dictyota spp.",
+        scientific_name == "Chondracanthus corymbiferus; Chondracanthus exasperatus" ~ "Chondracanthus spp.",
+        TRUE ~ scientific_name
+      )) %>% 
+      mutate(sp_label = fct_relevel(sp_label, algae_splabel_factors))
   )) %>% 
   mutate(pca_vectors = map(
     pca,
@@ -184,7 +192,7 @@ reduced_combinations <- bind_rows(
     ggplot(data = v, 
            aes(x = PC1, 
                y = PC2, 
-               color = scientific_name, 
+               color = sp_label, 
     ) ) +
       PCA_aesthetics +
       species_colors + 
@@ -193,13 +201,13 @@ reduced_combinations <- bind_rows(
         alpha = 0.3,
         size = 1
       )   +
-      stat_ellipse(aes(color = scientific_name),
+      stat_ellipse(aes(color = sp_label),
                    level = 0.5) +
       # scale_x_continuous(limits = c(-1.3, 1.3)) +
       # scale_y_continuous(limits = c(-1.3, 1.3)) +
       PCA_theme() +
-      theme(legend.position = "inside",
-            legend.position.inside = c(0.15, 0.15),
+      theme(legend.position = "right",
+            legend.text = element_text(size = 16),
             legend.background = element_blank(),
             legend.spacing.y = unit(0.01, "cm"),
             legend.key.spacing.y = unit(0.01, "cm"),
@@ -216,9 +224,12 @@ reduced_combinations <- bind_rows(
   ))
 
 # plots together
-combo_4traits_biplots <- reduced_combinations[[22]][[1]]
-combo_3traits_combo7_biplots <- reduced_combinations[[22]][[2]]
-combo_3traits_combo22_biplots <- reduced_combinations[[22]][[3]]
+# 3 traits combo 7: row 69
+# 3 traits combo 22: row 73
+# 4 traits combo 15: row 8
+combo_4traits_biplots <- reduced_combinations[[22]][[8]]
+combo_3traits_combo7_biplots <- reduced_combinations[[22]][[69]]
+combo_3traits_combo22_biplots <- reduced_combinations[[22]][[73]]
 
 combo_biplots_together <- list(
   combo_4traits_biplots,
@@ -246,4 +257,15 @@ for(i in 1:length(combo_biplots_together)) {
          units = "cm",
          dpi = 300)
 }
+
+dispersions <- reduced_combinations %>% 
+  select(number_of_traits, combo_number, betadisp_anova) %>% 
+  mutate(p_val = map(
+    betadisp_anova,
+    ~ case_when(
+      .x$`Pr(>F)`[[1]] > 0.05 ~ paste0("no diff (p = ", round(.x$`Pr(>F)`[[1]], digits = 2), ")"),
+      .x$`Pr(>F)`[[1]] < 0.05 ~ paste0("diff dispersions (p = ", round(.x$`Pr(>F)`[[1]], digits = 2), ")")
+    )
+   # ~ .x$`Pr(>F)`[[1]]
+  ))
 

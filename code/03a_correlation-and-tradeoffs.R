@@ -224,7 +224,8 @@ log_ind_traits <- ind_traits_filtered %>%
                   sav_scaled, 
                   sta_scaled,
                   sap_mean), 
-                log))
+                log)) %>% 
+  mutate(sp_label = fct_relevel(sp_label, algae_splabel_factors))
 
 pairwise_sma <- function(model_formula, trait1, trait2, data) {
   df <- if(data == "normal") {
@@ -244,19 +245,19 @@ pairwise_sma <- function(model_formula, trait1, trait2, data) {
   plot <- ggplot(data = df,
                  aes(x = {{ trait1 }},
                      y = {{ trait2 }},
-                     color = scientific_name)) +
+                     color = sp_label)) +
     geom_point(alpha = 0.3,
                shape = 21,
-               size = 0.75) +
+               size = 1) +
     stat_ma_line(method = "SMA",
                  color = "black",
                  fill = "lightgrey",
-                 linewidth = 0.75) +
-    geom_smooth(aes(group = scientific_name),
+                 linewidth = 1) +
+    geom_smooth(aes(group = sp_label),
                 method = "lm",
                 se = FALSE,
-                linewidth = 0.5) +
-    scale_color_manual(values = algae_colors,
+                linewidth = 1) +
+    scale_color_manual(values = algae_splabel_colors,
                        labels = function(x) str_wrap(x, width = 40)) +
     labs(color = "Scientific name") + 
     guides(color = guide_legend(nrow = 3),
@@ -264,7 +265,7 @@ pairwise_sma <- function(model_formula, trait1, trait2, data) {
     # labs(title = model_formula) +
     theme_bw() +
     theme(panel.grid = element_blank(),
-          text = element_text(size = 22))
+          text = element_text(size = 26))
   
   # return all
   return(list(lmodel2_obj, sma_obj, plot))
@@ -334,13 +335,13 @@ plot_legend_test <- cowplot::get_plot_component(plot_legend, "guide-box-right", 
 
 sma_together <- (sta_sav_plot | thick_height_plot) / (sta_h_ww_plot | dmc_height_plot) + plot_layout(guides = "collect") & theme(legend.position = 'bottom')
   
-# ggsave(here::here("figures",
-#                   "tradeoffs",
-#                   paste0("sma_supplement_", today(), ".jpg")),
-#        width = 14,
-#        height = 18,
-#        units = "cm",
-#        dpi = 300)
+ggsave(here::here("figures",
+                  "tradeoffs",
+                  paste0("sma_supplement_", today(), ".jpg")),
+       width = 16,
+       height = 18,
+       units = "cm",
+       dpi = 300)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # -------------------- 5. Principal Components Analysis -------------------
@@ -374,22 +375,22 @@ trait_dist <- vegdist(pca_mat_log,
 
 sp_permanova <- adonis2(trait_dist ~ sp_code, 
                         data = ind_traits_filtered)
-# sp_permanova %>% 
-#   tidy() %>% 
-#   mutate(across(SumOfSqs:statistic, ~ round(.x, digits = 2))) %>% 
-#   flextable() %>% 
-#   autofit() %>% 
-#   fit_to_width(8) %>% 
+# sp_permanova %>%
+#   tidy() %>%
+#   mutate(across(SumOfSqs:statistic, ~ round(.x, digits = 2))) %>%
+#   flextable() %>%
+#   autofit() %>%
+#   fit_to_width(8) %>%
 #   font(fontname = "Times New Roman",
-#        part = "all") %>% 
+#        part = "all") %>%
 #   # change the column names
 #   set_header_labels("term" = "Term",
 #                     "df" = "Degrees of freedom",
 #                     "SumOfSqs" = "Sum of squares",
 #                     "R2" = "R\U00B2",
-#                     "statistic" = "F-statistic", 
-#                     "p.value" = "p-value") %>% 
-#   save_as_docx(path = here("tables", "ANOVA", paste0("full-trait-ANOVA_", today(), ".docx")))
+#                     "statistic" = "F-statistic",
+#                     "p.value" = "p-value") %>%
+#   save_as_docx(path = here("tables", "PERMANOVA", paste0("full-trait-ANOVA_", today(), ".docx")))
 # species are different from each other
 
 set.seed(1)
@@ -402,25 +403,42 @@ rvam_pairwise_log <- pairwise.perm.manova(resp = trait_dist,
 rvam_pairwise_log
 # BO and CO are not different from each other
 
-# rvam_pairwise_log$p.value %>% 
-#   as.data.frame() %>% 
-#   rownames_to_column("sp_code") %>% 
+# rvam_pairwise_log$p.value %>%
+#   as.data.frame() %>%
+#   rownames_to_column("sp_code") %>%
 #   mutate(across(c(CO:PTCA), ~ case_when(
 #     between(.x, 0, 0.001) ~ "<0.001",
 #     between(.x, 0.001, 0.01) ~ as.character(round(.x, digits = 3)),
 #     between(.x, 0.01, 1) ~ as.character(round(.x, digits = 2))
-#   ))) %>% 
-#   mutate(across(everything(), ~ replace_na(.x, "-"))) %>% 
-#   flextable() %>% 
-#   autofit() %>% 
-#   fit_to_width(8) %>% 
+#   ))) %>%
+#   mutate(across(everything(), ~ replace_na(.x, "-"))) %>%
+#   flextable() %>%
+#   autofit() %>%
+#   fit_to_width(8) %>%
 #   font(fontname = "Times New Roman",
-#        part = "all") %>% 
-#   set_header_labels("sp_code" = "") %>% 
-#   save_as_docx(path = here("tables", "ANOVA", paste0("full-trait-ANOVA_pairwise-comparisons_", today(), ".docx")))
+#        part = "all") %>%
+#   set_header_labels("sp_code" = "") %>%
+#   save_as_docx(path = here("tables", "PERMANOVA", paste0("full-trait-ANOVA_pairwise-comparisons_", today(), ".docx")))
 
 anova(betadisper(d = trait_dist,
-                 group = ind_traits_filtered$sp_code))
+                 group = ind_traits_filtered$sp_code)) %>% 
+  tidy() %>% 
+  mutate(across(where(is.numeric), ~round(., digits = 2))) %>% 
+  flextable() %>% 
+  set_header_labels("term" = "Term",
+                    "df" = "Degrees of freedom",
+                    "sumsq" = "Sum of squares",
+                    "meansq" = "Mean squares",
+                    "statistic" = "F-statistic",
+                    "p.value" = "p-value") %>% 
+  autofit() %>% 
+  fit_to_width(5, unit = "in") %>% 
+  font(fontname = "Times New Roman",
+       part = "all") %>% 
+  save_as_docx(path = here("tables",
+                    "PERMANOVA",
+                    paste0("full-trait_dispersions_", today(), ".docx")))
+  
 # no difference in dispersions
 
 # ⟞ b. loadings -----------------------------------------------------------
@@ -702,7 +720,7 @@ total_sample_collection_table <- ind_traits_filtered %>%
     na_str = "-"
   ) %>% 
   autofit() %>% 
-  fit_to_width(7) %>% 
+  fit_to_width(6.5, unit = "in") %>% 
   font(fontname = "Times New Roman",
        part = "all")
 

@@ -161,6 +161,24 @@ keep_4traits_heatmap <- keep_4traits %>%
     category_present %in% c("everything else/TRUE") ~ "transparent"
   ))
 
+keep_4traits %>% 
+  filter(if_any(contains("trait"), 
+                ~ str_detect(., "Surface area:perimeter"))) %>% 
+  group_by(category) %>% 
+  tally()
+
+keep_4traits %>% 
+  filter(if_any(contains("trait"), 
+                ~ str_detect(., "Surface area|Height"))) %>% 
+  group_by(category) %>% 
+  tally()
+
+keep_4traits %>% 
+  filter(if_any(contains("trait"), 
+                ~ str_detect(., "Thickness|Dry:wet weight"))) %>% 
+  group_by(category) %>% 
+  tally()
+
 bottom_4traits <- keep_4traits_heatmap %>% 
   ggplot(aes(x = combo,
              y = trait,
@@ -267,7 +285,17 @@ keep_3traits_heatmap <- keep_3traits %>%
     category_present %in% c("everything else/TRUE") ~ "transparent"
   ))
 
+keep_3traits %>% 
+  filter(if_any(contains("trait"), 
+                ~ str_detect(., "Surface area|Height"))) %>% 
+  group_by(category) %>% 
+  tally()
 
+keep_3traits %>% 
+  filter(if_any(contains("trait"), 
+                ~ str_detect(., "Thickness|Dry:wet weight"))) %>% 
+  group_by(category) %>% 
+  tally()
 
 bottom_3traits <- keep_3traits_heatmap %>% 
   ggplot(aes(x = combo,
