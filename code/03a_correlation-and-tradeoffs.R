@@ -15,25 +15,25 @@ pca_mat <- ind_traits_filtered %>%
   select(specimen_ID, 
          maximum_height, 
          thickness_mm_mean, 
-         frond_area_scaled,
+         # frond_area_scaled,
          height_ww,
          total_dmc, 
-         height_vol,
-         sav_scaled, 
-         sta_scaled,
-         sap_mean
+         height_vol
+         # sav_scaled, 
+         # sta_scaled,
+         # sap_mean
          ) %>% 
   column_to_rownames("specimen_ID") %>% 
   drop_na() %>% 
   rename(`Height` = maximum_height,
          `Thickness` = thickness_mm_mean,
-         `Surface area` = frond_area_scaled,
+         # `Surface area` = frond_area_scaled,
          `Height:wet weight` = height_ww,
          `Dry:wet weight` = total_dmc,
-         `Height:volume` = height_vol,
-         `Surface area:volume` = sav_scaled,
-         `Surface area:dry weight` = sta_scaled,
-         `Surface area:perimeter` = sap_mean
+         `Height:volume` = height_vol
+         # `Surface area:volume` = sav_scaled,
+         # `Surface area:dry weight` = sta_scaled,
+         # `Surface area:perimeter` = sap_mean
          )  
 
 pca_mat_scale <- scale(pca_mat)
@@ -166,19 +166,19 @@ corr_traits <- corrplot(corr = M,
                         col= colorRampPalette(c("#F21A00", "#FFFFFF", "#3B9AB2"))(200), 
                         sig.level = 0.05)
 
-# jpeg(here::here("figures", 
+# jpeg(here::here("figures",
 #                 "correlation",
 #                 paste0("corrplot_log_full-model_", today(), ".jpeg")),
 #      width = 24, height = 24, units = "cm", res = 300)
-# corrplot(corr = M, 
+# corrplot(corr = M,
 #          p.mat = p$p,
 #          diag = FALSE,
-#          method = "circle", 
+#          method = "circle",
 #          # addgrid.col = NA,
-#          type = "lower", 
-#          insig = "blank", 
-#          addCoef.col = "black", 
-#          col= colorRampPalette(c("#F21A00", "#FFFFFF", "#3B9AB2"))(200), 
+#          type = "lower",
+#          insig = "blank",
+#          addCoef.col = "black",
+#          col= colorRampPalette(c("#F21A00", "#FFFFFF", "#3B9AB2"))(200),
 #          sig.level = 0.05)
 # dev.off()
 
@@ -217,13 +217,14 @@ pairwise_comparisons <- p_df %>%
 log_ind_traits <- ind_traits_filtered %>% 
   mutate(across(c(maximum_height, 
                   thickness_mm_mean, 
-                  frond_area_scaled,
+                  # frond_area_scaled,
                   height_ww,
                   total_dmc, 
-                  height_vol,
-                  sav_scaled, 
-                  sta_scaled,
-                  sap_mean), 
+                  height_vol
+                  # sav_scaled, 
+                  # sta_scaled,
+                  # sap_mean
+                  ), 
                 log)) %>% 
   mutate(sp_label = fct_relevel(sp_label, algae_splabel_factors))
 
@@ -273,16 +274,16 @@ pairwise_sma <- function(model_formula, trait1, trait2, data) {
   
 }
 
-pair_sta_sav <- pairwise_sma(
-  model_formula = "sta_scaled ~ sav_scaled", 
-  trait1 = sta_scaled,
-  trait2 = sav_scaled,
+pair_h_hv <- pairwise_sma(
+  model_formula = "maximum_height ~ height_vol", 
+  trait1 = maximum_height,
+  trait2 = height_vol,
   data = "log"
 )
 
-sta_sav_plot <- pair_sta_sav[[3]] +
-  labs(x = "Surface area:dry weight",
-       y = "Surface area:volume ratio",
+pair_h_hv_plot <- pair_h_hv[[3]] +
+  labs(x = "Height:volume ratio",
+       y = "Maximum height",
        title = "(a)") +
   theme(plot.title.position = "plot")
 
@@ -294,22 +295,22 @@ pair_thick_height <- pairwise_sma(
 )
 
 thick_height_plot <- pair_thick_height[[3]] +
-  labs(x = "Thickness",
-       y = "Height",
-       title = "(b)") +
+  labs(x = "Height",
+       y = "Thickness",
+       title = "(c)") +
   theme(plot.title.position = "plot")
 
-pair_sta_h_ww <- pairwise_sma(
-  model_formula = "sta_scaled ~ height_ww", 
-  trait1 = sta_scaled,
+pair_t_h_ww <- pairwise_sma(
+  model_formula = "thickness_mm_mean ~ height_ww", 
+  trait1 = thickness_mm_mean,
   trait2 = height_ww,
   data = "log"
 )
 
-sta_h_ww_plot <- pair_sta_h_ww[[3]] +
-  labs(x = "Surface area:dry weight",
-       y = "Height:wet weight",
-       title = "(c)") +
+pair_t_h_ww <- pair_t_h_ww[[3]] +
+  labs(x = "Height:wet weight",
+       y = "Thickness",
+       title = "(b)") +
   theme(plot.title.position = "plot")
 
 pair_dmc_height <- pairwise_sma(
@@ -320,8 +321,8 @@ pair_dmc_height <- pairwise_sma(
 )
 
 dmc_height_plot <- pair_dmc_height[[3]] +
-  labs(x = "Dry:wet weight",
-       y = "Height",
+  labs(x = "Height",
+       y = "Dry:wet weight",
        title = "(d)") +
   theme(plot.title.position = "plot")
 
@@ -333,15 +334,15 @@ plot_legend <- pair_dmc_height[[3]] +
 plot_legend_test <- cowplot::get_plot_component(plot_legend, "guide-box-right", return_all = TRUE)
 
 
-sma_together <- (sta_sav_plot | thick_height_plot) / (sta_h_ww_plot | dmc_height_plot) + plot_layout(guides = "collect") & theme(legend.position = 'bottom')
+sma_together <- (pair_h_hv_plot | thick_height_plot) / (pair_t_h_ww | dmc_height_plot) + plot_layout(guides = "collect") & theme(legend.position = 'bottom')
   
-ggsave(here::here("figures",
-                  "tradeoffs",
-                  paste0("sma_supplement_", today(), ".jpg")),
-       width = 16,
-       height = 18,
-       units = "cm",
-       dpi = 300)
+# ggsave(here::here("figures",
+#                   "tradeoffs",
+#                   paste0("sma_supplement_", today(), ".jpg")),
+#        width = 16,
+#        height = 18,
+#        units = "cm",
+#        dpi = 300)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # -------------------- 5. Principal Components Analysis -------------------
@@ -367,14 +368,15 @@ summary(pca_full)
 prcomp(pca_mat_log, center = TRUE, scale. = TRUE) %>% summary()
 
 # proportion variance explained for downstream figure making
-prop_PC1_full <- "62.6%"
-prop_PC2_full <- "21.9%"
+prop_PC1_full <- "53.2%"
+prop_PC2_full <- "28.4%"
 
 trait_dist <- vegdist(pca_mat_log, 
                       method = "euclidean")
 
 sp_permanova <- adonis2(trait_dist ~ sp_code, 
                         data = ind_traits_filtered)
+
 # sp_permanova %>%
 #   tidy() %>%
 #   mutate(across(SumOfSqs:statistic, ~ round(.x, digits = 2))) %>%
@@ -401,7 +403,15 @@ rvam_pairwise_log <- pairwise.perm.manova(resp = trait_dist,
                                           `F` = TRUE)
 
 rvam_pairwise_log
-# BO and CO are not different from each other
+# BO and CO are not different from each other = articulated corallines
+# DP and BF are not different = foliose ish things
+# PTCA and LAFA are not different = stipate browns
+# CYOS: bushy stipate brown
+# CC: short leathery red
+# R: bushy short red
+# DP: bushy short brown
+
+full_pairwise_matrix <- (rvam_pairwise_log$p.value < 0.05)
 
 # rvam_pairwise_log$p.value %>%
 #   as.data.frame() %>%
@@ -546,8 +556,8 @@ plot_PCA_12_vectors <- ggplot() +
                   alpha = 0.8,
                   seed = 666,
                   color = "black") +
-  scale_x_continuous(limits = c(-2, 3)) +
-  scale_y_continuous(limits = c(-2.75, 2.25)) +
+  scale_x_continuous(limits = c(-3, 3)) +
+  scale_y_continuous(limits = c(-3, 3)) +
   PCA_theme() +
   labs(x = paste0("PC1 (", prop_PC1_full, ")"),
        y = paste0("PC2 (", prop_PC2_full, ")"),

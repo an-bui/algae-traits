@@ -301,6 +301,30 @@ algae_spcode_full_names <- c(
   "DP" = "Dictyota spp."
 )
 
+# BO and CO are not different from each other = articulated corallines
+# DP and BF are not different = foliose ish things
+# PTCA and LAFA are not different = stipate browns
+# CYOS: bushy stipate brown
+# CC: short leathery red
+# R: bushy short red
+# DP: bushy short brown
+groups <- c(
+  "BO" = "articulated coralline",
+  "CO" = "articulated coralline",
+  
+  "DP" = "foliose, bushy turf",
+  "BF" = "foliose, bushy turf",
+  
+  "PTCA" = "tall, stipate",
+  "LAFA" = "tall, stipate",
+  
+  "CYOS" = "bushy, stipate",
+  
+  "CC" = "short, leathery red",
+  
+  "R" = "bushy, short red"
+)
+
 
 
 # colors
