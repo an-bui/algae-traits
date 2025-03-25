@@ -1,14 +1,14 @@
 # This is a script for cleaning up trait data.
 
-############################################################-
-# 0. source -------------------------------------------------
-############################################################-
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ------------------------------- 0. source -------------------------------
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 source(here::here("code", "00c_trait-data.R"))
 
-############################################################-
-# 1. cleaning/summarizing -----------------------------------
-############################################################-
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ---------------------- 1. cleaning and summarizing ----------------------
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # ⊣ a. FvFm -------------------------------------------------
 
@@ -228,9 +228,9 @@ isotopes_ind <- isotopes_sub %>%
             weight_percent_c_mean = mean(weight_percent_c, na.rm = TRUE),
             weight_percent_c_se = se(weight_percent_c))
 
-############################################################-
-# 2. trait by sample matrices -------------------------------
-############################################################-
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ---------------------- 2. trait by sample matrices ----------------------
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # vector of recruit subsamples
 recruits <- metadata_sub %>% 
@@ -413,12 +413,9 @@ saved_df <- ind_traits %>%
 #   # replace NaNs with NAs
 #   mutate_all(na_if, "NaN")
 
-
-
-
-############################################################-
-# 3. categorical JoE traits ---------------------------------
-############################################################-
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ----------------------- 3. categorical JoE traits -----------------------
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 lte_spp <- lte %>% 
   filter(group == "algae") %>% 
@@ -434,6 +431,48 @@ lte_spp <- lte %>%
 
 # write_csv(lte_spp, file = here("data", "fong-categorical", "joe-traits-lter.csv"))
 
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ---------------------- 4. species collection table ----------------------
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+total_sample_collection_table <- ind_traits_filtered %>% 
+  # rownames_to_column("specimen_ID") %>% 
+  # select(specimen_ID) %>% 
+  # left_join(., metadata_ind, by = "specimen_ID") %>% 
+  # left_join(., coarse_traits, by = "sp_code") %>% 
+  # filter(sp_code %in% algae_proposal) %>% 
+  select(specimen_ID, scientific_name, site, year) %>% 
+  mutate(year = as_factor(year),
+         year = fct_relevel(year, "2021", "2022", "2023")) %>% 
+  group_by(scientific_name, site, year) %>% 
+  count() %>% 
+  pivot_wider(names_from = "site",
+              values_from = "n") %>%
+  select(scientific_name, year, Bullito, `Arroyo Quemado`, Naples, `Isla Vista`,
+         Mohawk, Carpinteria) %>%
+  adorn_totals(c("row", "col")) %>% 
+  arrange(scientific_name, year) %>% 
+  rename(`Scientific name` = scientific_name,
+         `Year` = year) %>% 
+  flextable() %>% 
+  merge_v(j = "Scientific name") %>% 
+  colformat_num(
+    part = "all",
+    na_str = "-"
+  ) %>% 
+  autofit() %>% 
+  fit_to_width(8, unit = "in") %>% 
+  font(fontname = "Times New Roman",
+       part = "all")
+
+total_sample_collection_table
+
+total_sample_collection_table %>%
+  save_as_docx(path = here::here(
+    "tables",
+    "sample-tables",
+    paste0("total-samples_all-data_", today(), ".docx")
+  ))
 
 
 
