@@ -127,10 +127,14 @@ combo_4traits <- combn(x = trait_names_vector,
     pairwise_euc,
     ~ .x$p.value < 0.05
   )) %>% 
+  mutate(match_pairs = map(
+    pairwise_significant_euc,
+    ~ .x == full_pairwise_matrix
+  )) %>% 
   # creating a new column: if any p-value > 0.05, then "no" 
   # this makes the following filtering step easier
   mutate(pairwise_conserved_euc = map(
-    pairwise_significant_euc,
+    match_pairs,
     ~ case_when(
       # if any p-values > 0.05, then pairwise comparisons are NOT conserved
       "FALSE" %in% .x ~ "no",
@@ -270,10 +274,14 @@ combo_3traits <- combn(x = trait_names_vector,
     pairwise_euc,
     ~ .x$p.value < 0.05
   )) %>% 
+  mutate(match_pairs = map(
+    pairwise_significant_euc,
+    ~ .x == full_pairwise_matrix
+  )) %>% 
   # creating a new column: if any p-value > 0.05, then "no" 
   # this makes the following filtering step easier
   mutate(pairwise_conserved_euc = map(
-    pairwise_significant_euc,
+    match_pairs,
     ~ case_when(
       # if any p-values > 0.05, then pairwise comparisons are NOT conserved
       "FALSE" %in% .x ~ "no",
@@ -301,7 +309,7 @@ combo_3traits <- combn(x = trait_names_vector,
 # ⟞ iii. 2 traits ---------------------------------------------------------
 
 # test differences between species with the trait combinations
-# first, select 3 traits from the vector (order doesn't matter)
+# first, select 2 traits from the vector (order doesn't matter)
 combo_2traits <- combn(x = trait_names_vector,
                        m = 2) %>% 
   # transpose this to look more like a long format data frame
@@ -432,9 +440,9 @@ combo_2traits <- combn(x = trait_names_vector,
     )
   ))
 
-write_rds(x = combo_2traits,
-          file = here("rds-objects",
-                      paste0("combo_2-traits_", today(), ".rds")))
+# write_rds(x = combo_2traits,
+#           file = here("rds-objects",
+#                       paste0("combo_2-traits_", today(), ".rds")))
 
 
 
