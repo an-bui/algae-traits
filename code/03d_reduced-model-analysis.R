@@ -178,8 +178,8 @@ reduced_combinations <- bind_rows(
                          size = 8, 
                          alpha = 0.8,
                          color = "black") +
-        # scale_x_continuous(limits = c(-2.7, 2.7)) +
-        # scale_y_continuous(limits = c(-2.7, 2.7)) +
+        scale_x_continuous(limits = c(-3, 3)) +
+        scale_y_continuous(limits = c(-3, 3)) +
         PCA_theme() +
         labs(x = paste0("PC1 (", round(x, 2)*100, "%)"),
              y = paste0("PC2 (", round(y, 2)*100, "%)"),
@@ -203,11 +203,13 @@ reduced_combinations <- bind_rows(
       )   +
       stat_ellipse(aes(color = sp_label),
                    level = 0.5) +
-      # scale_x_continuous(limits = c(-1.3, 1.3)) +
-      # scale_y_continuous(limits = c(-1.3, 1.3)) +
+      scale_x_continuous(limits = c(-1.5, 1.5)) +
+      scale_y_continuous(limits = c(-1.5, 1.5)) +
       PCA_theme() +
-      theme(legend.position = "right",
-            legend.text = element_text(size = 16),
+      theme(legend.position = "inside",
+            legend.position.inside = c(0.51, 0.88), 
+            legend.title = element_blank(),
+            legend.text = element_text(size = 14),
             legend.background = element_blank(),
             legend.spacing.y = unit(0.01, "cm"),
             legend.key.spacing.y = unit(0.01, "cm"),
@@ -223,10 +225,9 @@ reduced_combinations <- bind_rows(
     function(x, y) x + y
   ))
 
+  
+
 # plots together
-# 3 traits combo 7: row 69
-# 3 traits combo 22: row 73
-# 4 traits combo 15: row 8
 combo_4traits_combo2_biplots <- reduced_combinations[[22]][[1]]
 combo_4traits_combo5_biplots <- reduced_combinations[[22]][[2]]
 combo_3traits_combo9_biplots <- reduced_combinations[[22]][[3]]
@@ -252,8 +253,8 @@ for(i in 1:length(combo_biplots_together)) {
                      today(), 
                      ".jpg")),
          plot = combo_biplots_together[[i]],
-         width = 24,
-         height = 12,
+         width = 16,
+         height = 8,
          units = "cm",
          dpi = 300)
 }
