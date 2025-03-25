@@ -58,30 +58,11 @@ combo_4traits <- combn(x = trait_names_vector,
     ~ vegdist(.x, method = "euclidean")
   )) %>% 
   # do the permanova to ask if species are different in trait values
-  # mutate(permanova = map(
-  #   subset_df,
-  #   ~ adonis2(.x ~ sp_code, 
-  #             data = ind_traits_filtered)
-  # )) %>% 
-  # repeat permanova with euclidean distances
   mutate(permanova_euc = map(
     dist_obj,
     ~ adonis2(.x ~ sp_code, 
               data = ind_traits_filtered)
   )) %>% 
-  # do the pairwise comparisons to ask which pairwise differences exist
-  # mutate(pairwise = map(
-  #   subset_df,
-  #   ~ pairwise.perm.manova(resp = .x, 
-  #                          fact = ind_traits_filtered$sp_code,
-  #                          p.method = "none")
-  # )) %>% 
-  # mutate(pairwise_padj = map(
-  #   subset_df,
-  #   ~ pairwise.perm.manova(resp = .x, 
-  #                          fact = ind_traits_filtered$sp_code,
-  #                          p.method = "BH")
-  # )) %>% 
   mutate(pairwise_euc = map(
     dist_obj,
     ~ pairwise.perm.manova(resp = .x, 
@@ -94,35 +75,6 @@ combo_4traits <- combn(x = trait_names_vector,
                            fact = ind_traits_filtered$sp_code,
                            p.method = "BH")
   )) %>% 
-  # ask if the p-values in the pairwise comparisons are greater or less than 0.05
-  # if less than 0.05, then subset traits conserve differences between species
-  # mutate(pairwise_significant = map(
-  #   pairwise,
-  #   ~ .x$p.value < 0.05
-  # )) %>% 
-  # creating a new column: if any p-value > 0.05, then "no" 
-  # this makes the following filtering step easier
-  # mutate(pairwise_conserved = map(
-  #   pairwise_significant,
-  #   ~ case_when(
-  #     # if any p-values > 0.05, then pairwise comparisons are NOT conserved
-  #     "FALSE" %in% .x ~ "no",
-  #     # if all p-values > 0.05, then pairwise comparisons are conserved
-  #     TRUE ~ "yes"
-  #   )
-  # )) %>% 
-  # # repeat for p-value adjusted (not using euclidean distances)
-  # mutate(pairwise_padj_significant = map(
-  #   pairwise_padj,
-  #   ~ .x$p.value < 0.05
-  # )) %>% 
-  # mutate(pairwise_padj_conserved = map(
-  #   pairwise_padj_significant,
-  #   ~ case_when(
-  #     "FALSE" %in% .x ~ "no",
-  #     TRUE ~ "yes"
-  #   )
-  # )) %>% 
   mutate(pairwise_significant_euc = map(
     pairwise_euc,
     ~ .x$p.value < 0.05
@@ -209,30 +161,11 @@ combo_3traits <- combn(x = trait_names_vector,
     ~ vegdist(.x, method = "euclidean")
   )) %>% 
   # do the permanova to ask if species are different in trait values
-  # mutate(permanova = map(
-  #   subset_df,
-  #   ~ adonis2(.x ~ sp_code, 
-  #             data = ind_traits_filtered)
-  # )) %>% 
-  # repeat permanova with euclidean distances
   mutate(permanova_euc = map(
     dist_obj,
     ~ adonis2(.x ~ sp_code, 
               data = ind_traits_filtered)
   )) %>% 
-  # do the pairwise comparisons to ask which pairwise differences exist
-  # mutate(pairwise = map(
-  #   subset_df,
-  #   ~ pairwise.perm.manova(resp = .x, 
-  #                          fact = ind_traits_filtered$sp_code,
-  #                          p.method = "none")
-  # )) %>% 
-  # mutate(pairwise_padj = map(
-  #   subset_df,
-  #   ~ pairwise.perm.manova(resp = .x, 
-  #                          fact = ind_traits_filtered$sp_code,
-  #                          p.method = "BH")
-  # )) %>% 
   mutate(pairwise_euc = map(
     dist_obj,
     ~ pairwise.perm.manova(resp = .x, 
@@ -245,35 +178,6 @@ combo_3traits <- combn(x = trait_names_vector,
                            fact = ind_traits_filtered$sp_code,
                            p.method = "BH")
   )) %>% 
-  # ask if the p-values in the pairwise comparisons are greater or less than 0.05
-  # if less than 0.05, then subset traits conserve differences between species
-  # mutate(pairwise_significant = map(
-  #   pairwise,
-  #   ~ .x$p.value < 0.05
-  # )) %>% 
-  # creating a new column: if any p-value > 0.05, then "no" 
-  # this makes the following filtering step easier
-  # mutate(pairwise_conserved = map(
-  #   pairwise_significant,
-  #   ~ case_when(
-  #     # if any p-values > 0.05, then pairwise comparisons are NOT conserved
-  #     "FALSE" %in% .x ~ "no",
-  #     # if all p-values > 0.05, then pairwise comparisons are conserved
-  #     TRUE ~ "yes"
-  #   )
-  # )) %>% 
-  # # repeat for p-value adjusted (not using euclidean distances)
-  # mutate(pairwise_padj_significant = map(
-  #   pairwise_padj,
-  #   ~ .x$p.value < 0.05
-  # )) %>% 
-  # mutate(pairwise_padj_conserved = map(
-  #   pairwise_padj_significant,
-  #   ~ case_when(
-  #     "FALSE" %in% .x ~ "no",
-  #     TRUE ~ "yes"
-  #   )
-  # )) %>% 
   mutate(pairwise_significant_euc = map(
     pairwise_euc,
     ~ .x$p.value < 0.05
@@ -359,30 +263,12 @@ combo_2traits <- combn(x = trait_names_vector,
     ~ vegdist(.x, method = "euclidean")
   )) %>% 
   # do the permanova to ask if species are different in trait values
-  # mutate(permanova = map(
-  #   subset_df,
-  #   ~ adonis2(.x ~ sp_code, 
-  #             data = ind_traits_filtered)
-  # )) %>% 
-  # repeat permanova with euclidean distances
   mutate(permanova_euc = map(
     dist_obj,
     ~ adonis2(.x ~ sp_code, 
               data = ind_traits_filtered)
   )) %>% 
   # do the pairwise comparisons to ask which pairwise differences exist
-  # mutate(pairwise = map(
-  #   subset_df,
-  #   ~ pairwise.perm.manova(resp = .x, 
-  #                          fact = ind_traits_filtered$sp_code,
-  #                          p.method = "none")
-  # )) %>% 
-  # mutate(pairwise_padj = map(
-  #   subset_df,
-  #   ~ pairwise.perm.manova(resp = .x, 
-  #                          fact = ind_traits_filtered$sp_code,
-  #                          p.method = "BH")
-  # )) %>% 
   mutate(pairwise_euc = map(
     dist_obj,
     ~ pairwise.perm.manova(resp = .x, 
@@ -395,35 +281,6 @@ combo_2traits <- combn(x = trait_names_vector,
                            fact = ind_traits_filtered$sp_code,
                            p.method = "BH")
   )) %>% 
-  # ask if the p-values in the pairwise comparisons are greater or less than 0.05
-  # if less than 0.05, then subset traits conserve differences between species
-  # mutate(pairwise_significant = map(
-  #   pairwise,
-  #   ~ .x$p.value < 0.05
-  # )) %>% 
-  # creating a new column: if any p-value > 0.05, then "no" 
-  # this makes the following filtering step easier
-  # mutate(pairwise_conserved = map(
-  #   pairwise_significant,
-  #   ~ case_when(
-  #     # if any p-values > 0.05, then pairwise comparisons are NOT conserved
-  #     "FALSE" %in% .x ~ "no",
-  #     # if all p-values > 0.05, then pairwise comparisons are conserved
-  #     TRUE ~ "yes"
-  #   )
-  # )) %>% 
-  # # repeat for p-value adjusted (not using euclidean distances)
-  # mutate(pairwise_padj_significant = map(
-  #   pairwise_padj,
-  #   ~ .x$p.value < 0.05
-  # )) %>% 
-  # mutate(pairwise_padj_conserved = map(
-  #   pairwise_padj_significant,
-  #   ~ case_when(
-  #     "FALSE" %in% .x ~ "no",
-  #     TRUE ~ "yes"
-  #   )
-  # )) %>% 
   mutate(pairwise_significant_euc = map(
     pairwise_euc,
     ~ .x$p.value < 0.05
