@@ -1,23 +1,26 @@
 ###### 1. overall site table ######
 
 table_df <- biomass %>%
-  filter(year == 2022) %>%
-  select(site, scientific_name, dry_gm2, wm_gm2) %>%
-  filter(site %in% c("mohk")) %>%
+  filter(between(year, 2011, 2021)) %>%
+  select(site, scientific_name, dry_gm2) %>%
+  # filter(site %in% c("mohk")) %>%
   # mutate(site = fct_relevel(site, "aque", "napl", "ivee", "mohk", "carp")) %>%
   # filter out MAPY
-  filter(scientific_name != "Macrocystis pyrifera") %>%
+  filter(scientific_name != "Macrocystis pyrifera",
+         site %in% c("bull", "aque", "napl", "ivee", "mohk", "carp")) %>% 
   # create a new column where total biomass across sites for the whole survey is calculated
-  group_by(site) %>%
-  mutate(total_dry = sum(dry_gm2),
-         total_wet = sum(wm_gm2)) %>%
-  ungroup() %>%
+  # group_by(site) %>%
+  mutate(total_dry = sum(dry_gm2)# ,
+         # total_wet = sum(wm_gm2)
+         ) %>%
+  # ungroup() %>%
   # create a new column where total biomass for the species for the whole survey is calculated
   group_by(scientific_name) %>%
   reframe(total_sp_dry = sum(dry_gm2),
-         total_sp_wet = sum(wm_gm2),
+         # total_sp_wet = sum(wm_gm2),
          percent_sp_dry = total_sp_dry/total_dry,
-         percent_sp_wet = total_sp_wet/total_wet) %>%
+         #  # percent_sp_wet = total_sp_wet/total_wet
+         ) %>%
   # ungroup() %>%
   unique() %>%
   select(scientific_name, percent_sp_dry) %>%
