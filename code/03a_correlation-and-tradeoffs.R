@@ -113,7 +113,8 @@ vector_colors <- list(
 )
 
 species_colors <- list(
-  scale_color_manual(values = algae_splabel_colors)
+  scale_color_manual(values = algae_splabel_colors), 
+    guides(color = guide_legend(ncol = 2))
 )
 
 PCA_theme <- function() {
@@ -124,7 +125,7 @@ PCA_theme <- function() {
           axis.title = element_text(size = 18),
           axis.text = element_text(size = 16),
           title = element_text(size = 20),
-          legend.text = element_text(size = 10),
+          legend.text = element_text(size = 14),
           panel.grid = element_blank()) 
 }
 
@@ -588,20 +589,20 @@ plot_PCA_12_species <- PCAscores_full %>%
     shape = 21,
     alpha = 0.3,
     size = 1
-  )   +
+  ) +
   stat_ellipse(aes(color = splabel),
                level = 0.5) +
-  scale_x_continuous(limits = c(-1.6, 1.2)) +
-  scale_y_continuous(limits = c(-1.6, 1.2)) +
+  scale_x_continuous(limits = c(-1.05, 1.05)) +
+  scale_y_continuous(limits = c(-1.05, 1.05)) +
   PCA_theme() +
   theme(legend.position = "inside",
-        legend.position.inside = c(0.195, 0.225),
+        legend.position.inside = c(0.51, 0.89),
         legend.background = element_blank(),
         legend.spacing.y = unit(0.01, "cm"),
         legend.key.spacing.y = unit(0.01, "cm"),
         legend.key.height = unit(0.25, "cm"),
         legend.key.size = unit(0.3, "cm"),
-        legend.text = element_text(size = 14)) +
+        legend.title = element_blank()) +
   labs(color = "Scientific name",
        title = "(b) Species",
        x = paste0("PC1 (", prop_PC1_full, ")"),
@@ -656,7 +657,7 @@ contrib_aesthetics_full <- list(
 
 pc1_contrib_full <- varcoord_full %>% 
   filter(axis == "PC1") %>% 
-  ggplot(aes(x = reorder(abbrev, -contrib),
+  ggplot(aes(x = reorder(trait, -contrib),
              y = contrib, 
              fill = trait)) +
   contrib_aesthetics_full +
@@ -667,7 +668,7 @@ pc1_contrib_full
 
 pc2_contrib_full <- varcoord_full %>% 
   filter(axis == "PC2") %>% 
-  ggplot(aes(x = reorder(abbrev, -contrib),
+  ggplot(aes(x = reorder(trait, -contrib),
              y = contrib, 
              fill = trait)) +
   contrib_aesthetics_full +
