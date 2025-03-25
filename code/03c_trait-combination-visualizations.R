@@ -5,11 +5,14 @@
 # only need to run this once per session
 source(here::here("code", "03a_correlation-and-tradeoffs.R"))
 
+combo_2traits <- read_rds(file = here("rds-objects",
+                                      "combo_2-traits_2025-02-13.rds")) 
+
 combo_3traits <- read_rds(file = here("rds-objects",
-                                      "combo_3-traits_2024-12-03.rds")) 
+                                      "combo_3-traits_2024-12-19.rds")) 
 
 combo_4traits <- read_rds(file = here("rds-objects",
-                                      "combo_4-traits_2024-12-03.rds")) 
+                                      "combo_4-traits_2024-12-19.rds")) 
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -111,28 +114,20 @@ tally_plot_aesthetics <- list(
 
 # ⟞ i. 4 traits -----------------------------------------------------------
 
+
 # assigning each combination "same", "all", or "everything else"
 keep_4traits_categories <- combo_4traits %>% 
   mutate(combo = rownames(.)) %>% 
   # count TRUE and FALSE occurrences
   mutate(count = map(
-    pairwise_padj_significant_euc,
+    pairwise_significant_euc,
     ~ .x %>% unlist() %>% table() 
   )) %>% 
-  # number of insignificant pairwise comparisons
-  mutate(count_false = pmap(
-    list(x = pairwise_padj_conserved_euc, y = count),
-    function(x, y) case_when(
-      x == "no" ~ y[[1]],
-      x == "yes" ~ 0
-    )
-  )) %>% 
-  select(combo, count_false) %>% 
-  mutate(category = case_when(
-    count_false == 0 ~ "all",
-    count_false == 1 ~ "same",
-    TRUE ~ "everything else"
-  )) %>% 
+  select(combo, pairwise_conserved_euc) %>% 
+    mutate(category = case_when(
+      pairwise_conserved_euc == "yes" ~ "same",
+      TRUE ~ "everything else"
+    )) %>% 
   unnest(cols = everything())
 
 # only keep combinations where the pairwise comparisons are conserved
@@ -226,8 +221,8 @@ upset_plot_4traits
 #             "trait-selection",
 #             paste0("upset-plot_4traits_all-combinations_euclidean_", today(), ".jpg")),
 #        upset_plot_4traits,
-#        height = 5,
-#        width = 19,
+#        height = 8,
+#        width = 10,
 #        units = "cm",
 #        dpi = 400)
 
@@ -238,23 +233,12 @@ keep_3traits_categories <- combo_3traits %>%
   mutate(combo = rownames(.)) %>% 
   # count TRUE and FALSE occurrences
   mutate(count = map(
-    pairwise_padj_significant_euc,
+    pairwise_significant_euc,
     ~ .x %>% unlist() %>% table() 
   )) %>% 
-  # number of insignificant pairwise comparisons
-  mutate(count_false = pmap(
-    list(x = pairwise_padj_conserved_euc, y = count),
-    function(x, y) case_when(
-      x == "no" ~ y[[1]],
-      x == "yes" ~ 0
-    )
-  )) %>% 
-  select(combo, count_false) %>% 
+  select(combo, pairwise_conserved_euc) %>% 
   mutate(category = case_when(
-    count_false == 0 ~ "all",
-    # combo 3 is the only one with 1 non-significant pairwise comp that is 
-    # different from the full model
-    count_false == 1 & combo != 3 ~ "same",
+    pairwise_conserved_euc == "yes" ~ "same",
     TRUE ~ "everything else"
   )) %>% 
   unnest(cols = everything())
@@ -348,14 +332,14 @@ upset_plot_3traits <- (top_3traits / bottom_3traits) # | (plot_spacer() / right_
 # upset_plot_3traits <- top_3traits / bottom_3traits
 upset_plot_3traits
 
-# ggsave(here("figures",
-#             "trait-selection",
-#             paste0("upset-plot_3traits_all-combinations_euclidean_", today(), ".jpg")),
-#        upset_plot_3traits,
-#        height = 5,
-#        width = 14,
-#        units = "cm",
-#        dpi = 400)
+ggsave(here("figures",
+            "trait-selection",
+            paste0("upset-plot_3traits_all-combinations_euclidean_", today(), ".jpg")),
+       upset_plot_3traits,
+       height = 8,
+       width = 10,
+       units = "cm",
+       dpi = 400)
 
 tally_plots <- tally_plot_4traits / tally_plot_3traits
 
@@ -372,61 +356,61 @@ tally_plots <- tally_plot_4traits / tally_plot_3traits
 # ⟞ iii. 2 traits ---------------------------------------------------------
 
 # only keep combinations where the pairwise comparisons are conserved
-# keep_2traits <- combo_2traits %>% 
-#   keep_trait_function()
+keep_2traits <- combo_2traits %>%
+  keep_trait_function()
 # 
-# keep_2traits_tally <- keep_2traits %>% 
-#   keep_traits_heatmap_function() %>% 
-#   filter(pairwise_padj_conserved_euc == "yes" & present == TRUE) %>% 
-#   group_by(trait) %>% 
-#   tally() %>% 
-#   ungroup() %>% 
-#   arrange(n) %>% 
-#   mutate(trait = fct_inorder(trait))
+keep_2traits_tally <- keep_2traits %>%
+  keep_traits_heatmap_function() %>%
+  filter(pairwise_padj_conserved_euc == "yes" & present == TRUE) %>%
+  group_by(trait) %>%
+  tally() %>%
+  ungroup() %>%
+  arrange(n) %>%
+  mutate(trait = fct_inorder(trait))
 # 
-# keep_2traits_heatmap <- keep_2traits %>% 
-#   keep_traits_heatmap_function() %>% 
-#   mutate(trait = fct_relevel(trait, as.character(pull(keep_2traits_tally, trait))))
+keep_2traits_heatmap <- keep_2traits %>%
+  keep_traits_heatmap_function() %>%
+  mutate(trait = fct_relevel(trait, as.character(pull(keep_2traits_tally, trait))))
 # 
-# bottom_2traits <- keep_2traits_heatmap %>% 
-#   ggplot(aes(x = combo,
-#              y = trait,
-#              fill = present,
-#              alpha = pairwise_padj_conserved_euc)) +
-#   scale_fill_manual(values = c("TRUE" = "orange",
-#                                "FALSE" = "white")) +
-#   scale_alpha_manual(values = c("no" = 0.2,
-#                                 "yes" = 1)) +
-#   upset_plot_bottom
+bottom_2traits <- keep_2traits_heatmap %>%
+  ggplot(aes(x = combo,
+             y = trait,
+             fill = present,
+             alpha = pairwise_padj_conserved_euc)) +
+  scale_fill_manual(values = c("TRUE" = "orange",
+                               "FALSE" = "white")) +
+  scale_alpha_manual(values = c("no" = 0.2,
+                                "yes" = 1)) +
+  upset_plot_bottom
 # 
 # 
-# top_2traits <- keep_2traits %>% 
-#   mutate(combo = fct_relevel(combo, as.character(unique(pull(keep_2traits_heatmap, combo))))) %>% 
-#   # filter(pairwise_conserved == "yes") %>% 
-#   ggplot(aes(x = combo,
-#              y = cumu_prop,
-#              alpha = pairwise_padj_conserved_euc)) +
-#   geom_col(fill = "orange") +
-#   scale_alpha_manual(values = c("no" = 0.2,
-#                                 "yes" = 1)) +
-#   upset_plot_top
+top_2traits <- keep_2traits %>%
+  mutate(combo = fct_relevel(combo, as.character(unique(pull(keep_2traits_heatmap, combo))))) %>%
+  # filter(pairwise_conserved == "yes") %>%
+  ggplot(aes(x = combo,
+             y = cumu_prop,
+             alpha = pairwise_padj_conserved_euc)) +
+  geom_col(fill = "orange") +
+  scale_alpha_manual(values = c("no" = 0.2,
+                                "yes" = 1)) +
+  upset_plot_top
 # 
-# # right_2traits <- keep_2traits_tally %>% 
-# #   ggplot(aes(x = n,
-# #              y = trait)) +
-# #   geom_point(size = 1,
-# #              color = "darkgreen") +
-# #   geom_segment(aes(x = 0, xend = n),
-# #                color = "darkgreen") +
-# #   geom_text(aes(x = n + 0.5,
-# #                 label = n),
-# #             size = 6) +
-# #   upset_plot_right +
-# #   coord_cartesian(xlim = c(9.5, 19.75)) 
+# right_2traits <- keep_2traits_tally %>%
+#   ggplot(aes(x = n,
+#              y = trait)) +
+#   geom_point(size = 1,
+#              color = "darkgreen") +
+#   geom_segment(aes(x = 0, xend = n),
+#                color = "darkgreen") +
+#   geom_text(aes(x = n + 0.5,
+#                 label = n),
+#             size = 6) +
+#   upset_plot_right +
+#   coord_cartesian(xlim = c(9.5, 19.75))
 # # 
 # # right_2traits
 # 
-# upset_plot_2traits <- (top_2traits / bottom_2traits) # | (plot_spacer() / right_2traits)
+upset_plot_2traits <- (top_2traits / bottom_2traits) # | (plot_spacer() / right_2traits)
 # 
 # upset_plot_2traits
 # 
