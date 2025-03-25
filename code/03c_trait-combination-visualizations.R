@@ -6,13 +6,13 @@
 source(here::here("code", "03a_correlation-and-tradeoffs.R"))
 
 combo_2traits <- read_rds(file = here("rds-objects",
-                                      "combo_2-traits_2025-02-13.rds")) 
+                                      "combo_2-traits_2025-03-25.rds")) 
 
 combo_3traits <- read_rds(file = here("rds-objects",
-                                      "combo_3-traits_2024-12-19.rds")) 
+                                      "combo_3-traits_2025-03-25.rds")) 
 
 combo_4traits <- read_rds(file = here("rds-objects",
-                                      "combo_4-traits_2024-12-19.rds")) 
+                                      "combo_4-traits_2025-03-25.rds")) 
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -59,7 +59,8 @@ keep_traits_heatmap_function <- function(df) {
 upset_plot_bottom <- list(
   geom_tile(color = "black"), 
   scale_x_discrete(expand = c(0, 0)),
-  scale_y_discrete(expand = c(0, 0)),
+  scale_y_discrete(expand = c(0, 0),
+                   limits = rev),
   labs(y = "Trait"),
   theme_minimal(),
   theme(legend.position = "none",
@@ -120,12 +121,12 @@ keep_4traits_categories <- combo_4traits %>%
   mutate(combo = rownames(.)) %>% 
   # count TRUE and FALSE occurrences
   mutate(count = map(
-    pairwise_significant_euc,
+    pairwise_padj_significant_euc,
     ~ .x %>% unlist() %>% table() 
   )) %>% 
-  select(combo, pairwise_conserved_euc) %>% 
+  select(combo, pairwise_padj_conserved_euc) %>% 
     mutate(category = case_when(
-      pairwise_conserved_euc == "yes" ~ "same",
+      pairwise_padj_conserved_euc == "yes" ~ "same",
       TRUE ~ "everything else"
     )) %>% 
   unnest(cols = everything())
@@ -145,7 +146,7 @@ keep_4traits_tally <- keep_4traits %>%
   group_by(trait) %>%
   tally() %>%
   ungroup() %>%
-  arrange(n) 
+  arrange(-n) 
 
 keep_4traits_heatmap <- keep_4traits %>% 
   keep_traits_heatmap_function() %>% 
@@ -233,12 +234,12 @@ keep_3traits_categories <- combo_3traits %>%
   mutate(combo = rownames(.)) %>% 
   # count TRUE and FALSE occurrences
   mutate(count = map(
-    pairwise_significant_euc,
+    pairwise_padj_significant_euc,
     ~ .x %>% unlist() %>% table() 
   )) %>% 
-  select(combo, pairwise_conserved_euc) %>% 
+  select(combo, pairwise_padj_conserved_euc) %>% 
   mutate(category = case_when(
-    pairwise_conserved_euc == "yes" ~ "same",
+    pairwise_padj_conserved_euc == "yes" ~ "same",
     TRUE ~ "everything else"
   )) %>% 
   unnest(cols = everything())
@@ -332,14 +333,14 @@ upset_plot_3traits <- (top_3traits / bottom_3traits) # | (plot_spacer() / right_
 # upset_plot_3traits <- top_3traits / bottom_3traits
 upset_plot_3traits
 
-ggsave(here("figures",
-            "trait-selection",
-            paste0("upset-plot_3traits_all-combinations_euclidean_", today(), ".jpg")),
-       upset_plot_3traits,
-       height = 8,
-       width = 10,
-       units = "cm",
-       dpi = 400)
+# ggsave(here("figures",
+#             "trait-selection",
+#             paste0("upset-plot_3traits_all-combinations_euclidean_", today(), ".jpg")),
+#        upset_plot_3traits,
+#        height = 8,
+#        width = 10,
+#        units = "cm",
+#        dpi = 400)
 
 tally_plots <- tally_plot_4traits / tally_plot_3traits
 

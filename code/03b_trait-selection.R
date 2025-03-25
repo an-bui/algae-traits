@@ -146,8 +146,12 @@ combo_4traits <- combn(x = trait_names_vector,
     pairwise_padj_euc,
     ~ .x$p.value < 0.05
   )) %>% 
-  mutate(pairwise_padj_conserved_euc = map(
+  mutate(match_pairs_padj = map(
     pairwise_padj_significant_euc,
+    ~ .x == full_pairwise_matrix
+  )) %>% 
+  mutate(pairwise_padj_conserved_euc = map(
+    match_pairs_padj,
     ~ case_when(
       "FALSE" %in% .x ~ "no",
       TRUE ~ "yes"
@@ -293,8 +297,12 @@ combo_3traits <- combn(x = trait_names_vector,
     pairwise_padj_euc,
     ~ .x$p.value < 0.05
   )) %>% 
-  mutate(pairwise_padj_conserved_euc = map(
+  mutate(match_pairs_padj = map(
     pairwise_padj_significant_euc,
+    ~ .x == full_pairwise_matrix
+  )) %>% 
+  mutate(pairwise_padj_conserved_euc = map(
+    match_pairs_padj,
     ~ case_when(
       "FALSE" %in% .x ~ "no",
       TRUE ~ "yes"
@@ -338,89 +346,96 @@ combo_2traits <- combn(x = trait_names_vector,
   # do the PCA
   mutate(pca = map(
     subset_df,
-    ~ prcomp(.x, center = TRUE, scale = TRUE)
+    ~ rda(.x, scale = TRUE)
   )) %>% 
   # extract the cumulative proportion explained by PC1 and PC2
   mutate(cumu_prop = map(
     pca,
     # [3, 2] is cumulative proportion of PC1 and PC2
-    ~ summary(.x)$importance[3, 2]
+    ~ summary(.x)$cont$importance[3, 2]
+  )) %>% 
+  mutate(dist_obj = map(
+    subset_df,
+    ~ vegdist(.x, method = "euclidean")
   )) %>% 
   # do the permanova to ask if species are different in trait values
-  mutate(permanova = map(
-    subset_df,
+  # mutate(permanova = map(
+  #   subset_df,
+  #   ~ adonis2(.x ~ sp_code, 
+  #             data = ind_traits_filtered)
+  # )) %>% 
+  # repeat permanova with euclidean distances
+  mutate(permanova_euc = map(
+    dist_obj,
     ~ adonis2(.x ~ sp_code, 
               data = ind_traits_filtered)
   )) %>% 
-  # repeat permanova with euclidean distances
-  mutate(permanova_euc = map(
-    subset_df,
-    ~ adonis2(.x ~ sp_code, 
-              data = ind_traits_filtered, 
-              method = "euclidean")
-  )) %>% 
   # do the pairwise comparisons to ask which pairwise differences exist
-  mutate(pairwise = map(
-    subset_df,
-    ~ pairwise.perm.manova(resp = .x, 
-                           fact = ind_traits_filtered$sp_code,
-                           p.method = "none")
-  )) %>% 
-  mutate(pairwise_padj = map(
-    subset_df,
-    ~ pairwise.perm.manova(resp = .x, 
-                           fact = ind_traits_filtered$sp_code,
-                           p.method = "BH")
-  )) %>% 
+  # mutate(pairwise = map(
+  #   subset_df,
+  #   ~ pairwise.perm.manova(resp = .x, 
+  #                          fact = ind_traits_filtered$sp_code,
+  #                          p.method = "none")
+  # )) %>% 
+  # mutate(pairwise_padj = map(
+  #   subset_df,
+  #   ~ pairwise.perm.manova(resp = .x, 
+  #                          fact = ind_traits_filtered$sp_code,
+  #                          p.method = "BH")
+  # )) %>% 
   mutate(pairwise_euc = map(
-    subset_df,
-    ~ pairwise.perm.manova(resp = dist(.x, "euclidean"), 
+    dist_obj,
+    ~ pairwise.perm.manova(resp = .x, 
                            fact = ind_traits_filtered$sp_code,
                            p.method = "none")
   )) %>% 
   mutate(pairwise_padj_euc = map(
-    subset_df,
-    ~ pairwise.perm.manova(resp = dist(.x, "euclidean"), 
+    dist_obj,
+    ~ pairwise.perm.manova(resp = .x, 
                            fact = ind_traits_filtered$sp_code,
                            p.method = "BH")
   )) %>% 
   # ask if the p-values in the pairwise comparisons are greater or less than 0.05
   # if less than 0.05, then subset traits conserve differences between species
-  mutate(pairwise_significant = map(
-    pairwise,
-    ~ .x$p.value < 0.05
-  )) %>% 
+  # mutate(pairwise_significant = map(
+  #   pairwise,
+  #   ~ .x$p.value < 0.05
+  # )) %>% 
   # creating a new column: if any p-value > 0.05, then "no" 
   # this makes the following filtering step easier
-  mutate(pairwise_conserved = map(
-    pairwise_significant,
-    ~ case_when(
-      # if any p-values > 0.05, then pairwise comparisons are NOT conserved
-      "FALSE" %in% .x ~ "no",
-      # if all p-values > 0.05, then pairwise comparisons are conserved
-      TRUE ~ "yes"
-    )
-  )) %>% 
-  # repeat for p-value adjusted (not using euclidean distances)
-  mutate(pairwise_padj_significant = map(
-    pairwise_padj,
-    ~ .x$p.value < 0.05
-  )) %>% 
-  mutate(pairwise_padj_conserved = map(
-    pairwise_padj_significant,
-    ~ case_when(
-      "FALSE" %in% .x ~ "no",
-      TRUE ~ "yes"
-    )
-  )) %>% 
+  # mutate(pairwise_conserved = map(
+  #   pairwise_significant,
+  #   ~ case_when(
+  #     # if any p-values > 0.05, then pairwise comparisons are NOT conserved
+  #     "FALSE" %in% .x ~ "no",
+  #     # if all p-values > 0.05, then pairwise comparisons are conserved
+  #     TRUE ~ "yes"
+  #   )
+  # )) %>% 
+  # # repeat for p-value adjusted (not using euclidean distances)
+  # mutate(pairwise_padj_significant = map(
+  #   pairwise_padj,
+  #   ~ .x$p.value < 0.05
+  # )) %>% 
+  # mutate(pairwise_padj_conserved = map(
+  #   pairwise_padj_significant,
+  #   ~ case_when(
+  #     "FALSE" %in% .x ~ "no",
+  #     TRUE ~ "yes"
+  #   )
+  # )) %>% 
   mutate(pairwise_significant_euc = map(
     pairwise_euc,
     ~ .x$p.value < 0.05
   )) %>% 
+  mutate(match_pairs = map(
+    pairwise_significant_euc,
+    ~ .x == full_pairwise_matrix
+  )) %>% 
   # creating a new column: if any p-value > 0.05, then "no" 
   # this makes the following filtering step easier
   mutate(pairwise_conserved_euc = map(
-    pairwise_significant_euc,
+    match_pairs,
     ~ case_when(
       # if any p-values > 0.05, then pairwise comparisons are NOT conserved
       "FALSE" %in% .x ~ "no",
@@ -432,8 +447,12 @@ combo_2traits <- combn(x = trait_names_vector,
     pairwise_padj_euc,
     ~ .x$p.value < 0.05
   )) %>% 
-  mutate(pairwise_padj_conserved_euc = map(
+  mutate(match_pairs_padj = map(
     pairwise_padj_significant_euc,
+    ~ .x == full_pairwise_matrix
+  )) %>% 
+  mutate(pairwise_padj_conserved_euc = map(
+    match_pairs_padj,
     ~ case_when(
       "FALSE" %in% .x ~ "no",
       TRUE ~ "yes"

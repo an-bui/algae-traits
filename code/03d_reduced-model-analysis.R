@@ -21,7 +21,7 @@ keep_4trait_combination <- combo_4traits %>%
   )) %>% 
   # number of insignificant pairwise comparisons
   mutate(count_false = pmap(
-    list(x = pairwise_conserved_euc, y = count),
+    list(x = pairwise_padj_conserved_euc, y = count),
     function(x, y) case_when(
       x == "no" ~ y[[1]],
       x == "yes" ~ 0
@@ -36,12 +36,12 @@ keep_3trait_combination <- combo_3traits %>%
   mutate(combo_number = rownames(.)) %>% 
   # count TRUE and FALSE occurrences
   mutate(count = map(
-    pairwise_significant_euc,
+    pairwise_padj_significant_euc,
     ~ .x %>% unlist() %>% table() 
   )) %>% 
   # number of insignificant pairwise comparisons
   mutate(count_false = pmap(
-    list(x = pairwise_conserved_euc, y = count),
+    list(x = pairwise_padj_conserved_euc, y = count),
     function(x, y) case_when(
       x == "no" ~ y[[1]],
       x == "yes" ~ 0
@@ -229,20 +229,17 @@ reduced_combinations <- bind_rows(
 # 4 traits combo 15: row 8
 combo_4traits_combo2_biplots <- reduced_combinations[[22]][[1]]
 combo_4traits_combo5_biplots <- reduced_combinations[[22]][[2]]
-combo_3traits_combo7_biplots <- reduced_combinations[[22]][[3]]
-combo_3traits_combo9_biplots <- reduced_combinations[[22]][[4]]
+combo_3traits_combo9_biplots <- reduced_combinations[[22]][[3]]
 
 combo_biplots_together <- list(
   combo_4traits_combo2_biplots,
   combo_4traits_combo5_biplots,
-  combo_3traits_combo7_biplots,
   combo_3traits_combo9_biplots
 )
 
 combo_biplot_file_names <- list(
   "biplot-4traits-combo2",
   "biplot-4traits-combo5",
-  "biplot-3traits-combo7",
   "biplot-3traits-combo9"
 )
 
