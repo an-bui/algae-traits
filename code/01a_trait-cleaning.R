@@ -327,7 +327,7 @@ ind_traits <- ct_prep %>%
          frond_length_scaled = frond_length_mean*total_wet,
          frond_width_scaled = frond_width_mean*total_wet)
 
-ind_traits_filtered <- ind_traits %>% 
+ind_traits_filtered_full <- ind_traits %>% 
   filter(!(specimen_ID %in% c("20210721-BULL-023", "20210719-IVEE-009"))) %>% 
   filter(sp_code %in% c("BO", "CC", "CO", "BF", "DP", 
                         "LAFA", "PTCA", "R", "CYOS")) %>% 
@@ -369,8 +369,23 @@ ind_traits_filtered <- ind_traits %>%
     "Laminaria farlowii" ~ "Laminaria farlowii"
   ))
 
+ind_traits_filtered <- ind_traits_filtered_full %>% 
+  select(specimen_ID, 
+         scientific_name, 
+         sp_code, 
+         sp_label,
+         date_collected, 
+         year, 
+         site,
+         maximum_height, 
+         thickness_mm_mean, 
+         height_ww,
+         total_dmc, 
+         height_vol
+  )
+
 saved_df <- ind_traits %>% 
-  filter(specimen_ID %in% pull(ind_traits_filtered, specimen_ID)) %>% 
+  filter(specimen_ID %in% pull(ind_traits_filtered_full, specimen_ID)) %>% 
   select(specimen_ID, scientific_name, sp_code, date_collected, year, site,
          maximum_height, 
          thickness_mm_mean, 
