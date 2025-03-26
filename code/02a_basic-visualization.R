@@ -6,15 +6,19 @@
 # only need to run this once per session
 source(here::here("code", "01a_trait-cleaning.R"))
 
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ------------------------ 1. functions and themes ------------------------
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 # basic theme
 boxplot_theme <- list(
-    theme_bw(),
-    theme(legend.position = "none",
-          panel.grid = element_blank(),
-          axis.text = element_text(size = 26),
-          plot.title = element_text(size = 30),
-          axis.title = element_blank(),
-          plot.title.position = "plot")
+  theme_bw(),
+  theme(legend.position = "none",
+        panel.grid = element_blank(),
+        axis.text = element_text(size = 26),
+        plot.title = element_text(size = 30),
+        axis.title = element_blank(),
+        plot.title.position = "plot")
 )
 
 distribution_theme <- list(
@@ -26,10 +30,6 @@ distribution_theme <- list(
         plot.title = element_text(size = 14),
         plot.title.position = "plot")
 )
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# ------------------------------ 1. functions -----------------------------
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # This is a function to get the pairwise comparisons from the Tukey HSD into
 # a matrix for easier comparisons within pairs. Thanks to IRTFM for this
@@ -616,7 +616,7 @@ sp_variance_tables_full <- sp_anovas %>%
       variance_table_fxn()
   ))
 
-raw_variance_table_full <- sp_variance_tables %>% 
+raw_variance_table_full <- sp_variance_tables_full %>% 
   select(variance_test_untransform_table) %>% 
   unnest(cols = variance_test_untransform_table) %>% 
   flextable(col_keys = c("trait",
@@ -645,7 +645,7 @@ raw_variance_table_full <- sp_variance_tables %>%
   font(fontname = "Times New Roman",
        part = "all")
 
-log_variance_table_full <- sp_variance_tables %>% 
+log_variance_table_full <- sp_variance_tables_full %>% 
   select(variance_test_log_table) %>% 
   unnest(cols = variance_test_log_table) %>% 
   flextable(col_keys = c("trait",
@@ -851,8 +851,6 @@ kw_tables <- sp_kw %>%
   font(fontname = "Times New Roman",
        part = "all")
 
-kw_tables
-
 # ⟞ f. saving outputs -----------------------------------------------------
 
 # ⟞ ⟞ i. plots ------------------------------------------------------------
@@ -978,7 +976,7 @@ kw_plots_together <- list(
 #                          "ANOVA",
 #                          paste0("log-trait-ANOVA_", today(), ".docx")),
 #              log_anova_table_full)
-
+# 
 # save_as_docx(path = here("tables",
 #                   "ANOVA",
 #                   paste0("raw-trait-ANOVA_variances_", today(), ".docx")),
@@ -988,7 +986,7 @@ kw_plots_together <- list(
 #                          "ANOVA",
 #                          paste0("log-trait-ANOVA_variances_", today(), ".docx")),
 #              log_variance_table_full)
-
+# 
 # save_as_docx(path = here("tables",
 #                          "ANOVA",
 #                          paste0("kw-tables_", today(), ".docx")),

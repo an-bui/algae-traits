@@ -71,7 +71,7 @@ reduced_combinations <- bind_rows(
   )) %>% 
   mutate(prop_PC2 = map(
     pca,
-    # [2, 2] is proportion explained by PC1
+    # [2, 2] is proportion explained by PC2
     ~ summary(.x)$cont$importance[2, 2] 
   )) %>% 
   mutate(betadisp = map(
