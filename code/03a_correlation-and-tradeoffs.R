@@ -435,24 +435,24 @@ full_pairwise_matrix <- (rvam_pairwise_log$p.value < 0.05)
 #                            "PERMANOVA", 
 #                            paste0("full-trait-ANOVA_pairwise-comparisons_", today(), ".docx")))
 
-anova(betadisper(d = trait_dist,
-                 group = ind_traits_filtered$sp_code)) %>% 
-  tidy() %>% 
-  mutate(across(where(is.numeric), ~round(., digits = 2))) %>% 
-  flextable() %>% 
-  set_header_labels("term" = "Term",
-                    "df" = "Degrees of freedom",
-                    "sumsq" = "Sum of squares",
-                    "meansq" = "Mean squares",
-                    "statistic" = "F-statistic",
-                    "p.value" = "p-value") %>% 
-  autofit() %>% 
-  fit_to_width(5, unit = "in") %>% 
-  font(fontname = "Times New Roman",
-       part = "all") %>% 
-  save_as_docx(path = here("tables",
-                    "PERMANOVA",
-                    paste0("full-trait_dispersions_", today(), ".docx")))
+# anova(betadisper(d = trait_dist,
+#                  group = ind_traits_filtered$sp_code)) %>% 
+#   tidy() %>% 
+#   mutate(across(where(is.numeric), ~round(., digits = 2))) %>% 
+#   flextable() %>% 
+#   set_header_labels("term" = "Term",
+#                     "df" = "Degrees of freedom",
+#                     "sumsq" = "Sum of squares",
+#                     "meansq" = "Mean squares",
+#                     "statistic" = "F-statistic",
+#                     "p.value" = "p-value") %>% 
+#   autofit() %>% 
+#   fit_to_width(5, unit = "in") %>% 
+#   font(fontname = "Times New Roman",
+#        part = "all") %>% 
+#   save_as_docx(path = here("tables",
+#                     "PERMANOVA",
+#                     paste0("full-trait_dispersions_", today(), ".docx")))
   
 # no difference in dispersions
 
