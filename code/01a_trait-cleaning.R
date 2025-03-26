@@ -351,10 +351,10 @@ ind_traits_filtered <- ind_traits %>%
          frond_area_scaled,
          height_ww,
          total_dmc, 
-         height_vol#,
-         #sav_scaled, 
-         #sta_scaled,
-         #sap_mean
+         height_vol,
+         sav_scaled, 
+         sta_scaled,
+         sap_mean
          ) %>% 
   mutate(sp_label = case_match(
     scientific_name,
@@ -371,19 +371,19 @@ ind_traits_filtered <- ind_traits %>%
 
 saved_df <- ind_traits %>% 
   filter(specimen_ID %in% pull(ind_traits_filtered, specimen_ID)) %>% 
-  select(specimen_ID, scientific_name, sp_code,#  date_collected, year, site,
+  select(specimen_ID, scientific_name, sp_code, date_collected, year, site,
          maximum_height, 
          thickness_mm_mean, 
-         # frond_area_scaled,
+         frond_area_scaled,
          height_ww,
          total_dmc, 
          height_vol,
-         # sav_scaled, 
-         # sta_scaled,
-         # sap_mean
+         sav_scaled, 
+         sta_scaled,
+         sap_mean
          )
 
-# write_csv(saved_df, here("data", "ind-trait-values_2024-12-19.csv"))
+# write_csv(saved_df, here("data", "ind-trait-values_2025-03-26.csv"))
 
 # ⟞ c. trait by species matrix --------------------------------------------
 
