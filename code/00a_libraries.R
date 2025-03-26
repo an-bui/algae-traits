@@ -48,6 +48,7 @@ library(smatr) # SMA
 library(ggpmisc) # visualization of SMA
 library(ggExtra) # visualization of SMA
 library(broom) # getting tidy model outputs
+library(rstatix) # for Dunn test
 
 ############################################################-
 # 4. visualization packages ---------------------------------
@@ -59,6 +60,7 @@ library(corrplot) # correlation plots
 library(plotly) # for making the species biomass plot
 library(patchwork) # putting plots together
 library(multcompView) # pairwise comparisons on plots
+library(rcompanion) # pairwise comparisons for KW
 library(ggeffects) # plot model predictions
 library(emmeans) # also plot model predictions
 library(ggnewscale) # multiple color scales on ggplot
@@ -192,8 +194,8 @@ algae_colors <- c(
   "Corallina officinalis" = "#E67932", 
   "Bossiella orbigniana" = "#E49C39", 
   # corticated macrophytes: BF, R
-  "Cryptopleura ruprechtiana" = "#A6B354", 
-  "Rhodymenia californica" = "#77B77D", 
+  "Rhodymenia californica" = "#A6B354",
+  "Cryptopleura ruprechtiana" = "#77B77D", 
   # corticated foliose: DP
   "Dictyota binghamiae; Dictyota flabellata; Dictyota coriacea" = "#4D8AC6",
   # leathery macrophytes: CC, CYOS, PTCA, LAFA
@@ -208,8 +210,8 @@ algae_splabel_colors <- c(
   "Corallina officinalis" = "#E67932", 
   "Bossiella orbigniana" = "#E49C39", 
   # corticated macrophytes: BF, R
-  "Cryptopleura ruprechtiana" = "#A6B354", 
-  "Rhodymenia californica" = "#77B77D", 
+  "Rhodymenia californica" = "#A6B354",
+  "Cryptopleura ruprechtiana" = "#77B77D", 
   # corticated foliose: DP
   "Dictyota spp." = "#4D8AC6",
   # leathery macrophytes: CC, CYOS, PTCA, LAFA
@@ -224,8 +226,8 @@ algae_spcode_colors <- c(
   "CO" = "#E67932", 
   "BO" = "#E49C39", 
   # corticated macrophytes: BF, R
-  "BF" = "#A6B354", 
-  "R" = "#77B77D", 
+  "R" = "#A6B354",
+  "BF" = "#77B77D", 
   # corticated foliose: DP
   "DP" = "#4D8AC6",
   # leathery macrophytes: CC, CYOS, PTCA, LAFA
@@ -253,8 +255,8 @@ algae_factors <- c(
 algae_splabel_factors <- c(
   "Corallina officinalis", 
   "Bossiella orbigniana", 
-  "Cryptopleura ruprechtiana", 
   "Rhodymenia californica", 
+  "Cryptopleura ruprechtiana", 
   "Dictyota spp.",
   "Chondracanthus spp.", 
   "Stephanocystis osmundacea", 
@@ -263,7 +265,7 @@ algae_splabel_factors <- c(
 )
 
 algae_spcode_factors <- c(
-  "CO", "BO", "BF", "R", "DP", "CC", "CYOS", "PTCA", "LAFA"
+  "CO", "BO", "R", "BF", "DP", "CC", "CYOS", "PTCA", "LAFA"
 )
 
 # algae_spcode_colors <- c(

@@ -108,6 +108,45 @@ sig_table_fxn <- function(pairwise_sig_df) {
 # ⟞ a. ANOVA --------------------------------------------------------------
 
 sp_anovas <- ind_traits_filtered %>% 
+  filter(!(specimen_ID %in% c("20210721-BULL-023", "20210719-IVEE-009"))) %>% 
+  filter(sp_code %in% c("BO", "CC", "CO", "BF", "DP", 
+                        "LAFA", "PTCA", "R", "CYOS")) %>% 
+  mutate(sp_code = fct_relevel(sp_code, algae_spcode_factors),
+         scientific_name = fct_relevel(scientific_name, algae_factors)) %>% 
+  #  H, T, SA, H:WW, DW:WW, H:V, SA:V, SA:DW, and SA:P
+  drop_na(specimen_ID, scientific_name, sp_code, 
+          maximum_height, 
+          thickness_mm_mean, 
+          frond_area_scaled,
+          height_ww,
+          total_dmc, 
+          height_vol,
+          sav_scaled, 
+          sta_scaled,
+          sap_mean) %>% 
+  select(specimen_ID, scientific_name, sp_code, date_collected, year, site,
+         maximum_height, 
+         thickness_mm_mean, 
+         frond_area_scaled,
+         height_ww,
+         total_dmc, 
+         height_vol,
+         sav_scaled, 
+         sta_scaled,
+         sap_mean
+  ) %>% 
+  mutate(sp_label = case_match(
+    scientific_name,
+    "Corallina officinalis" ~ "Corallina officinalis",
+    "Bossiella orbigniana" ~ "Bossiella orbigniana",
+    "Cryptopleura ruprechtiana" ~ "Cryptopleura ruprechtiana",
+    "Chondracanthus corymbiferus; Chondracanthus exasperatus" ~ "Chondracanthus spp.",
+    "Rhodymenia californica" ~ "Rhodymenia californica",
+    "Stephanocystis osmundacea" ~ "Stephanocystis osmundacea",
+    "Dictyota binghamiae; Dictyota flabellata; Dictyota coriacea" ~ "Dictyota spp.",
+    "Pterygophora californica" ~ "Pterygophora californica",
+    "Laminaria farlowii" ~ "Laminaria farlowii"
+  )) %>% 
   pivot_longer(cols = maximum_height:sap_mean,
                names_to = "trait",
                values_to = "value") %>% 
@@ -197,6 +236,46 @@ sp_anovas <- ind_traits_filtered %>%
     ~ TukeyHSD(.x)$sp_code
   )) %>% 
   
+  # CLD and means
+  mutate(log_cld = map(
+    log_pairwise,
+    ~ .x %>% 
+      as_tibble(rownames = "comparisons") %>% 
+      clean_names() %>% 
+      cldList(p_adj ~ comparisons,
+              data = .,
+              threshold = 0.05,
+              remove.space = FALSE) %>% 
+      rename_at(vars(Letter, MonoLetter), ~ paste0(., '_log')) %>% 
+      rename("sp_code" = "Group")
+  )) %>% 
+  mutate(raw_cld = map(
+    raw_pairwise,
+    ~ .x %>% 
+      as_tibble(rownames = "comparisons") %>% 
+      clean_names() %>% 
+      cldList(p_adj ~ comparisons,
+              data = .,
+              threshold = 0.05,
+              remove.space = FALSE) %>% 
+      rename_at(vars(Letter, MonoLetter), ~ paste0(., '_raw')) %>% 
+      rename("sp_code" = "Group")
+  )) %>% 
+  mutate(means_cld = pmap(
+    list(x = data_log, y = log_cld, z = raw_cld),
+    function(x, y, z) x %>% 
+      group_by(sp_code) %>% 
+      summarize(mean_log = mean(log_value, na.rm = TRUE),
+                max_log = max(log_value, na.rm = TRUE),
+                mean_raw = mean(value, na.rm = TRUE),
+                max_raw = max(value, na.rm = TRUE)) %>% 
+      ungroup() %>% 
+      mutate(max_log = max(max_log),
+             max_raw = max(max_raw)) %>% 
+      left_join(., y, by = "sp_code") %>% 
+      left_join(., z, by = "sp_code")
+  )) %>% 
+  
   # getting the p-values from pairwise comparisons
   mutate(log_sig_df = map(
     log_pairwise,
@@ -216,6 +295,7 @@ sp_anovas <- ind_traits_filtered %>%
     raw_sig_df,
     ~ sig_table_fxn(.x)
   )) %>% 
+  
   # log transformed boxplot
   mutate(log_boxplot = map2(
     data, units,
@@ -234,19 +314,26 @@ sp_anovas <- ind_traits_filtered %>%
       boxplot_theme
   )) %>% 
   # log transformed means plot (mean + 95% CI)
-  mutate(log_means_plot = map(
-    data, 
-    ~ .x %>% 
-      ggplot(aes(x = sp_code,
-                 y = log(value),
-                 group = sp_code,
-                 color = sp_code)) +
+  mutate(log_means_plot = pmap(
+    list(x = data, y = means_cld), 
+    function(x, y) ggplot(
+      data = x,
+      aes(x = sp_code,
+          y = log(value),
+          group = sp_code,
+          color = sp_code)) +
       geom_point(alpha = 0.2,
                  position = position_jitter(width = 0.1,
                                             seed = 666),
                  shape = 21) +
       stat_summary(geom = "pointrange",
                    fun.data = mean_cl_normal) +
+      geom_text(data = y,
+                aes(x = sp_code,
+                    y = max_log*1.1,
+                    label = Letter_log),
+                color = "#000000",
+                size = 8) +
       scale_color_manual(values = algae_spcode_colors) +
       scale_x_discrete(labels = scales::label_wrap(10)) +
       labs(title = "(a) log transformed") +
@@ -270,19 +357,27 @@ sp_anovas <- ind_traits_filtered %>%
       boxplot_theme
   )) %>% 
   # raw means plot (means + 95% CI)
-  mutate(raw_means_plot = map(
-    data, 
-    ~ .x %>% 
-      ggplot(aes(x = sp_code,
-                 y = value,
-                 group = sp_code,
-                 color = sp_code)) +
+  mutate(raw_means_plot = pmap(
+    list(x = data, y = means_cld), 
+    function(x, y) ggplot(
+      data = x,
+      aes(x = sp_code,
+          y = value,
+          group = sp_code,
+          color = sp_code)
+    ) +
       geom_point(alpha = 0.2,
                  position = position_jitter(width = 0.1,
                                             seed = 666),
                  shape = 21) +
       stat_summary(geom = "pointrange",
                    fun.data = mean_cl_normal) +
+      geom_text(data = y,
+                aes(x = sp_code,
+                    y = max_raw*1.1,
+                    label = Letter_raw),
+                color = "#000000",
+                size = 8) +
       scale_color_manual(values = algae_spcode_colors) +
       scale_x_discrete(labels = scales::label_wrap(10)) +
       labs(title = "(b) untransformed") +
@@ -314,49 +409,49 @@ sp_anovas <- ind_traits_filtered %>%
 # h:ww not sig with raw values, sig with log because of huge BO outlier
 
 # maximum height
-log_h_means_plot_table <- pluck(sp_anovas, 22, 1)
-raw_h_means_plot_table <- pluck(sp_anovas, 23, 1)
-h_means_plots_together <- pluck(sp_anovas, 24, 1)
+log_h_means_plot_table <- pluck(sp_anovas, 25, 1)
+raw_h_means_plot_table <- pluck(sp_anovas, 26, 1)
+h_means_plots_together <- pluck(sp_anovas, 27, 1)
 
 # thickness
-log_t_means_plot_table <- pluck(sp_anovas, 22, 2)
-raw_t_means_plot_table <- pluck(sp_anovas, 23, 2)
-t_means_plots_together <- pluck(sp_anovas, 24, 2)
+log_t_means_plot_table <- pluck(sp_anovas, 25, 2)
+raw_t_means_plot_table <- pluck(sp_anovas, 26, 2)
+t_means_plots_together <- pluck(sp_anovas, 27, 2)
 
 # surface area
-log_sa_means_plot_table <- pluck(sp_anovas, 22, 3)
-raw_sa_means_plot_table <- pluck(sp_anovas, 23, 3)
-sa_means_plots_together <- pluck(sp_anovas, 24, 3)
+log_sa_means_plot_table <- pluck(sp_anovas, 25, 3)
+raw_sa_means_plot_table <- pluck(sp_anovas, 26, 3)
+sa_means_plots_together <- pluck(sp_anovas, 27, 3)
 
 # height:wet weight
-log_h_ww_means_plot_table <- pluck(sp_anovas, 22, 4)
-raw_h_ww_means_plot_table <- pluck(sp_anovas, 23, 4)
-h_ww_means_plots_together <- pluck(sp_anovas, 24, 4)
+log_h_ww_means_plot_table <- pluck(sp_anovas, 25, 4)
+raw_h_ww_means_plot_table <- pluck(sp_anovas, 26, 4)
+h_ww_means_plots_together <- pluck(sp_anovas, 27, 4)
 
 # dry:wet weight
-log_dw_ww_means_plot_table <- pluck(sp_anovas, 22, 5)
-raw_dw_ww_means_plot_table <- pluck(sp_anovas, 23, 5)
-dw_ww_means_plots_together <- pluck(sp_anovas, 24, 5)
+log_dw_ww_means_plot_table <- pluck(sp_anovas, 25, 5)
+raw_dw_ww_means_plot_table <- pluck(sp_anovas, 26, 5)
+dw_ww_means_plots_together <- pluck(sp_anovas, 27, 5)
 
 # height:volume
-log_h_v_means_plot_table <- pluck(sp_anovas, 22, 6)
-raw_h_v_means_plot_table <- pluck(sp_anovas, 23, 6)
-h_v_means_plots_together <- pluck(sp_anovas, 24, 6)
+log_h_v_means_plot_table <- pluck(sp_anovas, 25, 6)
+raw_h_v_means_plot_table <- pluck(sp_anovas, 26, 6)
+h_v_means_plots_together <- pluck(sp_anovas, 27, 6)
 
 # SA:V
-log_sa_v_means_plot_table <- pluck(sp_anovas, 22, 7)
-raw_sa_v_means_plot_table <- pluck(sp_anovas, 23, 7)
-sa_v_means_plots_together <- pluck(sp_anovas, 24, 7)
+log_sa_v_means_plot_table <- pluck(sp_anovas, 25, 7)
+raw_sa_v_means_plot_table <- pluck(sp_anovas, 26, 7)
+sa_v_means_plots_together <- pluck(sp_anovas, 27, 7)
 
 # surface area:dry weight
-log_sa_dw_means_plot_table <- pluck(sp_anovas, 22, 8)
-raw_sa_dw_means_plot_table <- pluck(sp_anovas, 23, 8)
-sa_dw_means_plots_together <- pluck(sp_anovas, 24, 8)
+log_sa_dw_means_plot_table <- pluck(sp_anovas, 25, 8)
+raw_sa_dw_means_plot_table <- pluck(sp_anovas, 26, 8)
+sa_dw_means_plots_together <- pluck(sp_anovas, 27, 8)
 
 # SA:P
-log_sa_p_means_plot_table <- pluck(sp_anovas, 22, 9)
-raw_sa_p_means_plot_table <- pluck(sp_anovas, 23, 9)
-sa_p_means_plots_together <- pluck(sp_anovas, 24, 9)
+log_sa_p_means_plot_table <- pluck(sp_anovas, 25, 9)
+raw_sa_p_means_plot_table <- pluck(sp_anovas, 26, 9)
+sa_p_means_plots_together <- pluck(sp_anovas, 27, 9)
 
 # ⟞ b. multipanel plot ----------------------------------------------------
 
@@ -598,6 +693,16 @@ log_variance_table <- sp_variance_tables %>%
 sp_kw <- sp_anovas %>% 
   select(trait, units, data, data_log) %>% 
   filter(trait %in% c("thickness_mm_mean", "sap_mean", "total_dmc")) %>% 
+  mutate(data = map(
+    data,
+    ~ mutate(.x,
+             sp_code = fct_relevel(sp_code, algae_spcode_factors))
+  )) %>% 
+  mutate(data_log = map(
+    data,
+    ~ mutate(.x,
+             sp_code = fct_relevel(sp_code, algae_spcode_factors))
+  )) %>% 
   mutate(log_kw = map(
     data_log,
     ~ kruskal.test(value ~ sp_code,
@@ -609,47 +714,90 @@ sp_kw <- sp_anovas %>%
                data = .x,
                p.adjust.method = "BH")
   )) %>% 
-  # log transformed means plot (median as line)
-  mutate(log_medians_plot = map(
-    data, 
+  mutate(cld = map(
+    log_dunn,
     ~ .x %>% 
-      ggplot(aes(x = sp_code,
-                 y = log(value),
-                 group = sp_code,
-                 color = sp_code)) +
+      unite("Comparison", group1, group2, sep = "-", remove = FALSE) %>%
+      cldList(p.adj ~ Comparison, 
+              data = .,
+              threshold = 0.05,
+              remove.space = FALSE) %>% 
+      rename("sp_code" = "Group")
+  )) %>% 
+  mutate(medians_cld = pmap(
+    list(x = data, y = cld),
+    function(x, y) x %>% 
+      group_by(sp_code) %>% 
+      summarize(median = median(value, na.rm = TRUE),
+                max = max(value, na.rm = TRUE)) %>%
+      ungroup() %>% 
+      mutate(max = max(max)) %>% 
+      left_join(., y, by = "sp_code")
+  )) %>% 
+  mutate(medians_cld_log = pmap(
+    list(x = data_log, y = cld),
+    function(x, y) x %>% 
+      group_by(sp_code) %>% 
+      summarize(median = median(value, na.rm = TRUE),
+                max = max(value, na.rm = TRUE)) %>%
+      ungroup() %>% 
+      mutate(max = max(max)) %>% 
+      left_join(., y, by = "sp_code")
+  )) %>% 
+  # log transformed means plot (median as line)
+  mutate(log_medians_plot = pmap(
+    list(x = data_log, y = medians_cld_log), 
+    function(x, y) ggplot(
+      data = x, 
+      aes(x = sp_code,
+          y = value,
+          group = sp_code,
+          color = sp_code)) +
       geom_point(alpha = 0.2,
                  position = position_jitter(width = 0.1,
                                             seed = 666),
                  shape = 21) +
-      # add median as horizontal line
-      stat_summary(fun = "median", 
-                   geom = "errorbar", 
-                   aes(ymax = after_stat(y), 
-                       ymin = after_stat(y)),
-                   linewidth = 0.5) +
+      geom_errorbar(data = y,
+                    aes(y = median,
+                        ymax = median,
+                        ymin = median),
+                    linewidth = 0.5) +
+      geom_text(data = y,
+                aes(x = sp_code,
+                    label = Letter,
+                    y = max*1.05),
+                color = "#000000",
+                size = 8) +
       scale_color_manual(values = algae_spcode_colors) +
       scale_x_discrete(labels = scales::label_wrap(10)) +
       labs(title = "(a) log transformed") +
       boxplot_theme
   )) %>% 
   # raw transformed means plot (median as line)
-  mutate(raw_medians_plot = map(
-    data, 
-    ~ .x %>% 
-      ggplot(aes(x = sp_code,
-                 y = value,
-                 group = sp_code,
-                 color = sp_code)) +
+  mutate(raw_medians_plot = pmap(
+    list(x = data, y = medians_cld), 
+    function(x, y) ggplot(
+      data = x,
+      aes(x = sp_code,
+          y = value,
+          group = sp_code,
+          color = sp_code)
+    ) +
       geom_point(alpha = 0.2,
                  position = position_jitter(width = 0.1,
                                             seed = 666),
                  shape = 21) +
-      # add median as horizontal line
-      stat_summary(fun = "median", 
-                   geom = "errorbar", 
-                   aes(ymax = after_stat(y), 
-                       ymin = after_stat(y)),
-                   linewidth = 0.5) +
+      geom_errorbar(data = y,
+                    aes(y = median,
+                        ymax = median,
+                        ymin = median),
+                    linewidth = 0.5) +
+      geom_text(data = y,
+                aes(x = sp_code,
+                    label = Letter,
+                    y = max*1.05),
+                color = "#000000",
+                size = 8) +
       scale_color_manual(values = algae_spcode_colors) +
       scale_x_discrete(labels = scales::label_wrap(10)) +
       labs(title = "(b) untransformed") +
@@ -694,9 +842,9 @@ sp_kw <- sp_anovas %>%
       theme(plot.title = element_text(size = 32))
   ))
 
-t_median_plots_together <- sp_kw[[10]][[1]]
-dw_ww_median_plots_together <- sp_kw[[10]][[2]]
-sa_p_median_plots_together <- sp_kw[[10]][[3]]
+t_median_plots_together <- sp_kw[[13]][[1]]
+dw_ww_median_plots_together <- sp_kw[[13]][[2]]
+sa_p_median_plots_together <- sp_kw[[13]][[3]]
 
 # throws a warning from the fct_relevel - ok to ignore
 
@@ -787,7 +935,7 @@ means_plots_together <- list(
 
 # for(i in 1:length(log_means_plot_tables)) {
 #   ggsave(here("figures",
-#               "basic-visualizations", 
+#               "basic-visualizations",
 #               "means-plots",
 #               paste0("log_", trait_file_names[[i]], "_plot-table_", today(), ".jpg")),
 #          plot = log_means_plot_tables[[i]],
@@ -799,7 +947,7 @@ means_plots_together <- list(
 # 
 # for(i in 1:length(raw_means_plot_tables)) {
 #   ggsave(here("figures",
-#               "basic-visualizations", 
+#               "basic-visualizations",
 #               "means-plots",
 #               paste0("raw_", trait_file_names[[i]], "_plot-table_", today(), ".jpg")),
 #          plot = raw_means_plot_tables[[i]],
@@ -1068,25 +1216,54 @@ pluck(distributions, 12, 9)
 
 # ⟞ b. multipanel plot ----------------------------------------------------
 
-distributions_log_multipanel <- 
-  (pluck(distributions, 8, 1) + pluck(distributions, 8, 3) + pluck(distributions, 8, 2)) /
-  (pluck(distributions, 8, 6) + pluck(distributions, 8, 4) + pluck(distributions, 8, 5)) /
-  (pluck(distributions, 8, 7) + pluck(distributions, 8, 8) + pluck(distributions, 8, 9))
+# 1 = height
+# 2 = thickness
+# 3 = SA
+# 4 = height:wet weight
+# 5 = dry:wet weight
+# 6 = height:volume
+# 7 = SA:V
+# 8 = SA:DW
+# 9 = SA:P
+# 
+# main text: height, thickness, height:volume, height:wet weight, dry:wet weight
+# supp: SA, SA:V, SA:DW, SA:P
 
-distributions_raw_multipanel <- 
-  (pluck(distributions, 7, 1) + pluck(distributions, 7, 3) + pluck(distributions, 7, 2)) /
-  (pluck(distributions, 7, 6) + pluck(distributions, 7, 4) + pluck(distributions, 7, 5)) /
-  (pluck(distributions, 7, 7) + pluck(distributions, 7, 8) + pluck(distributions, 7, 9))
+distributions_log_multipanel_main <- wrap_plots(
+  pluck(distributions, 8, 1), 
+  pluck(distributions, 8, 2), 
+  plot_spacer(),
+  pluck(distributions, 8, 6), 
+  pluck(distributions, 8, 4), 
+  pluck(distributions, 8, 5)
+)
 
-qq_log_multipanel <- 
-  (pluck(distributions, 11, 1) + pluck(distributions, 11, 3) + pluck(distributions, 11, 2)) /
-  (pluck(distributions, 11, 6) + pluck(distributions, 11, 4) + pluck(distributions, 11, 5)) /
-  (pluck(distributions, 11, 7) + pluck(distributions, 11, 8) + pluck(distributions, 11, 9))
+distributions_raw_multipanel_main <- wrap_plots(
+  pluck(distributions, 7, 1), 
+  pluck(distributions, 7, 2), 
+  plot_spacer(),
+  pluck(distributions, 7, 6), 
+  pluck(distributions, 7, 4), 
+  pluck(distributions, 7, 5)
+)
 
-qq_raw_multipanel <- 
-  (pluck(distributions, 10, 1) + pluck(distributions, 10, 3) + pluck(distributions, 10, 2)) /
-  (pluck(distributions, 10, 6) + pluck(distributions, 10, 4) + pluck(distributions, 10, 5)) /
-  (pluck(distributions, 10, 7) + pluck(distributions, 10, 8) + pluck(distributions, 10, 9))
+qq_log_multipanel_main <- wrap_plots(
+  pluck(distributions, 11, 1), 
+  pluck(distributions, 11, 2), 
+  plot_spacer(),
+  pluck(distributions, 11, 6), 
+  pluck(distributions, 11, 4), 
+  pluck(distributions, 11, 5)
+)
+
+qq_raw_multipanel_main <- wrap_plots(
+  pluck(distributions, 10, 1), 
+  pluck(distributions, 10, 2), 
+  plot_spacer(),
+  pluck(distributions, 10, 6), 
+  pluck(distributions, 10, 4), 
+  pluck(distributions, 10, 5)
+)
 
 # ⟞ c. saving outputs -----------------------------------------------------
 
@@ -1094,9 +1271,9 @@ ggsave(here("figures",
             "basic-visualizations",
             "distributions",
             paste0("multipanel_hist_", today(), ".jpg")),
-       distributions_log_multipanel,
+       distributions_log_multipanel_main,
        width = 14,
-       height = 10,
+       height = 8,
        units = "cm",
        dpi = 300)
 
@@ -1104,9 +1281,9 @@ ggsave(here("figures",
             "basic-visualizations",
             "distributions",
             paste0("multipanel_qq_", today(), ".jpg")),
-       qq_log_multipanel,
+       qq_log_multipanel_main,
        width = 14,
-       height = 10,
+       height = 8,
        units = "cm",
        dpi = 300)
 
@@ -1114,9 +1291,9 @@ ggsave(here("figures",
             "basic-visualizations",
             "distributions",
             paste0("multipanel_hist_raw_", today(), ".jpg")),
-       distributions_raw_multipanel,
+       distributions_raw_multipanel_main,
        width = 14,
-       height = 10,
+       height = 8,
        units = "cm",
        dpi = 300)
 
@@ -1124,9 +1301,9 @@ ggsave(here("figures",
             "basic-visualizations",
             "distributions",
             paste0("multipanel_qq_raw_", today(), ".jpg")),
-       qq_raw_multipanel,
+       qq_raw_multipanel_main,
        width = 14,
-       height = 10,
+       height = 8,
        units = "cm",
        dpi = 300)
 

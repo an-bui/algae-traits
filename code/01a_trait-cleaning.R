@@ -345,13 +345,13 @@ ind_traits_filtered <- ind_traits %>%
   select(specimen_ID, scientific_name, sp_code, date_collected, year, site,
          maximum_height, 
          thickness_mm_mean, 
-         # frond_area_scaled,
+         frond_area_scaled,
          height_ww,
          total_dmc, 
-         height_vol
-         # sav_scaled, 
-         # sta_scaled,
-         # sap_mean
+         height_vol,
+         sav_scaled, 
+         sta_scaled,
+         sap_mean
          ) %>% 
   mutate(sp_label = case_match(
     scientific_name,
