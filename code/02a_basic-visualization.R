@@ -31,17 +31,17 @@ distribution_theme <- list(
 # ------------------------------ 1. functions -----------------------------
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-#' This is a function to get the pairwise comparisons from the Tukey HSD into
-#' a matrix for easier comparisons within pairs. Thanks to IRTFM for this
-#' solution on how to fill in a matrix with the values from a vector:
-#' https://stackoverflow.com/questions/24598710/presenting-tukey-hsd-pairwise-p-values-in-a-table
+# This is a function to get the pairwise comparisons from the Tukey HSD into
+# a matrix for easier comparisons within pairs. Thanks to IRTFM for this
+# solution on how to fill in a matrix with the values from a vector:
+# https://stackoverflow.com/questions/24598710/presenting-tukey-hsd-pairwise-p-values-in-a-table
 
-#' The function expects the subsetted output of a `TukeyHSD()` call. It's
-#' easier to see in the downstream section where I do the ANOVAs with the post-
-#' hoc comparisons, but the function's output creates this structure where the
-#' actual information is in a separate column, like `TukeyHSD(data)$name`.
-#' In any case, this function expects the `$` object, not the full `TukeyHSD()`
-#' output.
+# The function expects the subsetted output of a `TukeyHSD()` call. It's
+# easier to see in the downstream section where I do the ANOVAs with the post-
+# hoc comparisons, but the function's output creates this structure where the
+# actual information is in a separate column, like `TukeyHSD(data)$name`.
+# In any case, this function expects the `$` object, not the full `TukeyHSD()`
+# output.
 
 pairwise_sig_fxn <- function(pairwise) {
   # create an empty matrix
@@ -107,7 +107,7 @@ sig_table_fxn <- function(pairwise_sig_df) {
 
 # ⟞ a. ANOVA --------------------------------------------------------------
 
-sp_anovas <- ind_traits_filtered %>% 
+sp_anovas <- ind_traits_filtered_full %>% 
   filter(!(specimen_ID %in% c("20210721-BULL-023", "20210719-IVEE-009"))) %>% 
   filter(sp_code %in% c("BO", "CC", "CO", "BF", "DP", 
                         "LAFA", "PTCA", "R", "CYOS")) %>% 
@@ -529,7 +529,7 @@ sp_anova_tables <- sp_anovas %>%
 # ⟞ ⟞ ii. generating tables -----------------------------------------------
 
 # ANOVA using raw trait values
-raw_anova_table <- sp_anova_tables %>% 
+raw_anova_table_full <- sp_anova_tables %>% 
   select(raw_anova_table) %>% 
   unnest(cols = raw_anova_table) %>% 
   flextable(col_keys = c("trait",
@@ -564,7 +564,7 @@ raw_anova_table <- sp_anova_tables %>%
 
 # ANOVA using log transformed trait values
 
-log_anova_table <- sp_anova_tables %>% 
+log_anova_table_full <- sp_anova_tables %>% 
   select(log_anova_table) %>% 
   unnest(cols = log_anova_table) %>% 
   flextable(col_keys = c("trait",
@@ -599,7 +599,7 @@ log_anova_table <- sp_anova_tables %>%
 
 # variance comparisons
 
-sp_variance_tables <- sp_anovas %>% 
+sp_variance_tables_full <- sp_anovas %>% 
   select(units, variance_test_untransform, variance_test_log) %>% 
   mutate(variance_test_log_table = map2(
     variance_test_log, units,
@@ -616,7 +616,7 @@ sp_variance_tables <- sp_anovas %>%
       variance_table_fxn()
   ))
 
-raw_variance_table <- sp_variance_tables %>% 
+raw_variance_table_full <- sp_variance_tables %>% 
   select(variance_test_untransform_table) %>% 
   unnest(cols = variance_test_untransform_table) %>% 
   flextable(col_keys = c("trait",
@@ -645,7 +645,7 @@ raw_variance_table <- sp_variance_tables %>%
   font(fontname = "Times New Roman",
        part = "all")
 
-log_variance_table <- sp_variance_tables %>% 
+log_variance_table_full <- sp_variance_tables %>% 
   select(variance_test_log_table) %>% 
   unnest(cols = variance_test_log_table) %>% 
   flextable(col_keys = c("trait",
@@ -972,22 +972,22 @@ kw_plots_together <- list(
 # save_as_docx(path = here("tables",
 #                   "ANOVA",
 #                   paste0("raw-trait-ANOVA_", today(), ".docx")),
-#              raw_anova_table)
+#              raw_anova_table_full)
 # 
 # save_as_docx(path = here("tables",
 #                          "ANOVA",
 #                          paste0("log-trait-ANOVA_", today(), ".docx")),
-#              log_anova_table)
+#              log_anova_table_full)
 
 # save_as_docx(path = here("tables",
 #                   "ANOVA",
 #                   paste0("raw-trait-ANOVA_variances_", today(), ".docx")),
-#              raw_variance_table)
+#              raw_variance_table_full)
 # 
 # save_as_docx(path = here("tables",
 #                          "ANOVA",
 #                          paste0("log-trait-ANOVA_variances_", today(), ".docx")),
-#              log_variance_table)
+#              log_variance_table_full)
 
 # save_as_docx(path = here("tables",
 #                          "ANOVA",
@@ -1239,43 +1239,43 @@ qq_raw_multipanel_main <- wrap_plots(
 
 # ⟞ c. saving outputs -----------------------------------------------------
 
-ggsave(here("figures",
-            "basic-visualizations",
-            "distributions",
-            paste0("multipanel_hist_", today(), ".jpg")),
-       distributions_log_multipanel_main,
-       width = 14,
-       height = 8,
-       units = "cm",
-       dpi = 300)
-
-ggsave(here("figures",
-            "basic-visualizations",
-            "distributions",
-            paste0("multipanel_qq_", today(), ".jpg")),
-       qq_log_multipanel_main,
-       width = 14,
-       height = 8,
-       units = "cm",
-       dpi = 300)
-
-ggsave(here("figures",
-            "basic-visualizations",
-            "distributions",
-            paste0("multipanel_hist_raw_", today(), ".jpg")),
-       distributions_raw_multipanel_main,
-       width = 14,
-       height = 8,
-       units = "cm",
-       dpi = 300)
-
-ggsave(here("figures",
-            "basic-visualizations",
-            "distributions",
-            paste0("multipanel_qq_raw_", today(), ".jpg")),
-       qq_raw_multipanel_main,
-       width = 14,
-       height = 8,
-       units = "cm",
-       dpi = 300)
+# ggsave(here("figures",
+#             "basic-visualizations",
+#             "distributions",
+#             paste0("multipanel_hist_", today(), ".jpg")),
+#        distributions_log_multipanel_main,
+#        width = 14,
+#        height = 8,
+#        units = "cm",
+#        dpi = 300)
+# 
+# ggsave(here("figures",
+#             "basic-visualizations",
+#             "distributions",
+#             paste0("multipanel_qq_", today(), ".jpg")),
+#        qq_log_multipanel_main,
+#        width = 14,
+#        height = 8,
+#        units = "cm",
+#        dpi = 300)
+# 
+# ggsave(here("figures",
+#             "basic-visualizations",
+#             "distributions",
+#             paste0("multipanel_hist_raw_", today(), ".jpg")),
+#        distributions_raw_multipanel_main,
+#        width = 14,
+#        height = 8,
+#        units = "cm",
+#        dpi = 300)
+# 
+# ggsave(here("figures",
+#             "basic-visualizations",
+#             "distributions",
+#             paste0("multipanel_qq_raw_", today(), ".jpg")),
+#        qq_raw_multipanel_main,
+#        width = 14,
+#        height = 8,
+#        units = "cm",
+#        dpi = 300)
 
