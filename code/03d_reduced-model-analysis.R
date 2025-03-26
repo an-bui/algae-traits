@@ -264,9 +264,15 @@ dispersions <- reduced_combinations %>%
   mutate(p_val = map(
     betadisp_anova,
     ~ case_when(
-      .x$`Pr(>F)`[[1]] > 0.05 ~ paste0("no diff (p = ", round(.x$`Pr(>F)`[[1]], digits = 2), ")"),
-      .x$`Pr(>F)`[[1]] < 0.05 ~ paste0("diff dispersions (p = ", round(.x$`Pr(>F)`[[1]], digits = 2), ")")
+      # when p > 0.05, write "no diff" and report p value to the nearest 2 decimal places
+      .x$`Pr(>F)`[[1]] > 0.05 ~ paste0("no diff (p = ", 
+                                       round(.x$`Pr(>F)`[[1]], digits = 2), 
+                                       ")"),
+      # when p < 0.05, write "diff" and report p value to the nearest 2 decimal places
+      .x$`Pr(>F)`[[1]] < 0.05 ~ paste0("diff dispersions (p = ", 
+                                       round(.x$`Pr(>F)`[[1]], 
+                                             digits = 2), 
+                                       ")")
     )
-   # ~ .x$`Pr(>F)`[[1]]
   ))
 
