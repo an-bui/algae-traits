@@ -393,7 +393,9 @@ sp_permanova <- adonis2(trait_dist ~ sp_code,
 #                     "R2" = "R\U00B2",
 #                     "statistic" = "F-statistic",
 #                     "p.value" = "p-value") %>%
-#   save_as_docx(path = here("tables", "PERMANOVA", paste0("full-trait-ANOVA_", today(), ".docx")))
+#   save_as_docx(path = here("tables", 
+#                            "PERMANOVA", 
+#                            paste0("full-trait-ANOVA_", today(), ".docx")))
 # species are different from each other
 
 set.seed(1)
@@ -429,7 +431,9 @@ full_pairwise_matrix <- (rvam_pairwise_log$p.value < 0.05)
 #   font(fontname = "Times New Roman",
 #        part = "all") %>%
 #   set_header_labels("sp_code" = "") %>%
-#   save_as_docx(path = here("tables", "PERMANOVA", paste0("full-trait-ANOVA_pairwise-comparisons_", today(), ".docx")))
+#   save_as_docx(path = here("tables", 
+#                            "PERMANOVA", 
+#                            paste0("full-trait-ANOVA_pairwise-comparisons_", today(), ".docx")))
 
 anova(betadisper(d = trait_dist,
                  group = ind_traits_filtered$sp_code)) %>% 
