@@ -691,18 +691,8 @@ log_variance_table <- sp_variance_tables %>%
 # thickness, SA:P, and DW:WW
 
 sp_kw <- sp_anovas %>% 
-  select(trait, units, data, data_log) %>% 
+  select(trait, units, data_log) %>% 
   filter(trait %in% c("thickness_mm_mean", "sap_mean", "total_dmc")) %>% 
-  mutate(data = map(
-    data,
-    ~ mutate(.x,
-             sp_code = fct_relevel(sp_code, algae_spcode_factors))
-  )) %>% 
-  mutate(data_log = map(
-    data,
-    ~ mutate(.x,
-             sp_code = fct_relevel(sp_code, algae_spcode_factors))
-  )) %>% 
   mutate(log_kw = map(
     data_log,
     ~ kruskal.test(value ~ sp_code,
@@ -725,32 +715,25 @@ sp_kw <- sp_anovas %>%
       rename("sp_code" = "Group")
   )) %>% 
   mutate(medians_cld = pmap(
-    list(x = data, y = cld),
-    function(x, y) x %>% 
-      group_by(sp_code) %>% 
-      summarize(median = median(value, na.rm = TRUE),
-                max = max(value, na.rm = TRUE)) %>%
-      ungroup() %>% 
-      mutate(max = max(max)) %>% 
-      left_join(., y, by = "sp_code")
-  )) %>% 
-  mutate(medians_cld_log = pmap(
     list(x = data_log, y = cld),
     function(x, y) x %>% 
       group_by(sp_code) %>% 
-      summarize(median = median(value, na.rm = TRUE),
-                max = max(value, na.rm = TRUE)) %>%
+      summarize(median_log = median(log_value, na.rm = TRUE),
+                max_log = max(log_value, na.rm = TRUE),
+                median_raw = median(value, na.rm = TRUE),
+                max_raw = max(value, na.rm = TRUE)) %>%
       ungroup() %>% 
-      mutate(max = max(max)) %>% 
+      mutate(max_log = max(max_log),
+             max_raw = max(max_raw)) %>% 
       left_join(., y, by = "sp_code")
   )) %>% 
   # log transformed means plot (median as line)
   mutate(log_medians_plot = pmap(
-    list(x = data_log, y = medians_cld_log), 
+    list(x = data_log, y = medians_cld), 
     function(x, y) ggplot(
       data = x, 
       aes(x = sp_code,
-          y = value,
+          y = log_value,
           group = sp_code,
           color = sp_code)) +
       geom_point(alpha = 0.2,
@@ -758,14 +741,14 @@ sp_kw <- sp_anovas %>%
                                             seed = 666),
                  shape = 21) +
       geom_errorbar(data = y,
-                    aes(y = median,
-                        ymax = median,
-                        ymin = median),
+                    aes(y = median_log,
+                        ymax = median_log,
+                        ymin = median_log),
                     linewidth = 0.5) +
       geom_text(data = y,
                 aes(x = sp_code,
                     label = Letter,
-                    y = max*1.05),
+                    y = max_log*1.1),
                 color = "#000000",
                 size = 8) +
       scale_color_manual(values = algae_spcode_colors) +
@@ -775,7 +758,7 @@ sp_kw <- sp_anovas %>%
   )) %>% 
   # raw transformed means plot (median as line)
   mutate(raw_medians_plot = pmap(
-    list(x = data, y = medians_cld), 
+    list(x = data_log, y = medians_cld), 
     function(x, y) ggplot(
       data = x,
       aes(x = sp_code,
@@ -788,14 +771,14 @@ sp_kw <- sp_anovas %>%
                                             seed = 666),
                  shape = 21) +
       geom_errorbar(data = y,
-                    aes(y = median,
-                        ymax = median,
-                        ymin = median),
+                    aes(y = median_raw,
+                        ymax = median_raw,
+                        ymin = median_raw),
                     linewidth = 0.5) +
       geom_text(data = y,
                 aes(x = sp_code,
                     label = Letter,
-                    y = max*1.05),
+                    y = max_raw*1.1),
                 color = "#000000",
                 size = 8) +
       scale_color_manual(values = algae_spcode_colors) +
@@ -842,11 +825,12 @@ sp_kw <- sp_anovas %>%
       theme(plot.title = element_text(size = 32))
   ))
 
-t_median_plots_together <- sp_kw[[13]][[1]]
-dw_ww_median_plots_together <- sp_kw[[13]][[2]]
-sa_p_median_plots_together <- sp_kw[[13]][[3]]
-
 # throws a warning from the fct_relevel - ok to ignore
+
+t_median_plots_together <- sp_kw[[11]][[1]]
+dw_ww_median_plots_together <- sp_kw[[11]][[2]]
+sa_p_median_plots_together <- sp_kw[[11]][[3]]
+
 
 
 # ⟞ e. KW tables ----------------------------------------------------------
