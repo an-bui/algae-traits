@@ -11,8 +11,14 @@ combo_2traits <- read_rds(file = here("rds-objects",
 combo_3traits <- read_rds(file = here("rds-objects",
                                       "combo_3-traits_2025-03-25.rds")) 
 
+combo_3traits_full <- read_rds(file = here("rds-objects",
+                                           "combo_3-traits_2024-12-03.rds"))
+
 combo_4traits <- read_rds(file = here("rds-objects",
                                       "combo_4-traits_2025-03-25.rds")) 
+
+combo_4traits_full <- read_rds(file = here("rds-objects",
+                                           "combo_4-traits_2024-12-03.rds"))
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -114,7 +120,6 @@ tally_plot_aesthetics <- list(
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # ⟞ i. 4 traits -----------------------------------------------------------
-
 
 # assigning each combination "same", "all", or "everything else"
 keep_4traits_categories <- combo_4traits %>% 

@@ -1,14 +1,14 @@
 # This is a script for loading in trait data.
 
-############################################################-
-# 0. source -------------------------------------------------
-############################################################-
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ------------------------------- 0. source -------------------------------
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 source(here::here("code", "00a_libraries.R"))
 
-############################################################-
-# 1. FvFm data ----------------------------------------------
-############################################################-
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ----------------------------- 1. FvFm data ------------------------------
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # creating a vector of file names for .csv
 path <- here::here("data/fvfm", c(
@@ -43,83 +43,117 @@ path <- here::here("data/fvfm", c(
 fvfm_raw <- path %>% 
   map_df(~ read_csv(.))
 
-############################################################-
-# 2. other continuous traits --------------------------------
-############################################################-
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ---------------------- 2. traits from google sheet ----------------------
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # generated csvs in `00b_google-sheets.R`
 # remember to update file name if any have changed
 
-# ⊣ a. metadata for subsamples ------------------------------
+# ⟞ a. subsample metadata -------------------------------------------------
 
-metadata_sub <- read_csv(here::here("data", "google-sheet-traits", "metadata_sub_sheet_2023-11-08.csv"))
+metadata_sub <- read_csv(here::here("data", 
+                                    "google-sheet-traits", 
+                                    "metadata_sub_sheet_2023-11-08.csv"))
 
-# ⊣ b. metadata for individuals -----------------------------
+# ⟞ b. individual metadata ------------------------------------------------
 
-metadata_ind <- read_csv(here::here("data", "google-sheet-traits", "metadata_ind_sheet_2023-11-08.csv"))
+metadata_ind <- read_csv(here::here("data", 
+                                    "google-sheet-traits", 
+                                    "metadata_ind_sheet_2023-11-08.csv"))
 
-# ⊣ c. max height -------------------------------------------
+# ⟞ c. height -------------------------------------------------------------
 
-ind_height <- read_csv(here::here("data", "google-sheet-traits", "ind_height_sheet_2023-11-08.csv"))
+ind_height <- read_csv(here::here("data", 
+                                  "google-sheet-traits", 
+                                  "ind_height_sheet_2023-11-08.csv"))
 
-# ⊣ d. thallus length and width -----------------------------
+# ⟞ d. length and width ---------------------------------------------------
 
-lw <- read_csv(here::here("data", "google-sheet-traits", "lw_sheet_2023-11-08.csv")) 
+lw <- read_csv(here::here("data", 
+                          "google-sheet-traits", 
+                          "lw_sheet_2023-11-08.csv")) 
 
-# ⊣ e. thallus thickness ------------------------------------
+# ⟞ e. thickness ----------------------------------------------------------
 
-thickness <- read_csv(here::here("data", "google-sheet-traits", "thickness_sheet_2023-11-08.csv"))
+thickness <- read_csv(here::here("data", 
+                                 "google-sheet-traits", 
+                                 "thickness_sheet_2023-11-08.csv"))
 
-# ⊣ f. wet and dry weight -----------------------------------
+# ⟞ f. wet and dry weight -------------------------------------------------
 
-weight <- read_csv(here::here("data", "google-sheet-traits", "weight_sheet_2024-09-26.csv"))
-egme_weight <- read_csv(here::here("data", "google-sheet-traits", "egme_weight_sheet_2024-10-10.csv"))
+weight <- read_csv(here::here("data", 
+                              "google-sheet-traits", 
+                              "weight_sheet_2024-09-26.csv"))
 
-# ⊣ g. surface area and perimeter ---------------------------
+egme_weight <- read_csv(here::here("data", 
+                                   "google-sheet-traits", 
+                                   "egme_weight_sheet_2024-10-10.csv"))
 
-sa_peri <- read_csv(here::here("data", "google-sheet-traits", "sa_peri_sheet_2024-11-17.csv"))
+# ⟞ g. surface area and perimeter -----------------------------------------
 
-# ⊣ h. branching order (still need to clean up) -------------
+sa_peri <- read_csv(here::here("data", 
+                               "google-sheet-traits", 
+                               "sa_peri_sheet_2024-11-17.csv"))
 
-bra_ord <- read_csv(here::here("data", "google-sheet-traits", "bra_ord_sheet_2023-02-02.csv"))
+# ⟞ h. branching order ----------------------------------------------------
 
-# ⊣ i. toughness (still need to clean up) -------------------
+bra_ord <- read_csv(here::here("data", 
+                               "google-sheet-traits", 
+                               "bra_ord_sheet_2023-02-02.csv"))
 
-toughness <- read_csv(here::here("data", "google-sheet-traits", "toughness_sheet_2023-02-02.csv")) 
+# ⟞ i. toughness ----------------------------------------------------------
 
-# ⊣ j. volume -----------------------------------------------
+toughness <- read_csv(here::here("data", 
+                                 "google-sheet-traits", 
+                                 "toughness_sheet_2023-02-02.csv")) 
 
-volume <- read_csv(here::here("data", "google-sheet-traits", "volume_sheet_2024-06-20.csv"))
+# ⟞ j. volume -------------------------------------------------------------
 
-# ⊣ k. chlorophyll A ----------------------------------------
+volume <- read_csv(here::here("data", 
+                              "google-sheet-traits", 
+                              "volume_sheet_2024-06-20.csv"))
 
-chlA <- read_csv(here::here("data", "google-sheet-traits", "chlA_sheet_2023-07-26.csv"))
+# ⟞ k. chlorophyll A ------------------------------------------------------
 
+chlA <- read_csv(here::here("data", 
+                            "google-sheet-traits", 
+                            "chlA_sheet_2023-07-26.csv"))
 
-# ⊣ l. isotopes ---------------------------------------------
+# ⟞ l. isotopes -----------------------------------------------------------
 
 isotopes <- readxl::read_xls(here("data", "isotopes", "Bui6695_Final.xls"), sheet = "clean",
                              na = "NA")
 
-############################################################-
-# 3. categorical traits -------------------------------------
-############################################################-
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ------------------------- 3. categorical traits -------------------------
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-coarse_traits <- read_csv(here::here("data", "algae-traits_literature-search_2022-02-28.csv"))
+coarse_traits <- read_csv(here::here("data", 
+                                     "algae-traits_literature-search_2022-02-28.csv"))
 
-joe_traits <- read_csv(here::here("data", "fong-categorical", "Traits.csv")) %>% 
+joe_traits <- read_csv(here::here("data", 
+                                  "fong-categorical", 
+                                  "Traits.csv")) %>% 
   mutate(species = str_to_sentence(species))
 
-############################################################-
-# 4. LTER data ----------------------------------------------
-############################################################-
+# in dropbox: /Users/An/Dropbox/grad-work/01_research/02-phd/03-functional-responses/data
 
-lte <- read_csv(here("data", "SBC-LTER-benthics", "LTE_All_Species_Biomass_at_transect_20220208.csv")) %>% 
+cat_data <- repmis::source_data("https://www.dropbox.com/scl/fi/vpnue7o7dz2so6z1sxpwj/joe-traits-lter_2024-06-04.csv?rlkey=youehrjjnbunfc93gegiemopq&dl=1")
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ------------------------------ 4. LTER data -----------------------------
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+lte <- read_csv(here("data", 
+                     "SBC-LTER-benthics", 
+                     "LTE_All_Species_Biomass_at_transect_20220208.csv")) %>% 
   clean_names() %>% 
   mutate(across(c(site, treatment, group, mobility, growth_morph), tolower))
 
-biomass <- read_csv(here("data", "SBC-LTER-benthics",
-                      "Annual_All_Species_Biomass_at_transect_20240823.csv")) %>% 
+biomass <- read_csv(here("data", 
+                         "SBC-LTER-benthics",
+                         "Annual_All_Species_Biomass_at_transect_20240823.csv")) %>% 
   clean_names() %>% 
   mutate(across(c(site, group, mobility, growth_morph), tolower)) %>% 
   filter(group == "algae") %>% 
@@ -140,15 +174,4 @@ biomass <- read_csv(here("data", "SBC-LTER-benthics",
 #              y = mean_light,
 #              color = transect)) +
 #   geom_point()
-
-############################################################-
-# 5. categorical trait data ---------------------------------
-############################################################-
-
-# in dropbox: /Users/An/Dropbox/grad-work/01_research/02-phd/03-functional-responses/data
-
-cat_data <- repmis::source_data("https://www.dropbox.com/scl/fi/vpnue7o7dz2so6z1sxpwj/joe-traits-lter_2024-06-04.csv?rlkey=youehrjjnbunfc93gegiemopq&dl=1")
-
-
-
 

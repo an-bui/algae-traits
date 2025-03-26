@@ -10,7 +10,7 @@ source(here::here("code", "00c_trait-data.R"))
 # ---------------------- 1. cleaning and summarizing ----------------------
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-# ⊣ a. FvFm -------------------------------------------------
+# ⟞ a. FvFm ---------------------------------------------------------------
 
 # subsample
 fvfm_sub <- fvfm_raw %>% 
@@ -61,7 +61,7 @@ fvfm_ind <- fvfm_raw %>%
 
 # as a note: samples from 20210623 don't have FvFm, and one sample from IVEE doesn't either
 
-# ⊣ b. thickness --------------------------------------------
+# ⟞ b. thickness ----------------------------------------------------------
 
 holdfasts <- metadata_sub %>% 
   filter(type %in% c("holdfast")) %>% 
@@ -89,7 +89,7 @@ thickness_ind <- thickness %>%
   summarize(thickness_mm_mean = mean(thickness_mm, na.rm = TRUE),
             thickness_mm_se = se(thickness_mm))
 
-# ⊣ c. weights ----------------------------------------------
+# ⟞ c. weights ------------------------------------------------------------
 
 # subsample
 weight_sub <- weight %>%
@@ -101,8 +101,7 @@ weight_sub <- weight %>%
   # take out specimen_ID column
   select(-specimen_ID)
 
-# EGME weights
-egme_weight
+# EGME weights in `egme_weight` object
 
 # individual
 weight_ind <- weight %>% 
@@ -120,7 +119,7 @@ weight_ind <- weight %>%
     TRUE ~ total_dry
   ))
 
-# ⊣ d. volume -----------------------------------------------
+# ⟞ d. volume -------------------------------------------------------------
 
 # subsample
 volume_sub <- volume %>%
@@ -141,7 +140,7 @@ volume_ind <- volume %>%
   group_by(specimen_ID) %>% 
   summarize(total_volume = sum(volume_total_mL, na.rm = TRUE))
 
-# ⊣ e. surface area and perimeter ---------------------------
+# ⟞ e. surface area and perimeter -----------------------------------------
 
 pneumatocysts <- sa_peri %>% 
   filter(notes_scans == "pneumatocyst") %>% 
@@ -156,13 +155,13 @@ sa_peri_sub <- sa_peri %>%
   summarize(area_total = sum(area_total),
             peri_total = sum(peri_total)) 
 
-# ⊣ f. thallus length and width -----------------------------
+# ⟞ f. length and width ---------------------------------------------------
 
 # subsample
 lw_sub <- lw %>% 
   select(-specimen_ID, -5)
 
-# ⊣ g. branching order (not used) ----------------------------
+# ⟞ g. branching order (not used) -----------------------------------------
 
 # bra_ord_summary <- bra_ord %>% 
 #   pivot_longer(cols = bo_01:bo_05, names_to = "measurement_n", values_to = "bra_ord_count") %>% 
@@ -175,7 +174,7 @@ lw_sub <- lw %>%
 #   left_join(., coarse_traits, by = "sp_code") %>% 
 #   drop_na(sp_code)
 
-# ⊣ h. toughness (not used) ----------------------------------
+# ⟞ h. toughness (not used) -----------------------------------------------
 
 # toughness_summary <- toughness %>% 
 #   pivot_longer(cols = 2:11, names_to = "measurement_n", values_to = "toughness_kgcm2") %>% 
@@ -188,7 +187,7 @@ lw_sub <- lw %>%
 #   left_join(., coarse_traits, by = "sp_code") %>% 
 #   drop_na(sp_code)
 
-# ⊣ i. chlorophyll A ----------------------------------------
+# ⟞ i. chlorophyll A ------------------------------------------------------
 
 chlA_sub <- chlA %>% 
   # calculating total chlA ug per mg wet weight
@@ -208,14 +207,17 @@ chlA_ind <- chlA_sub %>%
             chlA_se = se(chlA_ug_mg)) %>% 
   ungroup()
 
-# ⊣ j. isotopes ---------------------------------------------
+# ⟞ j. isotopes -----------------------------------------------------------
 
 isotopes_sub <- isotopes %>% 
   filter(!is.na(subsample_ID)) %>% 
   select(!c(sample_id_run, amount_ug)) 
 
 isotopes_ind <- isotopes_sub %>% 
-  separate_wider_delim(cols = subsample_ID, names = c("date", "site", "ind", "sub"), delim = "-", cols_remove = FALSE) %>% 
+  separate_wider_delim(cols = subsample_ID, 
+                       names = c("date", "site", "ind", "sub"), 
+                       delim = "-", 
+                       cols_remove = FALSE) %>% 
   unite("specimen_ID", date:ind, sep = "-") %>% 
   select(!sub) %>% 
   group_by(specimen_ID) %>% 
@@ -247,9 +249,9 @@ ct_prep <- metadata_sub %>%
          growth_form, pigment_type, life_habit, longevity, posture, branching_yn, lifestage) %>%
   unique()
 
-# ⊣ a. leaf traits and average leaf values ------------------
+# ⟞ a. subsample traits and average values --------------------------------
 
-# leaf traits
+# subsample traits (called these "leaf" traits)
 leaf_traits <- metadata_sub %>% 
   filter(type %in% c("whole", "thallus")) %>% 
   filter(!(specimen_ID %in% recruits)) %>% 
@@ -266,7 +268,7 @@ leaf_traits <- metadata_sub %>%
          aspect_ratio = length/width,
          sta_mm_mg = area_total/weight_dry_mg)
 
-# average leaf values
+# average subsample values for an individual
 av_leaf_values <- leaf_traits %>% 
   group_by(specimen_ID) %>% 
   summarize(sta_mean = mean(sta_mm_mg, na.rm = TRUE),
@@ -294,7 +296,7 @@ av_leaf_values <- leaf_traits %>%
             frond_volume_mean = mean(volume_total_mL, na.rm = TRUE),
             frond_volume_se = se(volume_total_mL))
 
-# ⊣ b. individual values ------------------------------------
+# ⟞ b. individual values --------------------------------------------------
 
 # all traits for each individual with mean taken for each trait
 # H, T, SA, H:WW, DW:WW, H:V, SA:V, SA:DW, and SA:P
@@ -341,17 +343,18 @@ ind_traits_filtered <- ind_traits %>%
           height_vol,
           sav_scaled, 
           sta_scaled,
-          sap_mean) %>% 
+          sap_mean
+          ) %>% 
   select(specimen_ID, scientific_name, sp_code, date_collected, year, site,
          maximum_height, 
          thickness_mm_mean, 
          frond_area_scaled,
          height_ww,
          total_dmc, 
-         height_vol,
-         sav_scaled, 
-         sta_scaled,
-         sap_mean
+         height_vol#,
+         #sav_scaled, 
+         #sta_scaled,
+         #sap_mean
          ) %>% 
   mutate(sp_label = case_match(
     scientific_name,
@@ -382,7 +385,7 @@ saved_df <- ind_traits %>%
 
 # write_csv(saved_df, here("data", "ind-trait-values_2024-12-19.csv"))
 
-# ⊣ c. trait by species matrix ------------------------------
+# ⟞ c. trait by species matrix --------------------------------------------
 
 # trait values averaged across sites
 # tbspp_matrix <- metadata_ind %>% 
@@ -467,21 +470,9 @@ total_sample_collection_table <- ind_traits_filtered %>%
 
 total_sample_collection_table
 
-total_sample_collection_table %>%
-  save_as_docx(path = here::here(
-    "tables",
-    "sample-tables",
-    paste0("total-samples_all-data_", today(), ".docx")
-  ))
-
-
-
-
-
-
-
-
-
-
-
-
+# total_sample_collection_table %>%
+#   save_as_docx(path = here::here(
+#     "tables",
+#     "sample-tables",
+#     paste0("total-samples_all-data_", today(), ".docx")
+#   ))

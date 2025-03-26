@@ -1,20 +1,23 @@
-# This is a script to get data from google drive and save each data frame as a csv. 
+# This is a script to get data from google drive and save each data frame as a 
+# csv. 
 # Note to self: THIS ONLY NEEDS TO BE RUN IF YOU HAVE UPDATED ANY OF THE DATA.
 
-############################################################-
-# 1. function to write csv ----------------------------------
-############################################################-
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ----------------------- 1. function to write csv ------------------------
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 sheet_write_csv <- function(df) {
   # convert object name to string
   df_name <- deparse(substitute(df))
   # write csv from object and put into google-sheet-traits folder
-  write_csv(df, here::here("data", "google-sheet-traits", paste(df_name, "_", today(), ".csv", sep = "")))
+  write_csv(df, here::here("data", 
+                           "google-sheet-traits", 
+                           paste(df_name, "_", today(), ".csv", sep = "")))
 }
 
-############################################################-
-# 2. data from google sheet ---------------------------------
-############################################################-
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ----------------------- 2. data from google sheet -----------------------
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # packages
 source(here::here("code", "00a_libraries.R"))
@@ -24,7 +27,7 @@ sheet_id <- "1h2eHoL5kXMRwExt3hjrLavxG0pajHOvA1UfJd24pRk4"
 
 # googlesheets4 will ask for authentication from whichever read_sheet command runs first
 
-# ⊣ a. metadata for subsamples ------------------------------
+# ⟞ a. subsample metadata -------------------------------------------------
 
 metadata_sub_sheet <- read_sheet(sheet_id, sheet = "00b-metadata_sub") %>% 
   mutate(date_collected = ymd(date_collected)) %>% 
@@ -33,7 +36,7 @@ metadata_sub_sheet <- read_sheet(sheet_id, sheet = "00b-metadata_sub") %>%
 # last updated: 2023-11-08
 sheet_write_csv(metadata_sub_sheet)
 
-# ⊣ b. metadata for individuals -----------------------------
+# ⟞ b. individual metadata ------------------------------------------------
 
 metadata_ind_sheet <- metadata_sub_sheet %>% 
   select(specimen_ID, date_collected, year, site, sp_code, lifestage) %>% 
@@ -42,28 +45,32 @@ metadata_ind_sheet <- metadata_sub_sheet %>%
 # last updated: 2023-11-08
 sheet_write_csv(metadata_ind_sheet)
 
-# ⊣ c. max height -------------------------------------------
+
+# ⟞ c. height -------------------------------------------------------------
 
 ind_height_sheet <- read_sheet(sheet_id, sheet = "02a-ind_height", na = "NA") 
 
 # last updated: 2023-11-08
 sheet_write_csv(ind_height_sheet)
 
-# ⊣ d. thallus length and width -----------------------------
+
+# ⟞ d. length and width ---------------------------------------------------
 
 lw_sheet <- read_sheet(sheet_id, sheet = "02b-lw", na = "NA") 
 
 # last updated: 2023-11-08
 sheet_write_csv(lw_sheet)
 
-# ⊣ e. thallus thickness ------------------------------------
+
+# ⟞ e. thickness ----------------------------------------------------------
 
 thickness_sheet <- read_sheet(sheet_id, sheet = "03-thickness", na = "NA")
 
 # last updated: 2023-11-08
 sheet_write_csv(thickness_sheet)
 
-# ⊣ f. wet and dry weight -----------------------------------
+
+# ⟞ f. wet and dry weight -------------------------------------------------
 
 weight_sheet <- read_sheet(sheet_id, sheet = "04-weight", na = "NA")
 
@@ -75,35 +82,40 @@ egme_weight_sheet <- read_sheet(sheet_id, sheet = "04b-EGME_weight", na = "NA")
 # last updated: 2024-10-10
 sheet_write_csv(egme_weight_sheet)
 
-# ⊣ g. surface area and perimeter ---------------------------
+
+# ⟞ g. surface area and perimeter -----------------------------------------
 
 sa_peri_sheet <- read_sheet(sheet_id, sheet = "05a-scans") 
 
 # last updated: 2024-11-17
 sheet_write_csv(sa_peri_sheet)
 
-# ⊣ h. branching order (still need to clean up) -------------
+
+# ⟞ h. branching order ----------------------------------------------------
 
 bra_ord_sheet <- read_sheet(sheet_id, sheet = "05b-branching_order", na = "NA") 
 
 # last updated: 2023-02-02
 sheet_write_csv(bra_ord_sheet)
 
-# ⊣ i. toughness (still need to clean up) -------------------
+
+# ⟞ i. toughness ----------------------------------------------------------
 
 toughness_sheet <- read_sheet(sheet_id, sheet = "06-toughness", na = "NA") 
 
 # last updated: 2023-02-02
 sheet_write_csv(toughness_sheet)
 
-# ⊣ j. volume -----------------------------------------------
+
+# ⟞ j. volume -------------------------------------------------------------
 
 volume_sheet <- read_sheet(sheet_id, sheet = "07-volume", na = "NA") 
 
 # last updated: 2024-06-20
 sheet_write_csv(volume_sheet)
 
-# ⊣ k. chlorophyll A -----------------------------------------
+
+# ⟞ k. chlorophyll A ------------------------------------------------------
 
 chlA_sheet <- read_sheet(sheet_id, sheet = "08-chlA", na = "NA") 
 

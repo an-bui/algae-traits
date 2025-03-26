@@ -1,26 +1,24 @@
 # This is a script to load in packages and create some useful objects
 
-############################################################-
-# 1. general use packages -----------------------------------
-############################################################-
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ------------------------------ 1. packages ------------------------------
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# ⟞ a. general use --------------------------------------------------------
 
 library(tidyverse) # general use
 library(here) # file organization
 library(googlesheets4) # pulling data from google sheets
 
-############################################################-
-# 2. cleaning packages --------------------------------------
-############################################################-
+
+# ⟞ b. cleaning -----------------------------------------------------------
 
 library(janitor) # cleaning names in data frames
 library(lubridate) # dealing with dates
 library(fuzzyjoin) # fuzzy matching
 
-############################################################-
-# 3. analysis packages --------------------------------------
-############################################################-
 
-# ⊣ a. multivariate analysis --------------------------------
+# ⟞ c. multivariate analysis ----------------------------------------------
 
 library(vegan) # ordinations etc
 library(cluster) # get gower distance on categorical variables
@@ -30,9 +28,9 @@ library(pairwiseAdonis) # pairwise comparisons for permanova
 library(factoextra) # extract components from multivariate analyses
 library(cati) # partitioning species composition/intraspecific variation
 library(RVAideMemoire) # pairwise permanova
-library(FSA) # Dunn test for KW
 
-# ⊣ b. models -----------------------------------------------
+
+# ⟞ d. models -------------------------------------------------------------
 
 library(lmerTest) # tests for lm, loads in lme4
 library(nlme) # non-linear mixed effect models (gives significance for terms)
@@ -50,11 +48,8 @@ library(ggExtra) # visualization of SMA
 library(broom) # getting tidy model outputs
 library(rstatix) # for Dunn test
 
-############################################################-
-# 4. visualization packages ---------------------------------
-############################################################-
 
-# ⊣ a. plots ------------------------------------------------
+# ⟞ e. plots --------------------------------------------------------------
 
 library(corrplot) # correlation plots
 library(plotly) # for making the species biomass plot
@@ -70,125 +65,30 @@ library(GGally) # pairs plots
 library(ggConvexHull) # convex hulls
 library(ggrepel)
 
-# ⊣ b. tables -----------------------------------------------
+
+# ⟞ f. tables -------------------------------------------------------------
 
 library(gt) # making tables
 library(gtsummary) # summary tables for models
 library(flextable) # another making tables option
 
-# ⊣ c. fonts ------------------------------------------------
+
+# ⟞ g. fonts --------------------------------------------------------------
 
 library(showtext)
 font_add_google("Lato", "Lato")
 showtext_auto()
 
-############################################################-
-# 5. useful objects -----------------------------------------
-############################################################-
 
-# ⊣ a. algae vectors ----------------------------------------
-
-algae_common <- c("PH", "PTCA", # Pterygophora californica 
-                  "DL", # Desmarestia ligulata
-                  "R", # Rhodymenia californica 
-                  "CC", # Chondracanthus corymbiferus 
-                  "POLA", # Polyneura latissima 
-                  "CYOS", # Stephanocystis osmundacea 
-                  "FTHR", # Pterosiphonia dendroidea 
-                  "CO", # Corallina officinalis var. chilensis 
-                  "LX", # Osmundea spectabilis
-                  "GS", # Gracilaria spp. 
-                  "GR", # Gelidium robustum
-                  "BR", # Halymenia spp.
-                  "BO", # Bossiella orbigniana 
-                  "FB", # Ectocarpaceae spp. 
-                  "BF", # Cryptopleura ruprechtiana 
-                  "LAFA", # Laminaria farlowii 
-                  "CF", # Callophyllis rhynchocarpa 
-                  "DP" # Dictyota spp. 
-)
-
-# 11 species from Miller et al. 2012 and from conversation with Bob on 2022-01-18
-algae_interest <- c("CYOS", # Stephanocystis osmundacea 
-                    "LAFA", # Laminaria farlowii 
-                    "MAPY", # Macrocystis pyrifera
-                    "PH", "PTCA", # Pterygophora californica 
-                    "CF", # Callophyllis flabellulata
-                    "CC", # Chondracanthus corymbiferus 
-                    "GS", # Gracilaria spp. 
-                    "POLA", # Polyneura latissima 
-                    "FTHR", # Pterosiphonia dendroidea 
-                    "R", # Rhodymenia californica 
-                    "EGME", # Egregia menziesii
-                    "DL" # Desmarestia ligulata
-)
-
-# algae list in proposal
-# updated 2023-01-27 with new species
-algae_proposal <- c("PH", "PTCA", # Pterygophora californica 
-                    "BF", # Cryptopleura ruprechtiana                     
-                    "CYOS", # Stephanocystis osmundacea                     
-                    "DL", # Desmarestia ligulata                   
-                    "CC", # Chondracanthus corymbiferus                     
-                    "GS", # Gracilaria spp.                     
-                    "CO", # Corallina officinalis var. chilensis 
-                    "POLA", # Polyneura latissima 
-                    "R", # Rhodymenia californica 
-                    "GR", # Gelidium robustum
-                    "EH", "EGME", # Egregia menziesii
-                    "Nandersoniana", # Nienburgia andersoniana
-                    "LH", "LAFA", # Laminaria farlowii
-                    "DU", # Dictyopteris undulata
-                    "DP", # Dictyota
-                    "BO" # Bossiella orbigniana
-) 
-
-# reds
-# "BF", # Cryptopleura ruprechtiana  
-# "CC", # Chondracanthus corymbiferus 
-# "GS", # Gracilaria spp. 
-# "CO", # Corallina officinalis var. chilensis 
-# "BO" # Bossiella orbigniana
-# "POLA", # Polyneura latissima 
-# "R", # Rhodymenia californica 
-# "GR", # Gelidium robustum
-# "Nandersoniana", # Nienburgia andersoniana
-
-# browns
-# "PH", "PTCA", # Pterygophora californica 
-# "CYOS", # Stephanocystis osmundacea                     
-# "DL", # Desmarestia ligulata                   
-# "EH", "EGME", # Egregia menziesii
-# "LH", "LAFA", # Laminaria farlowii
-# "DU", # Dictyopteris undulata
-# "DP", # Dictyota
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# --------------------------- 2. useful objects ---------------------------
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-algae_proposal_code_factors <- algae_proposal %>% 
-  as_factor() %>% 
-  fct_relevel(., "BF", "CC", "GS", "CO", "BO", "POLA", "R", "GR", "Nandersoniana",
-              "PTCA", "CYOS", "DL", "EGME", "LAFA", "DU", "DP")
+# ⟞ a. vectors and colors -------------------------------------------------
 
-# algae_proposal_sciname_factors <- as_factor(
-#   c("Cryptopleura ruprechtiana", 
-#     "Chondracanthus corymbiferus; Chondracanthus exasperatus", 
-#     "Gracilaria spp.", 
-#     "Corallina officinalis", 
-#     "Bossiella orbigniana", 
-#     "Polyneura latissima", 
-#     "Rhodymenia californica", 
-#     "Gelidium spp.", 
-#     "Nienburgia andersoniana",
-#     "Pterygophora californica", 
-#     "Stephanocystis osmundacea", 
-#     "Desmarestia ligulata", 
-#     "Egregia menziesii", 
-#     "Laminaria farlowii", 
-#     "Dictyopteris undulata", 
-#     "Dictyota binghamiae; Dictyota flabellata; Dictyota coriacea"
-#   )
-# )
-# blue, green, red, purple
+# ⟞ ⟞ i. algae ------------------------------------------------------------
+
 algae_colors <- c(
   # BO, CO: articulated calcareous
   "Corallina officinalis" = "#E67932", 
@@ -268,27 +168,6 @@ algae_spcode_factors <- c(
   "CO", "BO", "R", "BF", "DP", "CC", "CYOS", "PTCA", "LAFA"
 )
 
-# algae_spcode_colors <- c(
-#   # reds
-#   "BF" = "#C68F76", 
-#   "CC" = "#F5CFBC", 
-#   "GS" = "#985030", 
-#   "CO" = "#D6A48D", 
-#   "BO" = "#893B19", 
-#   "POLA" = "#E5B9A4", 
-#   "R" = "#A86547", 
-#   "GR" = "#B77A5F", 
-#   "Nandersoniana" = "#7A2602",
-#   # browns
-#   "PTCA" = "#7A6720", 
-#   "CYOS" = "#BA9C30", 
-#   "DL" = "#CFAE35", 
-#   "EGME" = "#8F7825", 
-#   "LAFA" = "#FAD241", 
-#   "DU" = "#A48A2A", 
-#   "DP" = "#E4C03B"
-# )
-
 algae_spcode_full_names <- c(
   # reds
   "BF" = "Cryptopleura ruprechtiana", 
@@ -328,21 +207,150 @@ groups <- c(
 )
 
 
+# algae_common <- c("PH", "PTCA", # Pterygophora californica 
+#                   "DL", # Desmarestia ligulata
+#                   "R", # Rhodymenia californica 
+#                   "CC", # Chondracanthus corymbiferus 
+#                   "POLA", # Polyneura latissima 
+#                   "CYOS", # Stephanocystis osmundacea 
+#                   "FTHR", # Pterosiphonia dendroidea 
+#                   "CO", # Corallina officinalis var. chilensis 
+#                   "LX", # Osmundea spectabilis
+#                   "GS", # Gracilaria spp. 
+#                   "GR", # Gelidium robustum
+#                   "BR", # Halymenia spp.
+#                   "BO", # Bossiella orbigniana 
+#                   "FB", # Ectocarpaceae spp. 
+#                   "BF", # Cryptopleura ruprechtiana 
+#                   "LAFA", # Laminaria farlowii 
+#                   "CF", # Callophyllis rhynchocarpa 
+#                   "DP" # Dictyota spp. 
+# )
+
+# 11 species from Miller et al. 2012 and from conversation with Bob on 2022-01-18
+# algae_interest <- c("CYOS", # Stephanocystis osmundacea 
+#                     "LAFA", # Laminaria farlowii 
+#                     "MAPY", # Macrocystis pyrifera
+#                     "PH", "PTCA", # Pterygophora californica 
+#                     "CF", # Callophyllis flabellulata
+#                     "CC", # Chondracanthus corymbiferus 
+#                     "GS", # Gracilaria spp. 
+#                     "POLA", # Polyneura latissima 
+#                     "FTHR", # Pterosiphonia dendroidea 
+#                     "R", # Rhodymenia californica 
+#                     "EGME", # Egregia menziesii
+#                     "DL" # Desmarestia ligulata
+# )
+
+# algae list in proposal
+# updated 2023-01-27 with new species
+# algae_proposal <- c("PH", "PTCA", # Pterygophora californica 
+#                     "BF", # Cryptopleura ruprechtiana                     
+#                     "CYOS", # Stephanocystis osmundacea                     
+#                     "DL", # Desmarestia ligulata                   
+#                     "CC", # Chondracanthus corymbiferus                     
+#                     "GS", # Gracilaria spp.                     
+#                     "CO", # Corallina officinalis var. chilensis 
+#                     "POLA", # Polyneura latissima 
+#                     "R", # Rhodymenia californica 
+#                     "GR", # Gelidium robustum
+#                     "EH", "EGME", # Egregia menziesii
+#                     "Nandersoniana", # Nienburgia andersoniana
+#                     "LH", "LAFA", # Laminaria farlowii
+#                     "DU", # Dictyopteris undulata
+#                     "DP", # Dictyota
+#                     "BO" # Bossiella orbigniana
+# ) 
+
+# reds
+# "BF", # Cryptopleura ruprechtiana  
+# "CC", # Chondracanthus corymbiferus 
+# "GS", # Gracilaria spp. 
+# "CO", # Corallina officinalis var. chilensis 
+# "BO" # Bossiella orbigniana
+# "POLA", # Polyneura latissima 
+# "R", # Rhodymenia californica 
+# "GR", # Gelidium robustum
+# "Nandersoniana", # Nienburgia andersoniana
+
+# browns
+# "PH", "PTCA", # Pterygophora californica 
+# "CYOS", # Stephanocystis osmundacea                     
+# "DL", # Desmarestia ligulata                   
+# "EH", "EGME", # Egregia menziesii
+# "LH", "LAFA", # Laminaria farlowii
+# "DU", # Dictyopteris undulata
+# "DP", # Dictyota
+
+
+# algae_proposal_code_factors <- algae_proposal %>% 
+#   as_factor() %>% 
+#   fct_relevel(., "BF", "CC", "GS", "CO", "BO", "POLA", "R", "GR", "Nandersoniana",
+#               "PTCA", "CYOS", "DL", "EGME", "LAFA", "DU", "DP")
+
+# algae_proposal_sciname_factors <- as_factor(
+#   c("Cryptopleura ruprechtiana", 
+#     "Chondracanthus corymbiferus; Chondracanthus exasperatus", 
+#     "Gracilaria spp.", 
+#     "Corallina officinalis", 
+#     "Bossiella orbigniana", 
+#     "Polyneura latissima", 
+#     "Rhodymenia californica", 
+#     "Gelidium spp.", 
+#     "Nienburgia andersoniana",
+#     "Pterygophora californica", 
+#     "Stephanocystis osmundacea", 
+#     "Desmarestia ligulata", 
+#     "Egregia menziesii", 
+#     "Laminaria farlowii", 
+#     "Dictyopteris undulata", 
+#     "Dictyota binghamiae; Dictyota flabellata; Dictyota coriacea"
+#   )
+# )
+# blue, green, red, purple
+
+
+# algae_spcode_colors <- c(
+#   # reds
+#   "BF" = "#C68F76", 
+#   "CC" = "#F5CFBC", 
+#   "GS" = "#985030", 
+#   "CO" = "#D6A48D", 
+#   "BO" = "#893B19", 
+#   "POLA" = "#E5B9A4", 
+#   "R" = "#A86547", 
+#   "GR" = "#B77A5F", 
+#   "Nandersoniana" = "#7A2602",
+#   # browns
+#   "PTCA" = "#7A6720", 
+#   "CYOS" = "#BA9C30", 
+#   "DL" = "#CFAE35", 
+#   "EGME" = "#8F7825", 
+#   "LAFA" = "#FAD241", 
+#   "DU" = "#A48A2A", 
+#   "DP" = "#E4C03B"
+# )
+
+
+
 
 # colors
-rhodo_col <- "#781416"
-  ochro_col <- "#CC7540"
-    chloro_col <- "#6D5A18"
+# rhodo_col <- "#781416"
+#   ochro_col <- "#CC7540"
+#     chloro_col <- "#6D5A18"
 
 # rhodophyta: 1 and 2
-cluster1 <- "#CC5A17"
-cluster2 <- "#8C5332"
+# cluster1 <- "#CC5A17"
+# cluster2 <- "#8C5332"
 # ochrophyta: 3 and 4
-cluster3 <- "#16CCCB"
-cluster4 <- "#357777"
+# cluster3 <- "#16CCCB"
+# cluster4 <- "#357777"
+# 
+# cat_cluster1 <- "#CC8613"
+# cat_cluster2 <- "#1274CC"
+# 
 
-cat_cluster1 <- "#CC8613"
-cat_cluster2 <- "#1274CC"
+# ⟞ ⟞ ii. traits ----------------------------------------------------------
 
 sta_col <- "#BD973D"
 sav_col <- "#CC7556"
@@ -412,7 +420,10 @@ trait_colnames_factor <- c(
 )
       
     # gradient palette
-    gradient_palette <- c("#FFFFFF", "#009BB0")
+    # gradient_palette <- c("#FFFFFF", "#009BB0")
+    # 
+
+# ⟞ ⟞ iii. sites ----------------------------------------------------------
       
     # site name vector
     sites <- c("bull", "aque", "ahnd", "napl", "ivee", "golb", 
@@ -447,6 +458,8 @@ trait_colnames_factor <- c(
     sctw_full <- "Twin Harbors (SCTW)"
     
 
+
+# ⟞ b. functions ----------------------------------------------------------
     
     # function to calculate standard error
     se <- function(x,...){

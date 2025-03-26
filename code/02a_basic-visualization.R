@@ -96,14 +96,14 @@ sig_table_fxn <- function(pairwise_sig_df) {
 # --------------- 2. ANOVAs, post-hoc comparisons, and plots --------------
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-#' This section includes code to do one-way ANOVAs comparing trait values 
-#' between species. I also do a Tukey HSD post-hoc comparison after each ANOVA.
-#' The trait values used in the correlation analysis, standardized major axis
-#' regression, and PCA are log transformed; thus, this code includes ANOVAs for
-#' log transformed (log) and raw (raw) trait values. 
-#' 
-#' The code also includes visualizations of logged and raw trait values in 
-#' boxplots and means and 95% CI. 
+# This section includes code to do one-way ANOVAs comparing trait values 
+# between species. I also do a Tukey HSD post-hoc comparison after each ANOVA.
+# The trait values used in the correlation analysis, standardized major axis
+# regression, and PCA are log transformed; thus, this code includes ANOVAs for
+# log transformed (log) and raw (raw) trait values. 
+# 
+# The code also includes visualizations of logged and raw trait values in 
+# boxplots and means and 95% CI. 
 
 # ⟞ a. ANOVA --------------------------------------------------------------
 
@@ -453,25 +453,10 @@ log_sa_p_means_plot_table <- pluck(sp_anovas, 25, 9)
 raw_sa_p_means_plot_table <- pluck(sp_anovas, 26, 9)
 sa_p_means_plots_together <- pluck(sp_anovas, 27, 9)
 
-# ⟞ b. multipanel plot ----------------------------------------------------
 
-# boxplot_multipanel <- 
-#   (pluck(sp_anovas, 17,  1) + pluck(sp_anovas, 17,  3) + pluck(sp_anovas, 17,  2)) /
-#   (pluck(sp_anovas, 17,  4) + pluck(sp_anovas, 17,  5) + pluck(sp_anovas, 17,  6)) /
-#   (pluck(sp_anovas, 17,  7) + pluck(sp_anovas, 17,  8) + pluck(sp_anovas, 17,  9)) 
+# ⟞ b. ANOVA tables -------------------------------------------------------
 
-# ggsave(here("figures",
-#             "basic-visualizations",
-#             "boxplots",
-#             paste0("multipanel_boxplots_", today(), ".jpg")),
-#        boxplot_multipanel,
-#        width = 26,
-#        height = 18,
-#        units = "cm",
-#        dpi = 300)
-
-
-# ⟞ c. ANOVA tables -------------------------------------------------------
+# ⟞ ⟞ i. wrangling functions ----------------------------------------------
 
 # solution from TarJae: https://stackoverflow.com/questions/72451868/flextable-scientific-formats-for-a-table-that-has-both-very-large-and-very-smal
 
@@ -540,6 +525,10 @@ sp_anova_tables <- sp_anovas %>%
       table_fxn()
   ))
 
+
+# ⟞ ⟞ ii. generating tables -----------------------------------------------
+
+# ANOVA using raw trait values
 raw_anova_table <- sp_anova_tables %>% 
   select(raw_anova_table) %>% 
   unnest(cols = raw_anova_table) %>% 
@@ -573,7 +562,7 @@ raw_anova_table <- sp_anova_tables %>%
   font(fontname = "Times New Roman",
        part = "all")
 
-raw_anova_table
+# ANOVA using log transformed trait values
 
 log_anova_table <- sp_anova_tables %>% 
   select(log_anova_table) %>% 
@@ -608,7 +597,7 @@ log_anova_table <- sp_anova_tables %>%
   font(fontname = "Times New Roman",
        part = "all")
 
-log_anova_table
+# variance comparisons
 
 sp_variance_tables <- sp_anovas %>% 
   select(units, variance_test_untransform, variance_test_log) %>% 
@@ -827,10 +816,9 @@ sp_kw <- sp_anovas %>%
 
 # throws a warning from the fct_relevel - ok to ignore
 
-t_median_plots_together <- sp_kw[[11]][[1]]
-dw_ww_median_plots_together <- sp_kw[[11]][[2]]
-sa_p_median_plots_together <- sp_kw[[11]][[3]]
-
+t_median_plots_together <- pluck(sp_kw, 11, 1)
+dw_ww_median_plots_together <- pluck(sp_kw, 11, 2)
+sa_p_median_plots_together <- pluck(sp_kw, 11, 3)
 
 
 # ⟞ e. KW tables ----------------------------------------------------------
