@@ -9,7 +9,8 @@ source(here::here("code", "01a_trait-cleaning.R"))
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # ------------------------------ 1. wrangling -----------------------------
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
+# 
+# old matrix for testing
 pca_mat <- ind_traits_filtered %>% 
   # H, T, SA, H:WW, DW:WW, H:V, SA:V, SA:DW, and SA:P
   select(specimen_ID, 
@@ -22,26 +23,71 @@ pca_mat <- ind_traits_filtered %>%
          # sav_scaled, 
          # sta_scaled,
          # sap_mean
-         ) %>% 
+  ) %>% 
   column_to_rownames("specimen_ID") %>% 
   drop_na() %>% 
   rename(`Height` = maximum_height,
          `Thickness` = thickness_mm_mean,
-         # `Surface area` = frond_area_scaled,
+         #`Surface area` = frond_area_scaled,
          `Height:wet weight` = height_ww,
          `Dry:wet weight` = total_dmc,
          `Height:volume` = height_vol
          # `Surface area:volume` = sav_scaled,
          # `Surface area:dry weight` = sta_scaled,
          # `Surface area:perimeter` = sap_mean
-         )  
-
-pca_mat_scale <- scale(pca_mat)
+  )  
 
 pca_mat_log <- pca_mat %>% 
   # only log transforming traits that were not normally distributed
   mutate(across(where(is.numeric), 
                 log))
+
+pca_mat_full <- ind_traits_filtered_full %>% 
+  # H, T, SA, H:WW, DW:WW, H:V, SA:V, SA:DW, and SA:P
+  select(specimen_ID, 
+         maximum_height, 
+         thickness_mm_mean, 
+         frond_area_scaled,
+         height_ww,
+         total_dmc, 
+         height_vol,
+         sav_scaled, 
+         sta_scaled,
+         sap_mean
+         ) %>% 
+  column_to_rownames("specimen_ID") %>% 
+  drop_na() %>% 
+  rename(`Height` = maximum_height,
+         `Thickness` = thickness_mm_mean,
+         `Surface area` = frond_area_scaled,
+         `Height:wet weight` = height_ww,
+         `Dry:wet weight` = total_dmc,
+         `Height:volume` = height_vol,
+         `Surface area:volume` = sav_scaled,
+         `Surface area:dry weight` = sta_scaled,
+         `Surface area:perimeter` = sap_mean
+         )  
+
+pca_mat_full_log <- pca_mat_full %>% 
+  # only log transforming traits that were not normally distributed
+  mutate(across(where(is.numeric), 
+                log))
+
+pca_mat_sub <- pca_mat_full %>% 
+  select(`Height`,
+         `Thickness`,
+         `Height:wet weight`,
+         `Dry:wet weight`,
+         `Height:volume`
+  )
+
+pca_mat_sub_log <- pca_mat_full_log %>% 
+  select(`Height`,
+         `Thickness`,
+         `Height:wet weight`,
+         `Dry:wet weight`,
+         `Height:volume`
+  )
 
 # pca_mat_with_cn <- ind_traits %>% 
 #   filter(sp_code %in% algae_proposal) %>% 
@@ -146,40 +192,80 @@ contrib_theme <- function() {
 # ----------------------------- 3. correlations ---------------------------
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-mat_for_corr <- pca_mat_log
-
 # create a correlation matrix based on pearson correlation
-M <- mat_for_corr %>% 
+corr_mat_full <- pca_mat_full_log %>% 
   cor(method = "pearson")
 
-p <- cor.mtest(mat_for_corr,
-               conf.level = 0.95,
-               method = "pearson")
+corr_mat_sub <- pca_mat_sub_log %>% 
+  cor(method = "pearson")
 
-corr_traits <- corrplot(corr = M, 
-                        p.mat = p$p,
-                        diag = FALSE,
-                        method = "circle", 
-                        # addgrid.col = NA,
-                        type = "lower", 
-                        insig = "blank", 
-                        addCoef.col = "black", 
-                        col= colorRampPalette(c("#F21A00", "#FFFFFF", "#3B9AB2"))(200), 
-                        sig.level = 0.05)
+p_full <- cor.mtest(pca_mat_full_log,
+                    conf.level = 0.95,
+                    method = "pearson")
+
+p_sub <- cor.mtest(pca_mat_sub_log,
+                    conf.level = 0.95,
+                    method = "pearson")
+
+corr_traits_full <- corrplot(corr = corr_mat_full, 
+                             p.mat = p_full$p,
+                             diag = FALSE,
+                             method = "circle", 
+                             # addgrid.col = NA,
+                             type = "lower", 
+                             insig = "blank", 
+                             addCoef.col = "black", 
+                             col= colorRampPalette(c("#F21A00", 
+                                                     "#FFFFFF", 
+                                                     "#3B9AB2"))(200), 
+                             sig.level = 0.05)
+
+corr_traits_sub <- corrplot(corr = corr_mat_sub, 
+                             p.mat = p_sub$p,
+                             diag = FALSE,
+                             method = "circle", 
+                             # addgrid.col = NA,
+                             type = "lower", 
+                             insig = "blank", 
+                             addCoef.col = "black", 
+                             col= colorRampPalette(c("#F21A00", 
+                                                     "#FFFFFF", 
+                                                     "#3B9AB2"))(200), 
+                             sig.level = 0.05)
 
 # jpeg(here::here("figures",
 #                 "correlation",
-#                 paste0("corrplot_log_full-model_", today(), ".jpeg")),
+#                 paste0("corrplot_log_full-trait-set_", today(), ".jpeg")),
 #      width = 24, height = 24, units = "cm", res = 300)
-# corrplot(corr = M,
-#          p.mat = p$p,
+# corrplot(corr = corr_mat_full, 
+#          p.mat = p_full$p,
 #          diag = FALSE,
-#          method = "circle",
+#          method = "circle", 
 #          # addgrid.col = NA,
-#          type = "lower",
-#          insig = "blank",
-#          addCoef.col = "black",
-#          col= colorRampPalette(c("#F21A00", "#FFFFFF", "#3B9AB2"))(200),
+#          type = "lower", 
+#          insig = "blank", 
+#          addCoef.col = "black", 
+#          col= colorRampPalette(c("#F21A00", 
+#                                  "#FFFFFF", 
+#                                  "#3B9AB2"))(200), 
+#          sig.level = 0.05)
+# dev.off()
+# 
+# jpeg(here::here("figures",
+#                 "correlation",
+#                 paste0("corrplot_log_sub-trait-set_", today(), ".jpeg")),
+#      width = 24, height = 24, units = "cm", res = 300)
+# corrplot(corr = corr_mat_sub, 
+#          p.mat = p_sub$p,
+#          diag = FALSE,
+#          method = "circle", 
+#          # addgrid.col = NA,
+#          type = "lower", 
+#          insig = "blank", 
+#          addCoef.col = "black", 
+#          col= colorRampPalette(c("#F21A00", 
+#                                  "#FFFFFF", 
+#                                  "#3B9AB2"))(200), 
 #          sig.level = 0.05)
 # dev.off()
 
@@ -359,7 +445,7 @@ sma_together <- (pair_h_hv_plot | thick_height_plot) / (pair_t_h_ww | dmc_height
 # ⟞ a. PCA ----------------------------------------------------------------
 
 # trait by species PCA
-pca_full <- rda(pca_mat_log, scale = TRUE)
+pca_full <- rda(pca_mat_sub_log, scale = TRUE)
 
 # create a screeplot to visualize axis contributions
 screeplot(pca_full, bstick = TRUE)
@@ -376,7 +462,7 @@ trait_dist <- vegdist(pca_mat_log,
                       method = "euclidean")
 
 sp_permanova <- adonis2(trait_dist ~ sp_code, 
-                        data = ind_traits_filtered)
+                        data = ind_traits_filtered_sub)
 
 # sp_permanova %>%
 #   tidy() %>%
@@ -401,7 +487,7 @@ sp_permanova <- adonis2(trait_dist ~ sp_code,
 set.seed(1)
 
 rvam_pairwise_log <- pairwise.perm.manova(resp = trait_dist,
-                                          fact = ind_traits_filtered$sp_code,
+                                          fact = ind_traits_filtered_sub$sp_code,
                                           p.method = "BH",
                                           `F` = TRUE)
 
