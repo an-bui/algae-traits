@@ -537,19 +537,19 @@ sp_anova_tables <- sp_anovas %>%
 raw_anova_table <- sp_anova_tables %>% 
   select(raw_anova_table) %>% 
   unnest(cols = raw_anova_table) %>% 
-  mutate(supp_yn = case_when(
+  mutate(app_num = case_when(
     trait %in% c("Surface area (mm²)", 
                  "Surface area:volume (mm²/mL)", 
                  "Surface area:dry weight (mm²/dry mg)", 
-                 "Surface area:perimeter (mm²/mm)") ~ "supp",
-    TRUE ~ "main"
+                 "Surface area:perimeter (mm²/mm)") ~ "app2",
+    TRUE ~ "app1"
   )) %>% 
-  nest(.by = supp_yn,
+  nest(.by = app_num,
        data = everything()) %>% 
   mutate(data = map(
     data,
     ~ .x %>% 
-      select(-supp_yn)
+      select(-app_num)
   )) %>% 
   mutate(table = map(
     data,
@@ -590,19 +590,19 @@ raw_anova_table <- sp_anova_tables %>%
 log_anova_table <- sp_anova_tables %>% 
   select(log_anova_table) %>% 
   unnest(cols = log_anova_table) %>% 
-  mutate(supp_yn = case_when(
+  mutate(app_num = case_when(
     trait %in% c("Surface area (mm²)", 
                  "Surface area:volume (mm²/mL)", 
                  "Surface area:dry weight (mm²/dry mg)", 
-                 "Surface area:perimeter (mm²/mm)") ~ "supp",
-    TRUE ~ "main"
+                 "Surface area:perimeter (mm²/mm)") ~ "app2",
+    TRUE ~ "app1"
   )) %>% 
-  nest(.by = supp_yn,
+  nest(.by = app_num,
        data = everything()) %>% 
   mutate(data = map(
     data,
     ~ .x %>% 
-      select(-supp_yn)
+      select(-app_num)
   )) %>% 
   mutate(table = map(
     data,
@@ -639,24 +639,23 @@ log_anova_table <- sp_anova_tables %>%
   ))
 
 # variance comparisons
-# 
 log_variance_tables <- sp_anovas %>% 
   select(units, variance_test_log) %>% 
   unnest(cols = c(units, variance_test_log)) %>% 
   rename("trait" = "units") %>% 
-  mutate(supp_yn = case_when(
+  mutate(app_num = case_when(
     trait %in% c("Surface area (mm²)", 
                  "Surface area:volume (mm²/mL)", 
                  "Surface area:dry weight (mm²/dry mg)", 
-                 "Surface area:perimeter (mm²/mm)") ~ "supp",
-    TRUE ~ "main"
+                 "Surface area:perimeter (mm²/mm)") ~ "app2",
+    TRUE ~ "app1"
   )) %>% 
-  nest(.by = supp_yn,
+  nest(.by = app_num,
        data = everything()) %>% 
   mutate(data = map(
     data,
     ~ .x %>% 
-      select(-supp_yn)
+      select(-app_num)
   )) %>% 
   mutate(table = map(
     data,
@@ -693,19 +692,19 @@ raw_variance_tables <- sp_anovas %>%
   select(units, variance_test_untransform) %>% 
   unnest(cols = c(units, variance_test_untransform)) %>% 
   rename("trait" = "units") %>% 
-  mutate(supp_yn = case_when(
+  mutate(app_num = case_when(
     trait %in% c("Surface area (mm²)", 
                  "Surface area:volume (mm²/mL)", 
                  "Surface area:dry weight (mm²/dry mg)", 
-                 "Surface area:perimeter (mm²/mm)") ~ "supp",
-    TRUE ~ "main"
+                 "Surface area:perimeter (mm²/mm)") ~ "app2",
+    TRUE ~ "app1"
   )) %>% 
-  nest(.by = supp_yn,
+  nest(.by = app_num,
        data = everything()) %>% 
   mutate(data = map(
     data,
     ~ .x %>% 
-      select(-supp_yn)
+      select(-app_num)
   )) %>% 
   mutate(table = map(
     data,
@@ -768,63 +767,63 @@ raw_variance_tables <- sp_anovas %>%
 #       variance_table_fxn()
 #   ))
 
-raw_variance_tables <- sp_variance_tables_full %>% 
-  select(variance_test_untransform_table) %>% 
-  unnest(cols = variance_test_untransform_table) %>% 
-  flextable(col_keys = c("trait",
-                         "term",
-                         "Df",
-                         "F value",
-                         "p.value")) %>% 
-  # merge group cells to create a grouping column
-  merge_v(j = ~ trait) %>% 
-  valign(j = ~ trait,
-         i = NULL,
-         valign = "top") %>% 
-  # change the column names
-  set_header_labels("trait" = "Trait",
-                    "term" = "Term",
-                    "Df" = "Degrees of freedom",
-                    "F value" = "F-statistic", 
-                    "p.value" = "p-value") %>% 
-  # bold p values if they are significant
-  style(i = ~ signif == "yes",
-        j = c("p.value"),
-        pr_t = officer::fp_text(bold = TRUE),
-        part = "body") %>% 
-  # autofit() %>% 
-  fit_to_width(5, unit = "in") %>% 
-  font(fontname = "Times New Roman",
-       part = "all")
-
-log_variance_tables <- sp_variance_tables_full %>% 
-  select(variance_test_log_table) %>% 
-  unnest(cols = variance_test_log_table) %>% 
-  flextable(col_keys = c("trait",
-                         "term",
-                         "Df",
-                         "F value",
-                         "p.value")) %>% 
-  # merge group cells to create a grouping column
-  merge_v(j = ~ trait) %>% 
-  valign(j = ~ trait,
-         i = NULL,
-         valign = "top") %>% 
-  # change the column names
-  set_header_labels("trait" = "Trait",
-                    "term" = "Term",
-                    "Df" = "Degrees of freedom",
-                    "F value" = "F-statistic", 
-                    "p.value" = "p-value") %>% 
-  # bold p values if they are significant
-  style(i = ~ signif == "yes",
-        j = c("p.value"),
-        pr_t = officer::fp_text(bold = TRUE),
-        part = "body") %>% 
-  # autofit() %>% 
-  fit_to_width(5, unit = "in") %>% 
-  font(fontname = "Times New Roman",
-       part = "all")
+# raw_variance_tables <- sp_variance_tables_full %>% 
+#   select(variance_test_untransform_table) %>% 
+#   unnest(cols = variance_test_untransform_table) %>% 
+#   flextable(col_keys = c("trait",
+#                          "term",
+#                          "Df",
+#                          "F value",
+#                          "p.value")) %>% 
+#   # merge group cells to create a grouping column
+#   merge_v(j = ~ trait) %>% 
+#   valign(j = ~ trait,
+#          i = NULL,
+#          valign = "top") %>% 
+#   # change the column names
+#   set_header_labels("trait" = "Trait",
+#                     "term" = "Term",
+#                     "Df" = "Degrees of freedom",
+#                     "F value" = "F-statistic", 
+#                     "p.value" = "p-value") %>% 
+#   # bold p values if they are significant
+#   style(i = ~ signif == "yes",
+#         j = c("p.value"),
+#         pr_t = officer::fp_text(bold = TRUE),
+#         part = "body") %>% 
+#   # autofit() %>% 
+#   fit_to_width(5, unit = "in") %>% 
+#   font(fontname = "Times New Roman",
+#        part = "all")
+# 
+# log_variance_tables <- sp_variance_tables_full %>% 
+#   select(variance_test_log_table) %>% 
+#   unnest(cols = variance_test_log_table) %>% 
+#   flextable(col_keys = c("trait",
+#                          "term",
+#                          "Df",
+#                          "F value",
+#                          "p.value")) %>% 
+#   # merge group cells to create a grouping column
+#   merge_v(j = ~ trait) %>% 
+#   valign(j = ~ trait,
+#          i = NULL,
+#          valign = "top") %>% 
+#   # change the column names
+#   set_header_labels("trait" = "Trait",
+#                     "term" = "Term",
+#                     "Df" = "Degrees of freedom",
+#                     "F value" = "F-statistic", 
+#                     "p.value" = "p-value") %>% 
+#   # bold p values if they are significant
+#   style(i = ~ signif == "yes",
+#         j = c("p.value"),
+#         pr_t = officer::fp_text(bold = TRUE),
+#         part = "body") %>% 
+#   # autofit() %>% 
+#   fit_to_width(5, unit = "in") %>% 
+#   font(fontname = "Times New Roman",
+#        part = "all")
 
 
 # ⟞ d. Kruskal-Wallis and Dunn --------------------------------------------
@@ -985,19 +984,19 @@ kw_tables <- sp_kw %>%
   unnest(cols = c(units, log_kw_table)) %>% 
   select(!method) %>% 
   rename("trait" = "units") %>% 
-  mutate(supp_yn = case_when(
+  mutate(app_num = case_when(
     trait %in% c("Surface area (mm²)", 
                  "Surface area:volume (mm²/mL)", 
                  "Surface area:dry weight (mm²/dry mg)", 
-                 "Surface area:perimeter (mm²/mm)") ~ "supp",
-    TRUE ~ "main"
+                 "Surface area:perimeter (mm²/mm)") ~ "app2",
+    TRUE ~ "app1"
   )) %>% 
-  nest(.by = supp_yn,
+  nest(.by = app_num,
        data = everything()) %>% 
   mutate(data = map(
     data,
     ~ .x %>% 
-      select(-supp_yn)
+      select(-app_num)
   )) %>% 
   mutate(table = map(
     data,
@@ -1140,52 +1139,52 @@ kw_plots_together <- list(
 
 # save_as_docx(path = here("tables",
 #                   "ANOVA",
-#                   paste0("raw-trait-ANOVA_full_", today(), ".docx")),
+#                   paste0("raw-trait-ANOVA_app1_", today(), ".docx")),
 #              pluck(raw_anova_table, 3, 1))
 # 
 # save_as_docx(path = here("tables",
 #                          "ANOVA",
-#                          paste0("raw-trait-ANOVA_sub_", today(), ".docx")),
+#                          paste0("raw-trait-ANOVA_app2_", today(), ".docx")),
 #              pluck(raw_anova_table, 3, 2))
 # 
 # save_as_docx(path = here("tables",
 #                          "ANOVA",
-#                          paste0("log-trait-ANOVA_full_", today(), ".docx")),
+#                          paste0("log-trait-ANOVA_app1_", today(), ".docx")),
 #              pluck(log_anova_table, 3, 1))
 # 
 # save_as_docx(path = here("tables",
 #                          "ANOVA",
-#                          paste0("log-trait-ANOVA_sub_", today(), ".docx")),
+#                          paste0("log-trait-ANOVA_app2_", today(), ".docx")),
 #              pluck(log_anova_table, 3, 2))
-#
+# 
 # save_as_docx(path = here("tables",
 #                   "ANOVA",
-#                   paste0("raw-trait-ANOVA_variances_full_", today(), ".docx")),
+#                   paste0("raw-trait-ANOVA_variances_app1_", today(), ".docx")),
 #              pluck(raw_variance_tables, 3, 1))
 # 
 # save_as_docx(path = here("tables",
 #                   "ANOVA",
-#                   paste0("raw-trait-ANOVA_variances_sub_", today(), ".docx")),
+#                   paste0("raw-trait-ANOVA_variances_app2_", today(), ".docx")),
 #              pluck(raw_variance_tables, 3, 2))
 # 
 # save_as_docx(path = here("tables",
 #                          "ANOVA",
-#                          paste0("log-trait-ANOVA_variances_full_", today(), ".docx")),
+#                          paste0("log-trait-ANOVA_variances_app1_", today(), ".docx")),
 #              pluck(log_variance_tables, 3, 1))
 # 
 # save_as_docx(path = here("tables",
 #                          "ANOVA",
-#                          paste0("log-trait-ANOVA_variances_sub_", today(), ".docx")),
+#                          paste0("log-trait-ANOVA_variances_app2_", today(), ".docx")),
 #              pluck(log_variance_tables, 3, 2))
-#
+# 
 # save_as_docx(path = here("tables",
 #                          "ANOVA",
-#                          paste0("kw-tables_full_", today(), ".docx")),
+#                          paste0("kw-tables_app1_", today(), ".docx")),
 #              pluck(kw_tables, 3, 1))
 # 
 # save_as_docx(path = here("tables",
 #                          "ANOVA",
-#                          paste0("kw-tables_sub_", today(), ".docx")),
+#                          paste0("kw-tables_app2_", today(), ".docx")),
 #              pluck(kw_tables, 3, 2))
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
