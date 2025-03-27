@@ -327,6 +327,50 @@ ind_traits <- ct_prep %>%
          frond_length_scaled = frond_length_mean*total_wet,
          frond_width_scaled = frond_width_mean*total_wet)
 
+
+# OLD DF FOR TESTING HERE
+ind_traits_filtered <- ind_traits %>% 
+  filter(!(specimen_ID %in% c("20210721-BULL-023", "20210719-IVEE-009", "20230731-CARP-019"))) %>% 
+  filter(sp_code %in% c("BO", "CC", "CO", "BF", "DP", 
+                        "LAFA", "PTCA", "R", "CYOS")) %>% 
+  mutate(sp_code = fct_relevel(sp_code, algae_spcode_factors),
+         scientific_name = fct_relevel(scientific_name, algae_factors)) %>% 
+  #  H, T, SA, H:WW, DW:WW, H:V, SA:V, SA:DW, and SA:P
+  drop_na(specimen_ID, scientific_name, sp_code, 
+          maximum_height, 
+          thickness_mm_mean, 
+          #frond_area_scaled,
+          height_ww,
+          total_dmc, 
+          height_vol
+          # sav_scaled, 
+          # sta_scaled,
+          # sap_mean
+  ) %>% 
+  select(specimen_ID, scientific_name, sp_code, date_collected, year, site,
+         maximum_height, 
+         thickness_mm_mean, 
+         #frond_area_scaled,
+         height_ww,
+         total_dmc, 
+         height_vol
+         # sav_scaled, 
+         # sta_scaled,
+         # sap_mean
+  ) %>% 
+  mutate(sp_label = case_match(
+    scientific_name,
+    "Corallina officinalis" ~ "Corallina officinalis",
+    "Bossiella orbigniana" ~ "Bossiella orbigniana",
+    "Cryptopleura ruprechtiana" ~ "Cryptopleura ruprechtiana",
+    "Chondracanthus corymbiferus; Chondracanthus exasperatus" ~ "Chondracanthus spp.",
+    "Rhodymenia californica" ~ "Rhodymenia californica",
+    "Stephanocystis osmundacea" ~ "Stephanocystis osmundacea",
+    "Dictyota binghamiae; Dictyota flabellata; Dictyota coriacea" ~ "Dictyota spp.",
+    "Pterygophora californica" ~ "Pterygophora californica",
+    "Laminaria farlowii" ~ "Laminaria farlowii"
+  ))
+
 ind_traits_filtered_full <- ind_traits %>% 
   filter(!(specimen_ID %in% c("20210721-BULL-023", "20210719-IVEE-009"))) %>% 
   filter(sp_code %in% c("BO", "CC", "CO", "BF", "DP", 
@@ -369,7 +413,7 @@ ind_traits_filtered_full <- ind_traits %>%
     "Laminaria farlowii" ~ "Laminaria farlowii"
   ))
 
-ind_traits_filtered <- ind_traits_filtered_full %>% 
+ind_traits_filtered_sub <- ind_traits_filtered_full %>% 
   select(specimen_ID, 
          scientific_name, 
          sp_code, 
