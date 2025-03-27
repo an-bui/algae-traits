@@ -218,17 +218,17 @@ corr_traits_sub <- corrplot(corr = corr_mat_sub,
 #                 "correlation",
 #                 paste0("corrplot_log_sub-trait-set_", today(), ".jpeg")),
 #      width = 24, height = 24, units = "cm", res = 300)
-# corrplot(corr = corr_mat_sub, 
+# corrplot(corr = corr_mat_sub,
 #          p.mat = p_sub$p,
 #          diag = FALSE,
-#          method = "circle", 
+#          method = "circle",
 #          # addgrid.col = NA,
-#          type = "lower", 
-#          insig = "blank", 
-#          addCoef.col = "black", 
-#          col= colorRampPalette(c("#F21A00", 
-#                                  "#FFFFFF", 
-#                                  "#3B9AB2"))(200), 
+#          type = "lower",
+#          insig = "blank",
+#          addCoef.col = "black",
+#          col= colorRampPalette(c("#F21A00",
+#                                  "#FFFFFF",
+#                                  "#3B9AB2"))(200),
 #          sig.level = 0.05)
 # dev.off()
 
@@ -263,17 +263,17 @@ corr_traits_full <- corrplot(corr = corr_mat_full,
 #                 "correlation",
 #                 paste0("corrplot_log_full-trait-set_", today(), ".jpeg")),
 #      width = 24, height = 24, units = "cm", res = 300)
-# corrplot(corr = corr_mat_full, 
+# corrplot(corr = corr_mat_full,
 #          p.mat = p_full$p,
 #          diag = FALSE,
-#          method = "circle", 
+#          method = "circle",
 #          # addgrid.col = NA,
-#          type = "lower", 
-#          insig = "blank", 
-#          addCoef.col = "black", 
-#          col= colorRampPalette(c("#F21A00", 
-#                                  "#FFFFFF", 
-#                                  "#3B9AB2"))(200), 
+#          type = "lower",
+#          insig = "blank",
+#          addCoef.col = "black",
+#          col= colorRampPalette(c("#F21A00",
+#                                  "#FFFFFF",
+#                                  "#3B9AB2"))(200),
 #          sig.level = 0.05)
 # dev.off()
 
@@ -535,7 +535,7 @@ prop_PC2_sub <- "28.4%"
 trait_dist_sub <- vegdist(pca_mat_sub_log, 
                       method = "euclidean")
 
-sp_permanova <- adonis2(trait_dist ~ sp_code, 
+sp_permanova <- adonis2(trait_dist_sub ~ sp_code, 
                         data = ind_traits_filtered_sub)
 
 # sp_permanova %>%
@@ -595,8 +595,8 @@ pairwise_sub_matrix <- (pairwise_sub$p.value < 0.05)
 #   save_as_docx(path = here("tables",
 #                            "PERMANOVA",
 #                            paste0(
-#                              "subset_full-trait-ANOVA_pairwise-comparisons_", 
-#                              today(), 
+#                              "subset_full-trait-ANOVA_pairwise-comparisons_",
+#                              today(),
 #                              ".docx")))
 
 # anova(betadisper(d = trait_dist_sub,
@@ -652,7 +652,7 @@ loadings_plot_sub <- pc1_plot_sub / pc2_plot_sub
 # ggsave(here::here(
 #   "figures",
 #   "ordination",
-#   paste0("loadings_scale_subset_full-model_", today(), ".jpg")),
+#   paste0("loadings_subset_full-model_", today(), ".jpg")),
 #   loadings_plot_sub,
 #   width = 12,
 #   height = 14,
@@ -824,7 +824,6 @@ pc2_contrib_sub <- varcoord_sub %>%
 
 ### v. compiling figures and saving ---------------------------------------
 
-# scaled layout
 contrib_together_sub <- 
   (
     plot_PCA_12_vectors_sub | plot_PCA_12_species_sub
@@ -845,23 +844,153 @@ contrib_together_sub <-
 # )
 
 ## a. full set ------------------------------------------------------------
-### i. PCA and PERMANOVA --------------------------------------------------
-### ii. loadings ----------------------------------------------------------
-### iii. biplots ----------------------------------------------------------
-#### 1. trait vectors -----------------------------------------------------
-#### 2. species points ----------------------------------------------------
-### iv. axis contributions ------------------------------------------------
-### v. compiling figures and saving ---------------------------------------
 
-# ⟞ c. biplots ------------------------------------------------------------
+### i. PCA and PERMANOVA --------------------------------------------------
+
+# trait by species PCA
+pca_full <- rda(pca_mat_full_log, scale = TRUE)
+
+# create a screeplot to visualize axis contributions
+screeplot(pca_full, bstick = TRUE)
+
+# look at the summary
+summary(pca_full)
+
+# proportion variance explained for downstream figure making
+prop_PC1_full <- "62.6%"
+prop_PC2_full <- "21.9%"
+
+trait_dist_full <- vegdist(pca_mat_full_log, 
+                          method = "euclidean")
+
+sp_permanova_full <- adonis2(trait_dist_full ~ sp_code, 
+                             data = ind_traits_filtered_full)
+
+# sp_permanova_full %>%
+#   tidy() %>%
+#   mutate(across(SumOfSqs:statistic, ~ round(.x, digits = 2))) %>%
+#   flextable() %>%
+#   autofit() %>%
+#   fit_to_width(8) %>%
+#   font(fontname = "Times New Roman",
+#        part = "all") %>%
+#   # change the column names
+#   set_header_labels("term" = "Term",
+#                     "df" = "Degrees of freedom",
+#                     "SumOfSqs" = "Sum of squares",
+#                     "R2" = "R\U00B2",
+#                     "statistic" = "F-statistic",
+#                     "p.value" = "p-value") %>%
+#   save_as_docx(path = here("tables",
+#                            "PERMANOVA",
+#                            paste0("all-traits_full-trait-ANOVA_", today(), ".docx")))
+# species are different from each other
+
+set.seed(1)
+
+pairwise_full <- pairwise.perm.manova(resp = trait_dist_full,
+                                     fact = ind_traits_filtered_full$sp_code,
+                                     p.method = "BH",
+                                     `F` = TRUE)
+
+pairwise_full
+# BO and CO are not different from each other = articulated corallines
+
+# creating this object for downstream trait selection stuff
+pairwise_full_matrix <- (pairwise_full$p.value < 0.05)
+
+# pairwise_full$p.value %>%
+#   as.data.frame() %>%
+#   rownames_to_column("sp_code") %>%
+#   mutate(across(c(CO:PTCA), ~ case_when(
+#     between(.x, 0, 0.001) ~ "<0.001",
+#     between(.x, 0.001, 0.01) ~ as.character(round(.x, digits = 3)),
+#     between(.x, 0.01, 1) ~ as.character(round(.x, digits = 2))
+#   ))) %>%
+#   mutate(across(everything(), ~ replace_na(.x, "-"))) %>%
+#   flextable() %>%
+#   autofit() %>%
+#   fit_to_width(8) %>%
+#   font(fontname = "Times New Roman",
+#        part = "all") %>%
+#   set_header_labels("sp_code" = "") %>%
+#   save_as_docx(path = here("tables",
+#                            "PERMANOVA",
+#                            paste0(
+#                              "all-traits_full-trait-ANOVA_pairwise-comparisons_",
+#                              today(),
+#                              ".docx")))
+
+# anova(betadisper(d = trait_dist_full,
+#                  group = ind_traits_filtered_full$sp_code)) %>%
+#   tidy() %>%
+#   mutate(across(where(is.numeric), ~round(., digits = 2))) %>%
+#   flextable() %>%
+#   set_header_labels("term" = "Term",
+#                     "df" = "Degrees of freedom",
+#                     "sumsq" = "Sum of squares",
+#                     "meansq" = "Mean squares",
+#                     "statistic" = "F-statistic",
+#                     "p.value" = "p-value") %>%
+#   autofit() %>%
+#   fit_to_width(5, unit = "in") %>%
+#   font(fontname = "Times New Roman",
+#        part = "all") %>%
+#   save_as_docx(path = here("tables",
+#                     "PERMANOVA",
+#                     paste0("all-traits_full-trait_dispersions_", today(), ".docx")))
+# no difference in dispersions
+
+### ii. loadings ----------------------------------------------------------
+
+# get loadings into data frame
+loadings_df_full <- scores(pca_full, 
+                          display = 'species', 
+                          scaling = 0, 
+                          choices = c(1, 2)) %>% 
+  as_tibble(rownames = NA) %>% 
+  rownames_to_column("trait") %>% 
+  # arrange the data frame in order of PC1 loadings
+  arrange(PC1) %>% 
+  # set the factor levels so that all the traits appear in the same order
+  mutate(trait = fct_inorder(trait))
+
+pc1_plot_full <- ggplot(data = loadings_df_full, 
+                       aes(x = PC1,
+                           y = trait)) +
+  loadings_plot_aes +
+  loadings_plot_theme() +
+  labs(title = "PC1")
+
+pc2_plot_full <- ggplot(data = loadings_df_full, 
+                       aes(x = PC2,
+                           y = trait)) +
+  loadings_plot_aes +
+  loadings_plot_theme() +
+  labs(title = "PC2")
+
+loadings_plot_full <- pc1_plot_full / pc2_plot_full
+
+# ggsave(here::here(
+#   "figures",
+#   "ordination",
+#   paste0("loadings_all-traits_full-model_", today(), ".jpg")),
+#   loadings_plot_full,
+#   width = 12,
+#   height = 14,
+#   units = "cm",
+#   dpi = 300
+# )
+
+### iii. biplots ----------------------------------------------------------
 
 # simple biplot (compare with ggplot output to make sure it's right)
 biplot(pca_full)
 
 # species points
 PCAscores_full <- scores(pca_full, 
-                    display = "sites", 
-                    choices = c(1, 2)) %>% 
+                        display = "sites", 
+                        choices = c(1, 2)) %>% 
   as.data.frame() %>% 
   rownames_to_column("specimen_ID") %>% 
   left_join(., metadata_ind, by = "specimen_ID") %>% 
@@ -875,17 +1004,17 @@ PCAscores_full <- scores(pca_full,
   mutate(splabel = factor(splabel,
                           levels = algae_splabel_factors))
 
-
-# ⟞ ⟞ i. trait vectors ----------------------------------------------------
+#### 1. trait vectors -----------------------------------------------------
 
 # trait vectors
 PCAvect_full <- scores(pca_full, 
-                       display = "species", 
-                       choices = c(1, 2)) %>% 
-  as.data.frame()
+                      display = "species", 
+                      choices = c(1, 2)) %>% 
+  as_tibble(rownames = "trait") %>% 
+  left_join(., enframe(trait_abbreviations), by = c("trait" = "value"))
 
 # plot PCA
-plot_PCA_12_vectors <- ggplot() +
+plot_PCA_12_vectors_full <- ggplot() +
   PCA_aesthetics +
   vector_colors + 
   geom_point(data = PCAscores_full, 
@@ -894,29 +1023,29 @@ plot_PCA_12_vectors <- ggplot() +
                  # color = scientific_name, 
                  # shape = scientific_name,
                  # size = fvfm_mean
-                 ) ,
+             ) ,
              alpha = 0.3,
              size = 1,
              shape = 21,
              color = "darkgrey"
-             ) +
+  ) +
   geom_segment(data = PCAvect_full, 
                aes(x = 0, 
                    y = 0, 
                    xend = PC1, 
                    yend = PC2,
-                   color = rownames(PCAvect_full)), 
+                   color = trait), 
                arrow = arrow(length = unit(0.2, "cm")), 
                linewidth = 0.5) +
   geom_label_repel(data = PCAvect_full, 
-                  aes(x = PC1, 
-                      y = PC2, 
-                      label = rownames(PCAvect_full),
-                      fill = rownames(PCAvect_full)), 
-                  size = 6, 
-                  alpha = 0.8,
-                  seed = 666,
-                  color = "black") +
+                   aes(x = PC1, 
+                       y = PC2, 
+                       label = name,
+                       fill = trait), 
+                   size = 6, 
+                   alpha = 0.8,
+                   seed = 666,
+                   color = "black") +
   scale_x_continuous(limits = c(-3, 3)) +
   scale_y_continuous(limits = c(-3, 3)) +
   PCA_theme() +
@@ -925,18 +1054,10 @@ plot_PCA_12_vectors <- ggplot() +
        title = "(a) Trait vectors",
        # subtitle = "BO, CC, CO, BF, DP, LAFA, PTCA, R, CYOS", 
        color = "Scientific name") 
-plot_PCA_12_vectors
 
-# ggsave(here::here("figures",
-#                   "ordination",
-#                   paste("PCA-log_scale_full-model_vectors_", today(), ".jpg", sep = "")),
-#        plot_PCA_12_vectors,
-#        width = 8, height = 8, units = "cm", dpi = 300)
+#### 2. species points ----------------------------------------------------
 
-
-# ⟞ ⟞ i. species points ---------------------------------------------------
-
-plot_PCA_12_species <- PCAscores_full %>% 
+plot_PCA_12_species_full <- PCAscores_full %>% 
   ggplot(aes(x = PC1, 
              y = PC2, 
              color = splabel, 
@@ -952,11 +1073,11 @@ plot_PCA_12_species <- PCAscores_full %>%
   ) +
   stat_ellipse(aes(color = splabel),
                level = 0.5) +
-  scale_x_continuous(limits = c(-1.05, 1.05)) +
-  scale_y_continuous(limits = c(-1.05, 1.05)) +
+  scale_x_continuous(limits = c(-1.75, 1.5)) +
+  scale_y_continuous(limits = c(-1.75, 1.5)) +
   PCA_theme() +
   theme(legend.position = "inside",
-        legend.position.inside = c(0.51, 0.89),
+        legend.position.inside = c(0.54, 0.89),
         legend.background = element_blank(),
         legend.spacing.y = unit(0.01, "cm"),
         legend.key.spacing.y = unit(0.01, "cm"),
@@ -969,21 +1090,11 @@ plot_PCA_12_species <- PCAscores_full %>%
        y = paste0("PC2 (", prop_PC2_full, ")"),
   )
 
-plot_PCA_12_species
+PCA_vectors_species_full <- plot_PCA_12_vectors_full | plot_PCA_12_species_full
 
-PCA_vectors_species <- plot_PCA_12_vectors | plot_PCA_12_species
+### iv. axis contributions ------------------------------------------------
 
-# ggsave(here::here("figures",
-#                   "ordination",
-#                   paste("PCA_full-model_vectors-and-species_", today(), ".jpg", sep = "")),
-#        PCA_vectors_species,
-#        width = 16, height = 8, units = "cm", dpi = 300)
-
-# ⟞ d. axis contributions -------------------------------------------------
-
-# got calculation from http://www.sthda.com/english/articles/31-principal-component-methods-in-r-practical-guide/112-pca-principal-component-analysis-essentials/
 varcoord_full <- PCAvect_full %>% 
-  rownames_to_column("trait") %>% 
   mutate(quality_1 = PC1^2,
          quality_2 = PC2^2) %>% 
   select(trait, quality_1, quality_2) %>% 
@@ -1017,54 +1128,39 @@ contrib_aesthetics_full <- list(
 
 pc1_contrib_full <- varcoord_full %>% 
   filter(axis == "PC1") %>% 
-  ggplot(aes(x = reorder(trait, -contrib),
+  ggplot(aes(x = reorder(abbrev, -contrib),
              y = contrib, 
              fill = trait)) +
   contrib_aesthetics_full +
   contrib_theme() +
   labs(title = "(c) Trait % contributions to PC1")
 
-pc1_contrib_full
-
 pc2_contrib_full <- varcoord_full %>% 
   filter(axis == "PC2") %>% 
-  ggplot(aes(x = reorder(trait, -contrib),
+  ggplot(aes(x = reorder(abbrev, -contrib),
              y = contrib, 
              fill = trait)) +
   contrib_aesthetics_full +
   contrib_theme() +
   labs(title = "(d) Trait % contributions to PC2")
 
-pc2_contrib_full
+### v. compiling figures and saving ---------------------------------------
 
-# scaled layout
 contrib_together_full <- 
   (
-    plot_PCA_12_vectors | plot_PCA_12_species
+    plot_PCA_12_vectors_full | plot_PCA_12_species_full
   ) / (
     pc1_contrib_full / pc2_contrib_full
   ) +
   plot_layout(axis_titles = "collect")
 
-# contrib_together_full <- (free(plot_PCA_12_full) / 
-#                             (free(pc1_contrib_full) | free(pc2_contrib_full))) + 
-#   plot_layout(heights = c(1, 0.8))
-
-# contrib_together_full <- ((free(plot_PCA_12_full) / (free(pc1_contrib_full)) | (free(pc2_contrib_full) / plot_spacer()))) + 
-#   plot_layout(heights = c(1, 0.5, 0.5))
-
 # ggsave(here::here(
 #   "figures",
 #   "ordination",
-#   paste0("contributions_scale_full-model_", today(), ".jpg")),
+#   paste0("contributions_all-traits-model_", today(), ".jpg")),
 #   contrib_together_full,
 #   width = 16,
 #   height = 16,
 #   units = "cm",
 #   dpi = 300
 # )
-
-
-
-
-
