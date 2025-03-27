@@ -11,7 +11,7 @@ source(here::here("code", "03a_correlation-and-tradeoffs.R"))
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # put all the traits into a vector
-trait_names_vector <- colnames(pca_mat_log)
+trait_names_vector <- colnames(pca_mat_sub_log)
 
 # ⟞ i. 4 traits -----------------------------------------------------------
 
@@ -35,7 +35,7 @@ combo_4traits <- combn(x = trait_names_vector,
   # each "cell" contains the trait data frame
   mutate(df = map(
     trait1,
-    ~ bind_cols(pca_mat_log)
+    ~ bind_cols(pca_mat_sub_log)
   )) %>% 
   # subset the trait data frame by the traits in the combination
   mutate(subset_df = pmap(
@@ -81,7 +81,7 @@ combo_4traits <- combn(x = trait_names_vector,
   )) %>% 
   mutate(match_pairs = map(
     pairwise_significant_euc,
-    ~ .x == full_pairwise_matrix
+    ~ .x == pairwise_sub_matrix
   )) %>% 
   # creating a new column: if any p-value > 0.05, then "no" 
   # this makes the following filtering step easier
@@ -100,13 +100,20 @@ combo_4traits <- combn(x = trait_names_vector,
   )) %>% 
   mutate(match_pairs_padj = map(
     pairwise_padj_significant_euc,
-    ~ .x == full_pairwise_matrix
+    ~ .x == pairwise_sub_matrix
   )) %>% 
   mutate(pairwise_padj_conserved_euc = map(
     match_pairs_padj,
     ~ case_when(
       "FALSE" %in% .x ~ "no",
       TRUE ~ "yes"
+    )
+  )) %>% 
+  mutate(all_check = map(
+    pairwise_padj_significant_euc,
+    ~ case_when(
+      all(.x) == FALSE ~ "no",
+      TRUE ~ "all"
     )
   ))
 
@@ -138,7 +145,7 @@ combo_3traits <- combn(x = trait_names_vector,
   # each "cell" contains the trait data frame
   mutate(df = map(
     trait1,
-    ~ bind_cols(pca_mat_log)
+    ~ bind_cols(pca_mat_sub_log)
   )) %>% 
   # subset the trait data frame by the traits in the combination
   mutate(subset_df = pmap(
@@ -184,7 +191,7 @@ combo_3traits <- combn(x = trait_names_vector,
   )) %>% 
   mutate(match_pairs = map(
     pairwise_significant_euc,
-    ~ .x == full_pairwise_matrix
+    ~ .x == pairwise_sub_matrix
   )) %>% 
   # creating a new column: if any p-value > 0.05, then "no" 
   # this makes the following filtering step easier
@@ -203,13 +210,20 @@ combo_3traits <- combn(x = trait_names_vector,
   )) %>% 
   mutate(match_pairs_padj = map(
     pairwise_padj_significant_euc,
-    ~ .x == full_pairwise_matrix
+    ~ .x == pairwise_sub_matrix
   )) %>% 
   mutate(pairwise_padj_conserved_euc = map(
     match_pairs_padj,
     ~ case_when(
       "FALSE" %in% .x ~ "no",
       TRUE ~ "yes"
+    )
+  )) %>% 
+  mutate(all_check = map(
+    pairwise_padj_significant_euc,
+    ~ case_when(
+      all(.x) == FALSE ~ "no",
+      TRUE ~ "all"
     )
   ))
 
@@ -314,7 +328,7 @@ combo_2traits <- combn(x = trait_names_vector,
       "FALSE" %in% .x ~ "no",
       TRUE ~ "yes"
     )
-  ))
+  )) 
 
 # write_rds(x = combo_2traits,
 #           file = here("rds-objects",
