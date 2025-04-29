@@ -71,6 +71,7 @@ library(ggrepel)
 library(gt) # making tables
 library(gtsummary) # summary tables for models
 library(flextable) # another making tables option
+library(officer) # for formatting options with flextable
 
 
 # ⟞ g. fonts --------------------------------------------------------------
