@@ -577,6 +577,7 @@ coarse_traits |>
                     scientific_name = "Scientific name",
                     sp_code = "Species code",
                     growth_form = "Steneck and Dethier functional group") |> 
+  autofit() |> 
   fit_to_width(6, unit = "in") |> 
   font(fontname = "Times New Roman",
        part = "all") |> 
