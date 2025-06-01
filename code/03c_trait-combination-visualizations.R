@@ -151,7 +151,7 @@ upset_plot_bottom <- function(highlight_color, dark_color) {
     scale_x_discrete(expand = c(0, 0)),
     scale_y_discrete(expand = c(0, 0),
                      limits = rev),
-    scale_fill_manual(values = c("NA/FALSE" = "#FFFFFF",
+    scale_fill_manual(values = c("NA/FALSE" = "#0D0D0D",
                                  "same/TRUE" = dark_color,
                                  "everything else/TRUE" = "#9fa0a1",
                                  "all/TRUE" = highlight_color)),
@@ -268,8 +268,14 @@ bottom_4traits <- keep_4traits_heatmap %>%
              y = trait,
              fill = category_present,
              alpha = alpha)) +
-  upset_plot_bottom(highlight_color = "#059EE6",
-                         dark_color = "#356B7A")
+  upset_plot_bottom(highlight_color = "#356B7A",
+                    dark_color = "#059EE6"
+                    # highlight_color = "#059EE6",
+                    # dark_color = "#356B7A"
+  ) +
+  transparent_theme() +
+  theme(axis.ticks = element_blank(),
+        text = element_text(size = 28))
 
 top_4traits <- ggplot(data = keep_4traits,
                       aes(x = reorder(combo, -cumu_prop),
@@ -277,34 +283,46 @@ top_4traits <- ggplot(data = keep_4traits,
                           alpha = alpha,
                           fill = category)) +
   geom_col() +
-  upset_plot_top(highlight_color = "#059EE6",
-                      dark_color = "#356B7A")
+  upset_plot_top(highlight_color = "#356B7A",
+                      dark_color = "#059EE6"
+                 # highlight_color = "#059EE6",
+                 # dark_color = "#356B7A"
+                 ) +
+  transparent_theme() +
+  theme(axis.ticks = element_blank(),
+        text = element_text(size = 28))
 
 tally_plot_4traits <- keep_4traits_tally %>%
   ggplot(aes(x = n,
              y = reorder(trait, n))) +
   geom_point(size = 1,
-             color = "#356B7A") +
+             color = "#059EE6") +
   geom_segment(aes(x = 0, xend = n),
-               color = "#356B7A") +
+               color = "#059EE6") +
   geom_text(aes(x = n + 3.5,
                 label = n),
             size = 6) +
   tally_plot_aesthetics +
   theme(axis.title.x = element_blank()) +
-  labs(title = "(a) 4 trait combination")
+  labs(title = "(a) 4 trait combination") +
+  transparent_theme() +
+  theme(axis.ticks = element_blank())
 
-upset_plot_4traits <- (top_4traits / bottom_4traits) # | (plot_spacer() / right_4traits)
+upset_plot_4traits <- (top_4traits / bottom_4traits) & 
+  theme(plot.background = element_rect(fill='transparent',
+                                       color = "transparent")
+  )
 upset_plot_4traits
 
-# ggsave(here("figures",
-#             "trait-selection",
-#             paste0("upset-plot_4traits_all-combinations_euclidean_", today(), ".jpg")),
-#        upset_plot_4traits,
-#        height = 8,
-#        width = 10,
-#        units = "cm",
-#        dpi = 400)
+ggsave(here("figures",
+            "talk-figures",
+            paste0("upset-plot_4traits_all-combinations_euclidean_", today(), ".png")),
+       upset_plot_4traits,
+       bg = "transparent",
+       height = 8,
+       width = 10,
+       units = "cm",
+       dpi = 400)
 
 ## b. 4 traits (full) -----------------------------------------------------
 
@@ -355,8 +373,13 @@ bottom_4traits_full <- keep_4traits_full_heatmap %>%
              y = trait,
              fill = category_present,
              alpha = alpha)) +
-  upset_plot_bottom(highlight_color = "#059EE6",
-                    dark_color = "#356B7A")
+  upset_plot_bottom(highlight_color = "#356B7A",
+                    dark_color = "#059EE6"
+                    # highlight_color = "#059EE6",
+                    # dark_color = "#356B7A"
+  ) +
+  transparent_theme() +
+  theme(axis.ticks = element_blank())
 
 top_4traits_full <- ggplot(data = keep_4traits_full,
                       aes(x = reorder(combo, -cumu_prop),
@@ -364,34 +387,44 @@ top_4traits_full <- ggplot(data = keep_4traits_full,
                           alpha = alpha,
                           fill = category)) +
   geom_col() +
-  upset_plot_top(highlight_color = "#059EE6",
-                 dark_color = "#356B7A")
+  upset_plot_top(highlight_color = "#356B7A",
+                    dark_color = "#059EE6"
+                    # highlight_color = "#059EE6",
+                    # dark_color = "#356B7A"
+  ) +
+  transparent_theme() +
+  theme(axis.ticks = element_blank())
 
 tally_plot_4traits_full <- keep_4traits_full_tally %>%
   ggplot(aes(x = n,
              y = reorder(trait, n))) +
   geom_point(size = 1,
-             color = "#356B7A") +
+             color = "#059EE6") +
   geom_segment(aes(x = 0, xend = n),
-               color = "#356B7A") +
+               color = "#059EE6") +
   geom_text(aes(x = n + 3.5,
                 label = n),
             size = 6) +
   tally_plot_aesthetics +
   theme(axis.title.x = element_blank()) +
-  labs(title = "(a) 4 trait combination")
+  labs(title = "(a) 4 trait combination") +
+  transparent_theme()
 
-upset_plot_4traits_full <- (top_4traits_full / bottom_4traits_full) # | (plot_spacer() / right_4traits_full)
+upset_plot_4traits_full <- (top_4traits_full / bottom_4traits_full) & 
+  theme(plot.background = element_rect(fill='transparent',
+                                       color = "transparent")
+  )
 upset_plot_4traits_full
 
-# ggsave(here("figures",
-#             "trait-selection",
-#             paste0("upset-plot_4traits_full_all-combinations_euclidean_", today(), ".jpg")),
-#        upset_plot_4traits_full,
-#        height = 8,
-#        width = 16,
-#        units = "cm",
-#        dpi = 400)
+ggsave(here("figures",
+            "talk-figures",
+            paste0("upset-plot_4traits_full_all-combinations_euclidean_", today(), ".png")),
+       upset_plot_4traits_full,
+       bg = "transparent",
+       height = 8,
+       width = 16,
+       units = "cm",
+       dpi = 400)
 
 
 
@@ -437,8 +470,13 @@ bottom_3traits <- keep_3traits_heatmap %>%
              y = trait,
              fill = category_present,
              alpha = alpha)) +
-  upset_plot_bottom(highlight_color = "#05E67D",
-                    dark_color = "#077A54")
+  upset_plot_bottom(#highlight_color = "#077A54",
+                    #dark_color = "#05E67D",
+                    highlight_color = "#05E67D",
+                    dark_color = "#077A54") +
+  transparent_theme() +
+  theme(axis.ticks = element_blank(),
+        text = element_text(size = 28))
 
 top_3traits <- ggplot(data = keep_3traits,
                       aes(x = reorder(combo, -cumu_prop),
@@ -446,8 +484,13 @@ top_3traits <- ggplot(data = keep_3traits,
                           alpha = alpha,
                           fill = category)) +
   geom_col() +
-  upset_plot_top(highlight_color = "#05E67D",
-                 dark_color = "#077A54")
+  upset_plot_top(#highlight_color = "#077A54",
+    #dark_color = "#05E67D",
+    highlight_color = "#05E67D",
+    dark_color = "#077A54") +
+  transparent_theme() +
+  theme(axis.ticks = element_blank(),
+        text = element_text(size = 28))
 
 tally_plot_3traits <- keep_3traits_tally %>%
   ggplot(aes(x = n,
@@ -460,9 +503,13 @@ tally_plot_3traits <- keep_3traits_tally %>%
                 label = n),
             size = 6) +
   tally_plot_aesthetics +
-  labs(title = "(b) 3 trait combination")
+  labs(title = "(b) 3 trait combination") +
+  transparent_theme()
 
-upset_plot_3traits <- (top_3traits / bottom_3traits) # | (plot_spacer() / right_3traits)
+upset_plot_3traits <- (top_3traits / bottom_3traits) & 
+  theme(plot.background = element_rect(fill='transparent',
+                                       color = "transparent")
+  )
 
 # upset_plot_3traits <- bottom_3traits + plot_spacer() + right_3traits +
 #   plot_layout(widths = c(10, -1, 10))
@@ -474,14 +521,15 @@ upset_plot_3traits <- (top_3traits / bottom_3traits) # | (plot_spacer() / right_
 # upset_plot_3traits <- top_3traits / bottom_3traits
 upset_plot_3traits
 
-# ggsave(here("figures",
-#             "trait-selection",
-#             paste0("upset-plot_3traits_full_all-combinations_euclidean_", today(), ".jpg")),
-#        upset_plot_3traits_full,
-#        height = 8,
-#        width = 10,
-#        units = "cm",
-#        dpi = 400)
+ggsave(here("figures",
+            "talk-figures",
+            paste0("upset-plot_3traits_all-combinations_euclidean_", today(), ".png")),
+       upset_plot_3traits,
+       bg = "transparent",
+       height = 8,
+       width = 10,
+       units = "cm",
+       dpi = 400)
 
 ## d. 3 traits (full) -----------------------------------------------------
 
@@ -524,8 +572,12 @@ bottom_3traits_full <- keep_3traits_full_heatmap %>%
              y = trait,
              fill = category_present,
              alpha = alpha)) +
-  upset_plot_bottom(highlight_color = "#05E67D",
-                    dark_color = "#077A54")
+  upset_plot_bottom(#highlight_color = "#077A54",
+    #dark_color = "#05E67D",
+    highlight_color = "#05E67D",
+    dark_color = "#077A54") +
+  transparent_theme() +
+  theme(axis.ticks = element_blank())
 
 top_3traits_full <- ggplot(data = keep_3traits_full,
                       aes(x = reorder(combo, -cumu_prop),
@@ -533,8 +585,12 @@ top_3traits_full <- ggplot(data = keep_3traits_full,
                           alpha = alpha,
                           fill = category)) +
   geom_col() +
-  upset_plot_top(highlight_color = "#05E67D",
-                 dark_color = "#077A54")
+  upset_plot_top(#highlight_color = "#077A54",
+    #dark_color = "#05E67D",
+    highlight_color = "#05E67D",
+    dark_color = "#077A54") +
+  transparent_theme() +
+  theme(axis.ticks = element_blank())
 
 tally_plot_3traits_full <- keep_3traits_full_tally %>%
   ggplot(aes(x = n,
@@ -549,7 +605,10 @@ tally_plot_3traits_full <- keep_3traits_full_tally %>%
   tally_plot_aesthetics +
   labs(title = "(b) 3 trait combination")
 
-upset_plot_3traits_full <- (top_3traits_full / bottom_3traits_full) # | (plot_spacer() / right_3traits_full)
+upset_plot_3traits_full <- (top_3traits_full / bottom_3traits_full)  & 
+  theme(plot.background = element_rect(fill='transparent',
+                                       color = "transparent")
+  )
 
 # upset_plot_3traits_full <- bottom_3traits_full + plot_spacer() + right_3traits_full +
 #   plot_layout(widths = c(10, -1, 10))
@@ -562,9 +621,10 @@ upset_plot_3traits_full <- (top_3traits_full / bottom_3traits_full) # | (plot_sp
 upset_plot_3traits_full
 
 # ggsave(here("figures",
-#             "trait-selection",
-#             paste0("upset-plot_3traits_full_all-combinations_euclidean_", today(), ".jpg")),
+#             "talk-figures",
+#             paste0("upset-plot_3traits_full_all-combinations_euclidean_", today(), ".png")),
 #        upset_plot_3traits_full,
+#        bg = "transparent",
 #        height = 8,
 #        width = 16,
 #        units = "cm",

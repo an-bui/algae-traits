@@ -164,8 +164,8 @@ PCA_theme <- function() {
     theme(legend.position = "none", 
           plot.title.position = "plot",
           # legend.box = "vertical", 
-          axis.title = element_text(size = 18),
-          axis.text = element_text(size = 16),
+          axis.title = element_text(size = 22),
+          axis.text = element_text(size = 22),
           title = element_text(size = 20),
           legend.text = element_text(size = 14),
           panel.grid = element_blank()) 
@@ -432,7 +432,8 @@ pair_t_h_ww <- pair_t_h_ww[[3]] +
   labs(x = "Height:wet weight",
        y = "Thickness",
        title = "(b)") +
-  theme(plot.title.position = "plot")
+  theme(plot.title.position = "plot") +
+  transparent_theme()
 
 pair_dmc_height <- pairwise_sma(
   model_formula = "total_dmc ~ maximum_height", 
@@ -445,7 +446,8 @@ dmc_height_plot <- pair_dmc_height[[3]] +
   labs(x = "Height",
        y = "Dry:wet weight",
        title = "(d)") +
-  theme(plot.title.position = "plot")
+  theme(plot.title.position = "plot") +
+  transparent_theme()
 
 pair_sav_sadw <- pairwise_sma(
   model_formula = "sav_scaled ~ sta_scaled", 
@@ -458,7 +460,8 @@ sav_sadw_plot <- pair_sav_sadw[[3]] +
   labs(x = "Surface area:volume",
        y = "Surface area:dry weight",
        title = "(a)") +
-  theme(plot.title.position = "plot")
+  theme(plot.title.position = "plot") +
+  transparent_theme()
 
 pair_hww_sadw <- pairwise_sma(
   model_formula = "height_ww ~ sta_scaled", 
@@ -471,34 +474,43 @@ hww_sadw_plot <- pair_hww_sadw[[3]] +
   labs(x = "Surface area:volume",
        y = "Height:wet weight",
        title = "(b)") +
-  theme(plot.title.position = "plot")
+  theme(plot.title.position = "plot") +
+  transparent_theme()
 
 
 ## d. putting figures together and saving ---------------------------------
 
 sma_together <- (pair_h_hv_plot | thick_height_plot) / (pair_t_h_ww | dmc_height_plot) + 
-  plot_layout(guides = "collect") & theme(legend.position = 'bottom')
+  plot_layout(guides = "collect") & theme(legend.position = 'bottom') & 
+  theme(plot.background = element_rect(fill='transparent'),
+        legend.background = element_rect(fill = 'transparent')
+  )
 
 supp_sma <- (sav_sadw_plot | hww_sadw_plot) +
-  plot_layout(guides = "collect") & theme(legend.position = 'bottom')
+  plot_layout(guides = "collect") & theme(legend.position = 'bottom') & 
+  theme(plot.background = element_rect(fill='transparent'),
+        legend.background = element_rect(fill = 'transparent')
+  )
   
-# ggsave(here::here("figures",
-#                   "tradeoffs",
-#                   paste0("sma_app1_", today(), ".jpg")),
-#        sma_together,
-#        width = 16,
-#        height = 18,
-#        units = "cm",
-#        dpi = 300)
-# 
-# ggsave(here::here("figures",
-#                   "tradeoffs",
-#                   paste0("sma_app2_", today(), ".jpg")),
-#        supp_sma,
-#        width = 16,
-#        height = 10,
-#        units = "cm",
-#        dpi = 300)
+ggsave(here::here("figures",
+                  "talk-figures",
+                  paste0("sma_app1_", today(), ".png")),
+       sma_together,
+       bg = "transparent",
+       width = 16,
+       height = 18,
+       units = "cm",
+       dpi = 300)
+
+ggsave(here::here("figures",
+                  "talk-figures",
+                  paste0("sma_app2_", today(), ".png")),
+       supp_sma,
+       bg = "transparent",
+       width = 16,
+       height = 10,
+       units = "cm",
+       dpi = 300)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # -------------------- 5. Principal Components Analysis -------------------
@@ -698,15 +710,11 @@ plot_PCA_12_vectors_sub <- ggplot() +
   vector_colors + 
   geom_point(data = PCAscores_sub, 
              aes(x = PC1, 
-                 y = PC2#, 
-                 # color = scientific_name, 
-                 # shape = scientific_name,
-                 # size = fvfm_mean
+                 y = PC2
              ) ,
-             alpha = 0.3,
              size = 1,
              shape = 21,
-             color = "darkgrey"
+             color = "grey"
   ) +
   geom_segment(data = PCAvect_sub, 
                aes(x = 0, 
@@ -715,24 +723,33 @@ plot_PCA_12_vectors_sub <- ggplot() +
                    yend = PC2,
                    color = rownames(PCAvect_sub)), 
                arrow = arrow(length = unit(0.2, "cm")), 
-               linewidth = 0.5) +
+               linewidth = 1) +
   geom_label_repel(data = PCAvect_sub, 
                    aes(x = PC1, 
                        y = PC2, 
                        label = rownames(PCAvect_sub),
                        fill = rownames(PCAvect_sub)), 
-                   size = 6, 
-                   alpha = 0.8,
+                   size = 12, 
                    seed = 666,
-                   color = "black") +
+                   color = "white") +
   scale_x_continuous(limits = c(-3, 3)) +
   scale_y_continuous(limits = c(-3, 3)) +
   PCA_theme() +
   labs(x = paste0("PC1 (", prop_PC1_sub, ")"),
        y = paste0("PC2 (", prop_PC2_sub, ")"),
-       title = "(a) Trait vectors",
        # subtitle = "BO, CC, CO, BF, DP, LAFA, PTCA, R, CYOS", 
-       color = "Scientific name") 
+       color = "Scientific name") +
+  transparent_theme()
+
+ggsave(
+  filename = here("figures", "talk-figures",
+                  paste0("pca-vectors_", today(), ".png")),
+  bg = "transparent",
+  width = 10,
+  height = 10,
+  units = "cm",
+  dpi = 300
+)
 
 #### 2. species points ----------------------------------------------------
 
@@ -747,27 +764,31 @@ plot_PCA_12_species_sub <- PCAscores_sub %>%
   species_colors + 
   geom_point(
     shape = 21,
-    alpha = 0.3,
+    alpha = 0.7,
     size = 1
   ) +
   stat_ellipse(aes(color = splabel),
-               level = 0.5) +
+               level = 0.5,
+               linewidth = 1) +
   scale_x_continuous(limits = c(-1.05, 1.05)) +
   scale_y_continuous(limits = c(-1.05, 1.05)) +
   PCA_theme() +
-  theme(legend.position = "inside",
-        legend.position.inside = c(0.51, 0.89),
-        legend.background = element_blank(),
-        legend.spacing.y = unit(0.01, "cm"),
-        legend.key.spacing.y = unit(0.01, "cm"),
-        legend.key.height = unit(0.25, "cm"),
-        legend.key.size = unit(0.3, "cm"),
-        legend.title = element_blank()) +
+  theme(legend.position = "none") +
   labs(color = "Scientific name",
-       title = "(b) Species",
        x = paste0("PC1 (", prop_PC1_sub, ")"),
        y = paste0("PC2 (", prop_PC2_sub, ")"),
-  )
+  ) +
+  transparent_theme()
+
+ggsave(
+  filename = here("figures", "talk-figures",
+                  paste0("pca-species_", today(), ".png")),
+  bg = "transparent",
+  width = 10,
+  height = 10,
+  units = "cm",
+  dpi = 300
+)
 
 PCA_vectors_species_sub <- plot_PCA_12_vectors_sub | plot_PCA_12_species_sub
 
