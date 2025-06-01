@@ -404,7 +404,8 @@ pair_h_hv_plot <- pair_h_hv[[3]] +
   labs(x = "Height:volume ratio",
        y = "Maximum height",
        title = "(a)") +
-  theme(plot.title.position = "plot")
+  theme(plot.title.position = "plot") +
+  transparent_theme()
 
 pair_thick_height <- pairwise_sma(
   model_formula = "thickness_mm_mean ~ maximum_height", 
@@ -417,7 +418,8 @@ thick_height_plot <- pair_thick_height[[3]] +
   labs(x = "Height",
        y = "Thickness",
        title = "(c)") +
-  theme(plot.title.position = "plot")
+  theme(plot.title.position = "plot") +
+  transparent_theme()
 
 pair_t_h_ww <- pairwise_sma(
   model_formula = "thickness_mm_mean ~ height_ww", 
