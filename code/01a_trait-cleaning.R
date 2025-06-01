@@ -243,7 +243,7 @@ recruits <- metadata_sub |>
 ct_prep <- metadata_sub |> 
   # filter(!(specimen_ID %in% recruits)) |> 
   select(specimen_ID, sp_code, lifestage) |> 
-  left_join(., coarse_traits, by = "sp_code") |> 
+  left_join(coarse_traits, by = "sp_code") |> 
   # select(-subsample_ID) |> 
   select(specimen_ID, sp_code, scientific_name, 
          growth_form, pigment_type, life_habit, longevity, posture, branching_yn, lifestage) |>
@@ -255,13 +255,13 @@ ct_prep <- metadata_sub |>
 leaf_traits <- metadata_sub |> 
   filter(type %in% c("whole", "thallus")) |> 
   filter(!(specimen_ID %in% recruits)) |> 
-  left_join(., fvfm_sub, by = "subsample_ID") |> 
-  left_join(., thickness_sub, by = "subsample_ID") |> 
-  left_join(., weight_sub, by = "subsample_ID") |> 
-  left_join(., volume_sub, by = "subsample_ID") |> 
-  left_join(., lw_sub, by = "subsample_ID") |> 
-  left_join(., sa_peri_sub, by = "subsample_ID") |> 
-  left_join(., isotopes_sub, by = "subsample_ID") |> 
+  left_join(fvfm_sub, by = "subsample_ID") |> 
+  left_join(thickness_sub, by = "subsample_ID") |> 
+  left_join(weight_sub, by = "subsample_ID") |> 
+  left_join(volume_sub, by = "subsample_ID") |> 
+  left_join(lw_sub, by = "subsample_ID") |> 
+  left_join(sa_peri_sub, by = "subsample_ID") |> 
+  left_join(isotopes_sub, by = "subsample_ID") |> 
   # ratios
   mutate(sap_ratio = area_total/peri_total,
          sav_ratio = area_total/volume_total_mL,
@@ -301,18 +301,18 @@ av_leaf_values <- leaf_traits |>
 # all traits for each individual with mean taken for each trait
 # H, T, SA, H:WW, DW:WW, H:V, SA:V, SA:DW, and SA:P
 ind_traits <- ct_prep |> 
-  left_join(., ind_height, by = "specimen_ID") |> 
-  left_join(., thickness_ind, by = "specimen_ID") |> 
-  left_join(., av_leaf_values, by = "specimen_ID") |> 
-  left_join(., fvfm_ind, by = "specimen_ID") |> 
-  left_join(., weight_ind, by = "specimen_ID") |> 
-  left_join(., volume_ind, by = "specimen_ID") |> 
-  left_join(., chlA_ind, by = "specimen_ID") |> 
-  left_join(., isotopes_ind, by = "specimen_ID") |> 
+  left_join(ind_height, by = "specimen_ID") |> 
+  left_join(thickness_ind, by = "specimen_ID") |> 
+  left_join(av_leaf_values, by = "specimen_ID") |> 
+  left_join(fvfm_ind, by = "specimen_ID") |> 
+  left_join(weight_ind, by = "specimen_ID") |> 
+  left_join(volume_ind, by = "specimen_ID") |> 
+  left_join(chlA_ind, by = "specimen_ID") |> 
+  left_join(isotopes_ind, by = "specimen_ID") |> 
   mutate(mass_to_height = total_dry/maximum_height,
          height_ww = maximum_height/total_wet,
          height_vol = maximum_height/total_volume) |> 
-  left_join(., (metadata_ind |> select(specimen_ID, date_collected, site)), by = "specimen_ID") |> 
+  left_join((metadata_ind |> select(specimen_ID, date_collected, site)), by = "specimen_ID") |> 
   filter(sp_code != "EGME") |> 
   filter(!(sp_code == "PTCA" & lifestage == "recruit")) |> 
   filter(!(specimen_ID %in% c("20220726-BULL-016",
@@ -488,7 +488,7 @@ lte_spp <- lte |>
                               "Unidentifiable small brown blade")) |> 
   select(scientific_name, taxon_phylum, taxon_order, taxon_family) |> 
   unique() |> 
-  left_join(., joe_traits, by = c("scientific_name" = "species"))
+  left_join(joe_traits, by = c("scientific_name" = "species"))
 # 14 spp have traits already from Fong et al. JoE, 40 species do not, 1 "species" combines two genera
 
 # write_csv(lte_spp, file = here("data", "fong-categorical", "joe-traits-lter.csv"))
@@ -538,17 +538,17 @@ total_sample_collection_table <- ind_traits_filtered |>
 
 total_sample_collection_table
 
-total_sample_collection_table |>
-  save_as_docx(
-    path = here::here(
-    "tables",
-    "sample-tables",
-    paste0("total-samples_all-data_", today(), ".docx")
-  ),
-  pr_section = prop_section(
-    page_size = page_size(orient = "landscape",
-                          width = 8.5, height = 11)
-  ))
+# total_sample_collection_table |>
+#   save_as_docx(
+#     path = here::here(
+#     "tables",
+#     "sample-tables",
+#     paste0("total-samples_all-data_", today(), ".docx")
+#   ),
+#   pr_section = prop_section(
+#     page_size = page_size(orient = "landscape",
+#                           width = 8.5, height = 11)
+#   ))
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # ---------------------------- 4. species table ---------------------------
