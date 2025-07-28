@@ -724,14 +724,6 @@ plot_PCA_12_vectors_sub <- ggplot() +
                    color = rownames(PCAvect_sub)), 
                arrow = arrow(length = unit(0.2, "cm")), 
                linewidth = 1) +
-  geom_label_repel(data = PCAvect_sub, 
-                   aes(x = PC1, 
-                       y = PC2, 
-                       label = rownames(PCAvect_sub),
-                       fill = rownames(PCAvect_sub)), 
-                   size = 12, 
-                   seed = 666,
-                   color = "white") +
   scale_x_continuous(limits = c(-3, 3)) +
   scale_y_continuous(limits = c(-3, 3)) +
   PCA_theme() +
@@ -790,7 +782,37 @@ ggsave(
   dpi = 300
 )
 
-PCA_vectors_species_sub <- plot_PCA_12_vectors_sub | plot_PCA_12_species_sub
+example_pca <- PCAscores_sub %>% 
+  ggplot(aes(x = PC1, 
+             y = PC2, 
+             color = splabel, 
+             # shape = scientific_name,
+             # size = fvfm_mean
+  ) ) +
+  PCA_aesthetics +
+  species_colors + 
+  scale_x_continuous(limits = c(-1.05, 1.05)) +
+  scale_y_continuous(limits = c(-1.05, 1.05)) +
+  PCA_theme() +
+  theme(legend.position = "none") +
+  labs(color = "Scientific name",
+       x = paste0("PC1 (", prop_PC1_sub, ")"),
+       y = paste0("PC2 (", prop_PC2_sub, ")"),
+  ) +
+  transparent_theme()
+
+ggsave(
+  filename = here("figures", "talk-figures",
+                  paste0("example-pca_", today(), ".png")),
+  plot = example_pca,
+  bg = "transparent",
+  width = 10,
+  height = 10,
+  units = "cm",
+  dpi = 300
+)
+
+# PCA_vectors_species_sub <- plot_PCA_12_vectors_sub | plot_PCA_12_species_sub
 
 ### iv. axis contributions ------------------------------------------------
 
